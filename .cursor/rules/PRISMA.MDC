@@ -1,0 +1,18 @@
+id: prisma-schema-changes
+when:
+  file-modified: prisma/schema.prisma
+steps:
+  - type: message
+    message: "🔄 Prisma schema modified! Follow the correct development flow:"
+  - type: message
+    message: "📋 For STRUCTURAL changes (models/fields/relations): Create migration first"
+  - type: command
+    label: "Create Migration + Generate Client"
+    command: "npx prisma migrate dev --name 'describe-your-changes'"
+  - type: message
+    message: "📋 For NON-STRUCTURAL changes (comments/formatting): Generate only"
+  - type: command
+    label: "Generate Client Only"
+    command: "npx prisma generate"
+  - type: message
+    message: "⚠️  Choose the appropriate option above. Migrations are NOT automatic to prevent data loss."

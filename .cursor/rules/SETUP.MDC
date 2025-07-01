@@ -1,0 +1,9 @@
+id: setup-dependencies
+when:
+  not: file-exists(package-lock.json)
+steps:
+  - type: message
+    message: "It looks like this is a new project and dependencies are not installed."
+  - type: command
+    label: "Install dependencies"
+    command: "npm install"

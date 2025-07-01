@@ -1,103 +1,172 @@
-import Image from "next/image";
+import { checkAdminExists } from "./actions/admin";
+import { getCurrentUser } from "@/lib/auth/permissions";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ThemeToggle } from "@/components/theme-toggle";
+import Link from "next/link";
+import { Shield, ArrowRight, CheckCircle, User } from "lucide-react";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+interface HomeProps {
+  searchParams: Promise<{
+    message?: string;
+  }>;
+}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+export default async function Home({ searchParams }: HomeProps) {
+  const params = await searchParams;
+  const message = params.message;
+  const [adminExists, currentUser] = await Promise.all([
+    checkAdminExists(),
+    getCurrentUser(),
+  ]);
+
+  if (!adminExists) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <Shield className="h-12 w-12 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">Welcome to Your Application</CardTitle>
+            <CardDescription>
+              Let's get started by setting up your administrator account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertTitle>First Time Setup Required</AlertTitle>
+              <AlertDescription>
+                No administrator account has been created yet. You'll need to set up an admin
+                account to manage your application.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="space-y-2">
+              <h3 className="font-semibold">What happens next?</h3>
+              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                <li>Create your administrator email and password</li>
+                <li>Get full access to the admin dashboard</li>
+                <li>Start managing users and application settings</li>
+              </ul>
+            </div>
+
+            <Link href="/auth/setup-admin" className="block">
+              <Button className="w-full" size="lg">
+                Set Up Admin Account
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // User is signed in
+  if (currentUser) {
+    const isAdmin = currentUser.roles.some(r => r.role.name === "admin");
+    
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <User className="h-12 w-12 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">Welcome Back!</CardTitle>
+            <CardDescription>
+              You're signed in as {currentUser.email}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {message === 'magic_link_success' && (
+              <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-800 dark:text-green-200">Success!</AlertTitle>
+                <AlertDescription className="text-green-700 dark:text-green-300">
+                  You've been successfully signed in via magic link.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="space-y-2">
+              <h3 className="font-semibold">Your Account</h3>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>Email: {currentUser.email}</p>
+                <p>Member since: {new Date(currentUser.created_at).toLocaleDateString()}</p>
+                <p>Roles: {currentUser.roles.map(r => r.role.name).join(", ") || "user"}</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button className="w-full" variant="default">
+                    Go to Admin Dashboard
+                  </Button>
+                </Link>
+              )}
+              <form action="/api/auth/logout" method="post">
+                <Button type="submit" className="w-full" variant="outline">
+                  Sign Out
+                </Button>
+              </form>
+            </div>
+          </CardContent>
+        </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // No user signed in, but admin exists
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-lg">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <CheckCircle className="h-12 w-12 text-green-600" />
+          </div>
+          <CardTitle className="text-2xl">Your Application is Ready!</CardTitle>
+          <CardDescription>
+            The administrator account has been set up successfully
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-center text-muted-foreground">
+            Sign in to access all features of your application.
+          </p>
+          
+          <div className="flex flex-col gap-2">
+            <Link href="/auth/signin">
+              <Button className="w-full" variant="default">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button className="w-full" variant="outline">
+                Create New Account
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+      </div>
     </div>
   );
 }

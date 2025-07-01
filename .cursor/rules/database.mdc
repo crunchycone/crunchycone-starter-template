@@ -1,0 +1,119 @@
+# Database Guidelines
+
+## Schema Design Principles
+- All tables MUST include: id, created_at, updated_at, deleted_at
+- Use soft deletes (set deleted_at) instead of hard deletes
+- Always filter by deleted_at: null for active records
+- Use transactions for multi-table operations
+- Follow consistent naming: snake_case for database fields
+
+## Database Models Overview
+- **User**: Core user accounts with email/password
+- **UserProfile**: Extended user information (first_name, last_name)
+- **Role**: Available roles in the system (user, admin, custom)
+- **UserRole**: Many-to-many relationship between users and roles
+
+## Required Prisma Patterns
+
+### Soft Delete Operations
+```typescript
+// Soft delete (preferred)
+await prisma.user.update({
+  where: { id },
+  data: { deleted_at: new Date() }
+});
+
+// Always filter active records
+await prisma.user.findMany({
+  where: { deleted_at: null }
+});
+
+// Include in all queries
+where: { 
+  deleted_at: null,
+  // other conditions
+}
+```
+
+### Transaction Patterns
+```typescript
+// Multi-table operations
+await prisma.$transaction(async (tx) => {
+  const user = await tx.user.create({ data: userData });
+  await tx.userProfile.create({ 
+    data: { user_id: user.id, ...profileData } 
+  });
+  await tx.userRole.create({
+    data: { user_id: user.id, role_id: userRoleId }
+  });
+  return user;
+});
+```
+
+### Relationship Queries
+```typescript
+// User with profile and roles
+const user = await prisma.user.findUnique({
+  where: { id, deleted_at: null },
+  include: {
+    profile: true,
+    roles: {
+      where: { deleted_at: null },
+      include: { 
+        role: {
+          where: { deleted_at: null }
+        } 
+      }
+    }
+  }
+});
+
+// Role with user count
+const roles = await prisma.role.findMany({
+  where: { deleted_at: null },
+  include: {
+    _count: {
+      select: {
+        users: {
+          where: { deleted_at: null }
+        }
+      }
+    }
+  },
+  orderBy: { id: 'asc' }
+});
+```
+
+## Security Patterns
+- Never expose internal IDs to client-side
+- Always validate user permissions before database operations
+- Use parameterized queries (Prisma handles this)
+- Validate all input data with Zod schemas
+
+## CRITICAL RULE: Database Development Flow
+**MANDATORY: Follow this sequence for schema changes**
+
+1. **Modify schema.prisma**
+2. **Create migration FIRST** (before generate)
+3. **Migration automatically runs generate**
+
+For structural changes (models, fields, relations):
+```bash
+npx prisma migrate dev --name "descriptive-change-name"
+```
+
+For non-structural changes (comments only):
+```bash
+npx prisma generate
+```
+
+**Why this order:**
+- Migrations update database structure first
+- Generate syncs TypeScript types with database
+- Wrong order = type/database mismatches
+
+## Common Commands
+- `npx prisma migrate dev --name "description"` - Create migration + generate
+- `npx prisma generate` - Update Prisma client only
+- `npm run db:reset` - Reset database
+- `npm run db:studio` - Open Prisma Studio

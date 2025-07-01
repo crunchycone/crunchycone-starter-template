@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../db/prod.db"
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+  
+  email          String    @unique
+  password       String?
+  last_signed_in DateTime?
+  
+  profile        UserProfile?
+  roles          UserRole[]
+  
+  @@index([email])
+  @@index([deleted_at])
+}
+
+model UserProfile {
+  id         Int       @id @default(autoincrement())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  
+  user_id    Int       @unique
+  first_name String?
+  last_name  String?
+  
+  user       User      @relation(fields: [user_id], references: [id])
+  
+  @@index([user_id])
+  @@index([deleted_at])
+}
+
+model Role {
+  id         Int       @id @default(autoincrement())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  
+  name       String    @unique
+  
+  users      UserRole[]
+  
+  @@index([name])
+  @@index([deleted_at])
+}
+
+model UserRole {
+  id         Int       @id @default(autoincrement())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  
+  user_id    Int
+  role_id    Int
+  
+  user       User      @relation(fields: [user_id], references: [id])
+  role       Role      @relation(fields: [role_id], references: [id])
+  
+  @@unique([user_id, role_id])
+  @@index([user_id])
+  @@index([role_id])
+  @@index([deleted_at])
+}

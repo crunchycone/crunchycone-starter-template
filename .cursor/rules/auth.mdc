@@ -1,3 +1,8 @@
+---
+description: Authentication implementation guidelines
+globs: ["app/auth/**/*", "lib/auth/**/*", "components/auth/**/*", "app/api/auth/**/*"]
+---
+
 # Authentication Guidelines
 
 ## Authentication Architecture

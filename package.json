@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "reset": "node scripts/reset.js",
+    "distribute": "node scripts/create-distribution.js",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:reset": "rm -f db/prod.db && prisma migrate dev --name init && prisma db seed",

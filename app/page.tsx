@@ -1,11 +1,11 @@
-import { checkAdminExists } from "./actions/admin";
+import { checkAdminExists, isDatabaseEmpty } from "./actions/admin";
 import { getCurrentUser } from "@/lib/auth/permissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
-import { Shield, ArrowRight, CheckCircle, User } from "lucide-react";
+import { Shield, ArrowRight, CheckCircle, User, Rocket } from "lucide-react";
 
 interface HomeProps {
   searchParams: Promise<{
@@ -16,10 +16,73 @@ interface HomeProps {
 export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
   const message = params.message;
-  const [adminExists, currentUser] = await Promise.all([
+  const [adminExists, currentUser, dbEmpty] = await Promise.all([
     checkAdminExists(),
     getCurrentUser(),
+    isDatabaseEmpty(),
   ]);
+
+  // Special case: Database is completely empty (fresh install/development)
+  if (dbEmpty) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Rocket className="h-12 w-12 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Welcome to Production Starter</CardTitle>
+              <CardDescription>
+                Your application is ready for development
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert>
+                <AlertTitle>Fresh Installation Detected</AlertTitle>
+                <AlertDescription>
+                  The database is empty. You can start by creating a regular user account or 
+                  directly set up an administrator account.
+                </AlertDescription>
+              </Alert>
+              
+              <div className="space-y-2">
+                <h3 className="font-semibold">Get Started</h3>
+                <p className="text-sm text-muted-foreground">
+                  Choose how you'd like to begin using your application:
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Link href="/auth/signup">
+                  <Button className="w-full" variant="default">
+                    Create User Account
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/auth/setup-admin">
+                  <Button className="w-full" variant="outline">
+                    Set Up Admin Account
+                    <Shield className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+              
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Already have an account?</p>
+                <Link href="/auth/signin" className="text-primary underline">
+                  Sign in here
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (!adminExists) {
     return (

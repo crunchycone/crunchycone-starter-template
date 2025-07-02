@@ -1,3 +1,8 @@
+---
+description: Server actions best practices and patterns
+globs: ["app/actions/**/*", "app/**/page.tsx", "app/**/layout.tsx", "components/**/*"]
+---
+
 # Server Actions Guidelines
 
 ## Core Principles

@@ -322,6 +322,32 @@ npm run reset
 npm run reset --yes
 ```
 
+### Distribution Commands
+
+```bash
+# Create distribution package for sharing/deployment
+npm run distribute
+```
+
+The `npm run distribute` command creates a clean distribution package that:
+- ✅ Excludes `.git`, `node_modules`, `.next`, and build artifacts
+- ✅ Excludes environment files (keeps `.env.example`)
+- ✅ Excludes database files (for fresh setup)
+- ✅ Includes setup script for easy installation
+- ✅ Creates timestamped distribution folder
+- ✅ Includes distribution documentation
+
+**Usage:**
+1. Run `npm run distribute` in your project
+2. Navigate to the created distribution folder
+3. Zip the folder: `zip -r distribution-name.zip project-folder/`
+4. Share the zip file with others
+
+**Recipients can then:**
+1. Extract the zip file
+2. Run `./setup.sh` (or follow manual setup in DISTRIBUTION.md)
+3. Start developing immediately
+
 ### Project Reset
 
 The `npm run reset` command resets the project to its initial state:

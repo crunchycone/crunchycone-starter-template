@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 
 type User = {
-  id: number;
+  id: string;
   email: string;
   created_at: string;
   last_signed_in: string | null;
@@ -53,7 +53,7 @@ type User = {
 };
 
 type Role = {
-  id: number;
+  id: string;
   name: string;
 };
 
@@ -62,7 +62,7 @@ type UserManagementPanelProps = {
   totalCount: number;
   currentPage: number;
   itemsPerPage: number;
-  currentUserId: number;
+  currentUserId: string;
   availableRoles: Role[];
 };
 
@@ -93,7 +93,7 @@ export function UserManagementPanel({
     router.push(`/admin/users?search=${encodeURIComponent(searchQuery)}`);
   }
 
-  async function handlePasswordReset(userId: number, email: string) {
+  async function handlePasswordReset(userId: string, email: string) {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
@@ -118,7 +118,7 @@ export function UserManagementPanel({
     }
   }
 
-  async function handleRoleToggle(userId: number, roleName: string, hasRole: boolean) {
+  async function handleRoleToggle(userId: string, roleName: string, hasRole: boolean) {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/admin/users/${userId}/roles`, {

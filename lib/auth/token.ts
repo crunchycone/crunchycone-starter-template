@@ -2,10 +2,10 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
-export function verifyToken(token: string): { userId: number; type: string } | null {
+export function verifyToken(token: string): { userId: string; type: string } | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId: number;
+      userId: string;
       type: string;
     };
     return decoded;
@@ -15,7 +15,7 @@ export function verifyToken(token: string): { userId: number; type: string } | n
 }
 
 export function generateToken(
-  userId: number,
+  userId: string,
   type: "access" | "verification" | "reset" | "magic_link"
 ): string {
   const TOKEN_EXPIRY = {

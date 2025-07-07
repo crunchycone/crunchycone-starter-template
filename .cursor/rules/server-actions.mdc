@@ -32,7 +32,7 @@ globs: ["app/actions/**/*", "app/**/page.tsx", "app/**/layout.tsx", "components/
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getCurrentUser, isAdmin } from '@/lib/auth/permissions'
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function actionName(formData: FormData) {
   // 1. Authentication (required for protected actions)
@@ -174,7 +174,7 @@ export function CreateUserForm() {
 import { useTransition } from 'react'
 import { deleteUserAction } from '@/app/actions/users'
 
-export function DeleteUserButton({ userId }: { userId: number }) {
+export function DeleteUserButton({ userId }: { userId: string }) {
   const [isPending, startTransition] = useTransition()
 
   const handleDelete = () => {
@@ -257,7 +257,7 @@ export async function updateProfileAction(formData: FormData) {
 
 ### Admin-Only Server Actions
 ```typescript
-export async function adminDeleteUserAction(userId: number) {
+export async function adminDeleteUserAction(userId: string) {
   // Auth + Admin check
   const currentUser = await getCurrentUser()
   if (!currentUser || !(await isAdmin(currentUser.id))) {

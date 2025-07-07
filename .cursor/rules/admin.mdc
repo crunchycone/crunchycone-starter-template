@@ -10,6 +10,7 @@ globs: ["app/admin/**/*", "components/admin/**/*", "app/actions/admin.ts"]
 /admin              - Dashboard home with metrics
 /admin/users        - Complete user management
 /admin/roles        - Role creation and management
+/admin/database     - Database viewer with table browsing
 /admin/settings     - Application configuration
 ```
 
@@ -167,9 +168,41 @@ const updateUserRole = async (userId, roleId, action) => {
 };
 ```
 
+## Database Viewer Features (`/admin/database`)
+
+### Core Functionality
+- **Table List**: Display all database tables with row counts
+- **Table Data**: View table contents with pagination (100 rows per page)
+- **Navigation**: URL-based navigation for browser back/forward support
+- **SQL Protection**: Table name validation to prevent SQL injection
+
+### URL-Based Navigation
+```typescript
+// Navigate to table view
+router.push(`/admin/database?table=${encodeURIComponent(tableName)}&page=1`);
+
+// Navigate back to table list
+router.push('/admin/database');
+
+// Pagination
+router.push(`/admin/database?table=${tableName}&page=${pageNumber}`);
+```
+
+### Security Patterns
+```typescript
+// Validate table names against actual database tables
+const validTables = await getDatabaseTables();
+const isValidTable = validTables.some(t => t.name === tableName);
+
+if (!isValidTable) {
+  throw new Error("Invalid table name");
+}
+```
+
 ## Security Considerations
-- Never expose internal user IDs in URLs or client-side
+- ULIDs are safe to expose (non-enumerable, non-guessable)
 - Always validate permissions server-side
 - Use transactions for multi-step operations
 - Implement rate limiting for admin actions
 - Log admin actions for audit trails
+- Database Viewer validates table names to prevent SQL injection

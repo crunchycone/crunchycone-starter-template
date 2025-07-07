@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { hashPassword, generateToken } from "@/lib/auth/auth";
 import { sendEmail, getVerificationEmailTemplate } from "@/lib/email/email";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 const signUpSchema = z.object({
   email: z.string().email(),

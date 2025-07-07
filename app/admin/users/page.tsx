@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { UserManagementPanel } from "@/components/admin/UserManagementPanel";
 import { getCurrentUser } from "@/lib/auth/permissions";
-
-const prisma = new PrismaClient();
 const ITEMS_PER_PAGE = 10;
 
 async function getRoles() {
@@ -81,7 +79,7 @@ export default async function UsersPage({
         totalCount={count}
         currentPage={page}
         itemsPerPage={ITEMS_PER_PAGE}
-        currentUserId={currentUser?.id || 0}
+        currentUserId={currentUser?.id || ""}
         availableRoles={roles}
       />
     </div>

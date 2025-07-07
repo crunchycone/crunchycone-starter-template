@@ -10,20 +10,20 @@ globs: ["app/auth/**/*", "lib/auth/**/*", "components/auth/**/*", "app/api/auth/
 ### Core Functions (lib/auth/auth.ts)
 - `hashPassword(password)` - Hash passwords with bcrypt (10 salt rounds)
 - `verifyPassword(password, hash)` - Verify password against hash
-- `createSession(userId)` - Create HTTP-only cookie session (7 days)
-- `getSession(token?)` - Get current session from cookie or token
+- `createSession(userId: string)` - Create HTTP-only cookie session (7 days) - userId is now ULID string
+- `getSession(token?)` - Get current session from cookie or token - returns {userId: string}
 - `clearSession()` - Clear session cookie
 
 ### Token Functions (lib/auth/token.ts)
-- `generateToken(userId, type)` - Create JWT tokens with expiry
-- `verifyToken(token)` - Verify and decode JWT tokens
+- `generateToken(userId: string, type)` - Create JWT tokens with expiry - userId is ULID string
+- `verifyToken(token)` - Verify and decode JWT tokens - returns {userId: string, type: string}
 - **Token Types**: access (7d), verification (1d), reset (1h), magic_link (1d)
 
 ### Permission Functions (lib/auth/permissions.ts)
-- `hasRole(userId, roleName)` - Check if user has specific role
+- `hasRole(userId: string, roleName)` - Check if user has specific role - userId is ULID string
 - `requireRole(roleName)` - Server action that redirects if role missing
-- `isAdmin(userId)` - Check admin status
-- `getCurrentUser()` - Get user with profile and roles
+- `isAdmin(userId: string)` - Check admin status - userId is ULID string
+- `getCurrentUser()` - Get user with profile and roles - returns user with string ID
 - `checkAdminExists()` - Check if any admin user exists
 
 ## Complete Authentication Flows
@@ -242,7 +242,7 @@ export async function createUserAction(formData: FormData) {
 
 #### Role-Based Actions
 ```typescript
-export async function updateUserRoleAction(userId: number, roleId: number, action: 'add' | 'remove') {
+export async function updateUserRoleAction(userId: string, roleId: string, action: 'add' | 'remove') {
   const currentUser = await getCurrentUser()
   if (!currentUser || !(await isAdmin(currentUser.id))) {
     throw new Error('Unauthorized')

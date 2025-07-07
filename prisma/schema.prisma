@@ -11,7 +11,7 @@ datasource db {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
+  id             String    @id @default("")
   created_at     DateTime  @default(now())
   updated_at     DateTime  @updatedAt
   deleted_at     DateTime?
@@ -28,12 +28,12 @@ model User {
 }
 
 model UserProfile {
-  id         Int       @id @default(autoincrement())
+  id         String    @id @default("")
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
   
-  user_id    Int       @unique
+  user_id    String    @unique
   first_name String?
   last_name  String?
   
@@ -44,7 +44,7 @@ model UserProfile {
 }
 
 model Role {
-  id         Int       @id @default(autoincrement())
+  id         String    @id @default("")
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
@@ -58,13 +58,13 @@ model Role {
 }
 
 model UserRole {
-  id         Int       @id @default(autoincrement())
+  id         String    @id @default("")
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
   
-  user_id    Int
-  role_id    Int
+  user_id    String
+  role_id    String
   
   user       User      @relation(fields: [user_id], references: [id])
   role       Role      @relation(fields: [role_id], references: [id])

@@ -13,7 +13,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 // Re-export token functions for backward compatibility
 export { generateToken, verifyToken };
 
-export async function createSession(userId: number): Promise<string> {
+export async function createSession(userId: string): Promise<string> {
   const token = generateToken(userId, "access");
   const cookieStore = await cookies();
   
@@ -28,7 +28,7 @@ export async function createSession(userId: number): Promise<string> {
   return token;
 }
 
-export async function getSession(token?: string): Promise<{ userId: number } | null> {
+export async function getSession(token?: string): Promise<{ userId: string } | null> {
   if (!token) {
     const cookieStore = await cookies();
     token = cookieStore.get("auth-token")?.value;

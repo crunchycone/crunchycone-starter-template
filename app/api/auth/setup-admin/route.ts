@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { hashPassword, createSession } from "@/lib/auth/auth";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 const setupSchema = z.object({
   email: z.string().email(),

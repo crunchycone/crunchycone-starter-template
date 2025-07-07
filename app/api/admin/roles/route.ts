@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/permissions";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 const createRoleSchema = z.object({
   name: z.string()

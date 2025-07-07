@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
-import { LayoutDashboard, Users, Settings, LogOut, Menu, Shield } from "lucide-react";
+import { LayoutDashboard, Users, Settings, LogOut, Menu, Shield, Database } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +45,12 @@ export default async function AdminLayout({
               <Button variant="ghost" className="w-full justify-start">
                 <Shield className="mr-2 h-4 w-4" />
                 Roles
+              </Button>
+            </Link>
+            <Link href="/admin/database">
+              <Button variant="ghost" className="w-full justify-start">
+                <Database className="mr-2 h-4 w-4" />
+                Database Viewer
               </Button>
             </Link>
             <Link href="/admin/settings">
@@ -95,6 +101,12 @@ export default async function AdminLayout({
                 <Link href="/admin/roles">
                   <Shield className="mr-2 h-4 w-4" />
                   Roles
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/database">
+                  <Database className="mr-2 h-4 w-4" />
+                  Database Viewer
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

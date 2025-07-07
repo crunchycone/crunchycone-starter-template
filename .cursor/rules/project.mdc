@@ -17,6 +17,7 @@ This is a production-ready Next.js 15 starter template with complete authenticat
 - **shadcn/ui**: Accessible component library
 - **bcrypt**: Password hashing
 - **JWT**: Stateless authentication
+- **ULID**: Universally Unique Lexicographically Sortable IDs
 - **next-themes**: Theme management
 
 ### Project Structure
@@ -38,7 +39,10 @@ lib/
 │   ├── auth.ts      # Core auth functions (server-side)
 │   ├── token.ts     # JWT token utilities (client/server safe)
 │   └── permissions.ts # Role checking and user management
-└── email/           # Email service with provider pattern
+├── email/           # Email service with provider pattern
+├── utils/           # Utility modules
+│   └── ulid.ts      # ULID generation and Prisma middleware
+└── prisma.ts        # Centralized Prisma client with ULID middleware
 
 prisma/
 ├── schema.prisma    # Database schema with soft deletes
@@ -57,7 +61,8 @@ prisma/
 ### Admin Management Flows
 1. **User Management**: Search, view, edit, assign roles, send password resets
 2. **Role Management**: Create custom roles, assign/remove, protect system roles
-3. **Protection Rules**: Cannot remove own admin role, system roles protected
+3. **Database Viewer**: Browse all tables, view data with pagination, SQL injection protection
+4. **Protection Rules**: Cannot remove own admin role, system roles protected
 
 ### Developer Flows
 1. **Database Migrations**: Schema changes → migrate → generate client
@@ -80,10 +85,12 @@ prisma/
 - System role protection (user/admin roles cannot be deleted)
 
 ### Database Security
+- ULID primary keys (non-enumerable, sortable by creation time)
 - Soft delete pattern (never hard delete)
 - Transaction-wrapped multi-table operations
 - Parameterized queries via Prisma
 - Input validation with Zod schemas
+- SQL injection protection in Database Viewer
 
 ## Development Guidelines
 
@@ -113,12 +120,18 @@ if (!session) {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
-// Admin check
+// Admin check (note: userId is now a string, not number)
 const isUserAdmin = await isAdmin(session.userId);
 if (!isUserAdmin) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 ```
+
+### ID Handling
+- All IDs are now ULID strings (26 characters)
+- Generated automatically by Prisma middleware
+- No parseInt() needed for route parameters
+- Example: `01JZK5AT1CBD1SBW5T3JQ60VPR`
 
 ## Email System
 

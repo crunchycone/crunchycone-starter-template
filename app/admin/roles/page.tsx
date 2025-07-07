@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { RoleManagementPanel } from "@/components/admin/RoleManagementPanel";
-
-const prisma = new PrismaClient();
 
 async function getRoles() {
   const roles = await prisma.role.findMany({

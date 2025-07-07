@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { verifyPassword, createSession, generateToken } from "@/lib/auth/auth";
 import { sendEmail, getMagicLinkEmailTemplate } from "@/lib/email/email";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 const signInSchema = z.discriminatedUnion("type", [
   z.object({

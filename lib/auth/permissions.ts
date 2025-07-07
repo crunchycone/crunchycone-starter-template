@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "./auth";
 import { redirect } from "next/navigation";
 
-const prisma = new PrismaClient();
-
-export async function hasRole(userId: number, roleName: string): Promise<boolean> {
+export async function hasRole(userId: string, roleName: string): Promise<boolean> {
   const userRole = await prisma.userRole.findFirst({
     where: {
       user_id: userId,
@@ -34,7 +32,7 @@ export async function requireRole(roleName: string) {
   return session;
 }
 
-export async function isAdmin(userId: number): Promise<boolean> {
+export async function isAdmin(userId: string): Promise<boolean> {
   return hasRole(userId, "admin");
 }
 

@@ -36,7 +36,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Plus, Trash2, Shield, Users } from "lucide-react";
 
 type Role = {
-  id: number;
+  id: string;
   name: string;
   created_at: string;
   _count: {
@@ -119,7 +119,7 @@ export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) 
     }
   }
 
-  async function handleDeleteRole(roleId: number, roleName: string) {
+  async function handleDeleteRole(roleId: string, roleName: string) {
     if (protectedRoles.includes(roleName)) {
       setMessage({
         type: "error",

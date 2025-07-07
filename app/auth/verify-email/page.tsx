@@ -1,12 +1,10 @@
 import { Suspense } from 'react';
 import { verifyToken } from '@/lib/auth/auth';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
-const prisma = new PrismaClient();
 
 interface VerifyEmailPageProps {
   searchParams: Promise<{

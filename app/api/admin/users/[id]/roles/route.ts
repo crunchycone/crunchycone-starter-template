@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/permissions";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 const roleSchema = z.object({
   roleName: z.string(),
@@ -24,7 +22,7 @@ export async function POST(
       );
     }
 
-    const userId = parseInt(params.id);
+    const userId = params.id;
     const body = await request.json();
     const validationResult = roleSchema.safeParse(body);
     
@@ -100,7 +98,7 @@ export async function DELETE(
       );
     }
 
-    const userId = parseInt(params.id);
+    const userId = params.id;
     const body = await request.json();
     const validationResult = roleSchema.safeParse(body);
     

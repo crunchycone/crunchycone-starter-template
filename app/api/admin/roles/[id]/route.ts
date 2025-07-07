@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/permissions";
-
-const prisma = new PrismaClient();
 
 const protectedRoles = ["user", "admin"];
 
@@ -21,7 +19,7 @@ export async function DELETE(
       );
     }
 
-    const roleId = parseInt(params.id);
+    const roleId = params.id;
     
     // Find the role
     const role = await prisma.role.findUnique({

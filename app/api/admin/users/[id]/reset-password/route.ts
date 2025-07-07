@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { generateToken, getSession } from "@/lib/auth/auth";
 import { isAdmin } from "@/lib/auth/permissions";
 import { sendEmail, getPasswordResetEmailTemplate } from "@/lib/email/email";
-
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
@@ -20,7 +18,7 @@ export async function POST(
       );
     }
 
-    const userId = parseInt(params.id);
+    const userId = params.id;
     
     // Find user
     const user = await prisma.user.findUnique({

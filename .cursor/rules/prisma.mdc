@@ -44,8 +44,16 @@ When `prisma/schema.prisma` is modified:
 - `npm run db:studio` - Open Prisma Studio GUI
 
 ### Schema Conventions:
-- All models include: `created_at`, `updated_at`, `deleted_at`
+- All models include: `id` (ULID string), `created_at`, `updated_at`, `deleted_at`
+- IDs are ULID strings with `@default("")` - middleware generates actual values
+- Import Prisma client from `@/lib/prisma`, NOT `@prisma/client` directly
 - Use soft deletes (set `deleted_at`) instead of hard deletes
 - Add indexes for frequently queried fields
 - Use `@@unique` for compound unique constraints
 - Use `@relation` for explicit relation names
+
+### ULID Implementation:
+- All models use `id String @id @default("")`
+- ULID generation handled by Prisma middleware in `lib/utils/ulid.ts`
+- IDs are 26-character strings, sortable by creation time
+- Example: `01JZK5AT1CBD1SBW5T3JQ60VPR`

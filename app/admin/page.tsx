@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserCheck, Clock, TrendingUp } from "lucide-react";
-
-const prisma = new PrismaClient();
 
 async function getStats() {
   const [totalUsers, activeUsers, recentSignups] = await Promise.all([

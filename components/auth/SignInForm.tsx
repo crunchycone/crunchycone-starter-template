@@ -14,12 +14,12 @@ import { Mail, Lock } from "lucide-react";
 import Link from "next/link";
 
 const emailPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email({ error: "Invalid email address" }),
+  password: z.string().min(1, { error: "Password is required" }),
 });
 
 const magicLinkSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email({ error: "Invalid email address" }),
 });
 
 type EmailPasswordData = z.infer<typeof emailPasswordSchema>;

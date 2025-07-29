@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated jose from v5 to v6 for Edge Runtime authentication
 - Improved import specificity in edge-auth.ts for better tree-shaking
+- Updated zod from v3 to v4 with new error customization syntax
+  - Changed `message` parameter to `error` in all schemas
+  - Updated validation in SignUpForm, SignInForm, SetupAdminForm, ForgotPasswordPage, and RoleManagementPanel
 
 ## [0.1.0] - 2025-07-01
 

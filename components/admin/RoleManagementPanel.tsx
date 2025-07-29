@@ -46,9 +46,9 @@ type Role = {
 
 const createRoleSchema = z.object({
   name: z.string()
-    .min(1, "Role name is required")
-    .max(50, "Role name must be less than 50 characters")
-    .regex(/^[a-z0-9_-]+$/, "Role name must contain only lowercase letters, numbers, hyphens, and underscores"),
+    .min(1, { error: "Role name is required" })
+    .max(50, { error: "Role name must be less than 50 characters" })
+    .regex(/^[a-z0-9_-]+$/, { error: "Role name must contain only lowercase letters, numbers, hyphens, and underscores" }),
 });
 
 type CreateRoleData = z.infer<typeof createRoleSchema>;

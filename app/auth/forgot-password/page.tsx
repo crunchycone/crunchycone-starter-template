@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email({ error: 'Invalid email address' }),
 });
 
 type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;

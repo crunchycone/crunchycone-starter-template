@@ -47,10 +47,14 @@ export async function verifyTokenEdge(token: string): Promise<EdgeSession | null
     };
   } catch (error: any) {
     if (error.code === 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED') {
-      console.error('[Edge Auth] Invalid JWT signature - token was signed with a different secret');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Edge Auth] Invalid JWT signature - token was signed with a different secret');
+      }
     } else if (error.code === 'ERR_JWT_EXPIRED') {
-      console.error('[Edge Auth] JWT token has expired');
-    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Edge Auth] JWT token has expired');
+      }
+    } else if (process.env.NODE_ENV === 'development') {
       console.error('[Edge Auth] Token verification failed:', error);
     }
     return null;

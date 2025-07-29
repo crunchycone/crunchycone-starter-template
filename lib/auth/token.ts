@@ -29,9 +29,13 @@ export function verifyToken(token: string): { userId: string; type: string } | n
     return decoded;
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError' && error.message === 'invalid signature') {
-      console.error("[Token] Invalid JWT signature - token was signed with a different secret");
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Token] Invalid JWT signature - token was signed with a different secret");
+      }
     } else if (error.name === 'TokenExpiredError') {
-      console.error("[Token] JWT token has expired");
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Token] JWT token has expired");
+      }
     } else if (process.env.NODE_ENV === "development") {
       console.error("[Token] Token verification failed:", error);
     }

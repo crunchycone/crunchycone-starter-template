@@ -61,7 +61,9 @@ export async function getSession(token?: string): Promise<{ userId: string } | n
     }
     
     // Clear the invalid cookie to prevent repeated errors
-    console.error("[Auth] Clearing invalid auth token cookie");
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Auth] Clearing invalid auth token cookie");
+    }
     cookieStore.delete("auth-token");
     
     return null;

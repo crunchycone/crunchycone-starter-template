@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Changed `message` parameter to `error` in all schemas
   - Updated validation in SignUpForm, SignInForm, SetupAdminForm, ForgotPasswordPage, and RoleManagementPanel
 
+### Removed
+- Removed @types/bcryptjs dependency as bcryptjs v3 now includes its own TypeScript definitions
+
 ## [0.1.0] - 2025-07-01
 
 ### Added

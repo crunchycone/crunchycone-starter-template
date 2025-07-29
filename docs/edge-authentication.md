@@ -98,6 +98,14 @@ In development mode, comprehensive logging helps troubleshoot issues:
 4. SameSite policy prevents CSRF attacks
 5. Secure flag ensures HTTPS in production
 
+## Invalid Token Handling
+
+When a JWT token becomes invalid (e.g., after changing JWT_SECRET):
+- The token is treated as if no session exists
+- Users are redirected to sign in
+- Cookies cannot be deleted in Server Components (Next.js limitation)
+- Invalid tokens are simply ignored until they expire or user signs in again
+
 ## Testing
 
 To test the implementation:

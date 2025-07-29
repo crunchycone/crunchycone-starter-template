@@ -1,4 +1,5 @@
 import { checkAdminExists, isDatabaseEmpty } from "./actions/admin";
+import { signOutAction } from "./actions/auth";
 import { getCurrentUser } from "@/lib/auth/permissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -213,7 +214,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       </Button>
                     </Link>
                   )}
-                  <form action="/api/auth/logout" method="post">
+                  <form action={signOutAction}>
                     <Button type="submit" className="w-full" variant="outline">
                       Sign Out
                     </Button>

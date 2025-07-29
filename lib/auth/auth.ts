@@ -60,11 +60,8 @@ export async function getSession(token?: string): Promise<{ userId: string } | n
       console.log("[Auth] Invalid session token:", decoded ? "wrong type" : "decode failed");
     }
     
-    // Clear the invalid cookie to prevent repeated errors
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Auth] Clearing invalid auth token cookie");
-    }
-    cookieStore.delete("auth-token");
+    // Note: Cannot delete cookies in Server Components
+    // Invalid tokens will be ignored and treated as no session
     
     return null;
   }

@@ -18,7 +18,9 @@ When `package-lock.json` doesn't exist:
 When `.env` file doesn't exist:
 - Show message: "Environment variables are not configured. Creating .env file from template."
 - Run command: `cp .env.example .env`
-- Show reminder: "Please update the JWT_SECRET in your .env file for security."
+- Show message: "Generating secure JWT_SECRET..."
+- Run command: `node -e "const crypto = require('crypto'); const fs = require('fs'); const envFile = fs.readFileSync('.env', 'utf8'); const newEnv = envFile.replace('JWT_SECRET=\"your-secret-key-change-in-production\"', 'JWT_SECRET=\"' + crypto.randomBytes(32).toString('hex') + '\"'); fs.writeFileSync('.env', newEnv);"`
+- Show message: "✅ Generated secure JWT_SECRET in .env file"
 
 ## Setup Database
 

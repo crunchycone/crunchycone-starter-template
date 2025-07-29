@@ -54,7 +54,7 @@ export default async function Home({ searchParams }: HomeProps) {
                   <ellipse cx="13.5" cy="8.5" rx="0.7" ry="0.5" fill="#FFFFF0" opacity="0.7"/>
                 </svg>
               </div>
-              <CardTitle className="text-2xl">Welcome to Production Starter</CardTitle>
+              <CardTitle className="text-2xl">Welcome to CrunchyCone</CardTitle>
               <CardDescription>
                 Your application is ready for development
               </CardDescription>

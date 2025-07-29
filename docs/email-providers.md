@@ -1,6 +1,6 @@
 # Email Provider Implementation Guide
 
-This guide explains how to implement different email providers in the production starter template.
+This guide explains how to implement different email providers in the CrunchyCone starter template.
 
 ## Overview
 

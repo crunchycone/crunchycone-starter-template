@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains detailed guides for extending the production starter template.
+This directory contains detailed guides for extending the CrunchyCone starter template.
 
 ## Available Guides
 

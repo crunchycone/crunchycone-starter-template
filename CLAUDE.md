@@ -1,4 +1,4 @@
-# Production Starter Template - Project Guide
+# CrunchyCone Starter Template - Project Guide
 
 ## Overview
 
@@ -7,7 +7,7 @@ This is a production-ready Next.js starter template with authentication, admin d
 ## Project Structure
 
 ```
-prod-starter-template/
+crunchycone-starter-template/
 ├── app/                      # Next.js App Router
 │   ├── actions/             # Server Actions
 │   │   └── admin.ts         # Admin-related server actions

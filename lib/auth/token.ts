@@ -4,12 +4,37 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-producti
 
 export function verifyToken(token: string): { userId: string; type: string } | null {
   try {
+    if (!token) {
+      console.error("[Token] No token provided to verifyToken");
+      return null;
+    }
+
+    if (!JWT_SECRET || JWT_SECRET === "your-secret-key-change-in-production") {
+      console.error("[Token] JWT_SECRET not properly configured");
+      return null;
+    }
+
     const decoded = jwt.verify(token, JWT_SECRET) as {
       userId: string;
       type: string;
     };
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Token] Token verified successfully:", {
+        userId: decoded.userId,
+        type: decoded.type,
+      });
+    }
+
     return decoded;
-  } catch {
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' && error.message === 'invalid signature') {
+      console.error("[Token] Invalid JWT signature - token was signed with a different secret");
+    } else if (error.name === 'TokenExpiredError') {
+      console.error("[Token] JWT token has expired");
+    } else if (process.env.NODE_ENV === "development") {
+      console.error("[Token] Token verification failed:", error);
+    }
     return null;
   }
 }
@@ -25,7 +50,15 @@ export function generateToken(
     magic_link: "1d",
   };
 
-  return jwt.sign(
+  if (!userId) {
+    throw new Error("[Token] Cannot generate token without userId");
+  }
+
+  if (!JWT_SECRET || JWT_SECRET === "your-secret-key-change-in-production") {
+    throw new Error("[Token] JWT_SECRET not properly configured for token generation");
+  }
+
+  const token = jwt.sign(
     {
       userId,
       type,
@@ -35,4 +68,14 @@ export function generateToken(
       expiresIn: TOKEN_EXPIRY[type],
     }
   );
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[Token] Token generated:", {
+      userId,
+      type,
+      expiresIn: TOKEN_EXPIRY[type],
+    });
+  }
+
+  return token;
 }

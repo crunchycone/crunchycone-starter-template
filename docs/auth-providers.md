@@ -1,6 +1,6 @@
 # Authentication Provider Implementation Guide
 
-This guide explains how to add different authentication providers (OAuth, social logins) to the production starter template.
+This guide explains how to add different authentication providers (OAuth, social logins) to the CrunchyCone starter template.
 
 ## Overview
 

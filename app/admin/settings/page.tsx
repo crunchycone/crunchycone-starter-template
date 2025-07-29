@@ -23,7 +23,7 @@ export default function AdminSettingsPage() {
           <div className="space-y-2">
             <h3 className="font-medium">Application Name</h3>
             <p className="text-sm text-muted-foreground">
-              Production Starter Template
+              CrunchyCone Starter Template
             </p>
           </div>
           <Separator />

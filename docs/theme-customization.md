@@ -1,6 +1,6 @@
 # Theme Customization Guide
 
-This guide explains how to create and customize themes in the production starter template.
+This guide explains how to create and customize themes in the CrunchyCone starter template.
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# Production Starter Template
+# CrunchyCone Starter Template
 
 A production-ready Next.js starter template with authentication, admin dashboard, and role-based access control.
 
@@ -80,8 +80,8 @@ A production-ready Next.js starter template with authentication, admin dashboard
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/prod-starter-template.git
-cd prod-starter-template
+git clone https://github.com/yourusername/crunchycone-starter-template.git
+cd crunchycone-starter-template
 ```
 
 2. Reset the project to initial state:
@@ -103,8 +103,8 @@ If you're using [Cursor IDE](https://cursor.sh/), you can set up this project wi
 
 1. **Clone and Open in Cursor**:
 ```bash
-git clone https://github.com/yourusername/prod-starter-template.git
-cd prod-starter-template
+git clone https://github.com/yourusername/crunchycone-starter-template.git
+cd crunchycone-starter-template
 cursor .
 ```
 
@@ -116,6 +116,7 @@ cursor .
 Claude will automatically:
 - ✅ Install all dependencies (`npm install`)
 - ✅ Reset the database to fresh state (`npm run reset`)
+- ✅ Generate a secure JWT_SECRET automatically
 - ✅ Start the development server (`npm run dev`)
 - ✅ Open [http://localhost:3000](http://localhost:3000) for you
 
@@ -136,7 +137,7 @@ When you first run the application:
 ## Project Structure
 
 ```
-prod-starter-template/
+crunchycone-starter-template/
 ├── app/                      # Next.js App Router
 │   ├── actions/             # Server Actions
 │   ├── admin/               # Admin dashboard pages
@@ -354,12 +355,15 @@ The `npm run reset` command resets the project to its initial state:
 - Removes existing database
 - Creates fresh database with schema and seed data
 - Copies .env.example to .env (if needed)
+- **Automatically generates a secure JWT_SECRET** (only if using default value)
 - Cleans Next.js build cache
 - Prompts for confirmation before proceeding (unless `--yes` flag is used)
 
 **Options:**
 - `npm run reset` - Interactive mode with confirmation prompt
 - `npm run reset --yes` (or `-y`) - Skip confirmation and reset immediately
+- `npm run reset --new-secret` - Also generates a new JWT_SECRET
+- `npm run reset --yes --new-secret` - Skip confirmation and generate new JWT_SECRET
 
 This is useful for:
 - Setting up the project for new developers
@@ -393,7 +397,8 @@ Create a `.env` file with these variables:
 DATABASE_URL="file:./db/prod.db"
 
 # Authentication
-JWT_SECRET="your-secret-key-change-in-production"
+JWT_SECRET="your-secret-key-change-in-production"  # Auto-generated during setup
+# Note: Changing JWT_SECRET will invalidate all existing sessions
 
 # Email
 EMAIL_FROM="noreply@example.com"

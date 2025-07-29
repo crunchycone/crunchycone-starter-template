@@ -44,7 +44,7 @@ function hasYesFlag() {
 
 async function main() {
   try {
-    log('\n🔄 Production Starter Template Reset', '\x1b[1m\x1b[34m'); // Bold Blue
+    log('\n🔄 CrunchyCone Starter Template Reset', '\x1b[1m\x1b[34m'); // Bold Blue
     log('=====================================\n');
     
     logWarning('This will reset the project to its initial state:');
@@ -81,14 +81,42 @@ async function main() {
     // Step 2: Copy .env.example to .env if .env doesn't exist
     const envPath = path.join(process.cwd(), '.env');
     const envExamplePath = path.join(process.cwd(), '.env.example');
+    const crypto = require('crypto');
+    
+    let envFileCreated = false;
     
     if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
       fs.copyFileSync(envExamplePath, envPath);
       logSuccess('Created .env file from .env.example');
+      envFileCreated = true;
     } else if (fs.existsSync(envPath)) {
       logInfo('.env file already exists (not overwritten)');
     } else {
       logWarning('.env.example not found - you may need to create .env manually');
+    }
+    
+    // Generate JWT_SECRET if needed
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const hasDefaultJwtSecret = envContent.includes('JWT_SECRET="your-secret-key-change-in-production"');
+      const forceNewSecret = process.argv.includes('--new-secret') || process.argv.includes('--new-jwt');
+      
+      if (hasDefaultJwtSecret || forceNewSecret) {
+        const jwtSecret = crypto.randomBytes(32).toString('hex');
+        const updatedEnvContent = envContent.replace(
+          /JWT_SECRET="[^"]*"/,
+          `JWT_SECRET="${jwtSecret}"`
+        );
+        fs.writeFileSync(envPath, updatedEnvContent);
+        
+        if (forceNewSecret && !hasDefaultJwtSecret) {
+          logSuccess('Generated new JWT_SECRET (forced)');
+        } else {
+          logSuccess('Generated secure JWT_SECRET (replaced default)');
+        }
+      } else if (!envFileCreated) {
+        logInfo('JWT_SECRET already configured (use --new-secret to regenerate)');
+      }
     }
 
     // Step 3: Clean Next.js cache

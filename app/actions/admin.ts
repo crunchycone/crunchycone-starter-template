@@ -6,25 +6,14 @@ import { redirect } from "next/navigation";
 
 export async function checkAdminExists(): Promise<boolean> {
   try {
-    // First check if there are ANY users in the database
-    const totalUserCount = await prisma.user.count({
-      where: {
-        deleted_at: null,
-      },
-    });
-    
-    // If no users exist at all, don't require admin setup
-    if (totalUserCount === 0) {
-      return true; // Pretend admin exists to skip setup
-    }
-    
-    // If users exist, check if any are admins
+    // Check if admin role exists
     const adminRole = await prisma.role.findUnique({
       where: { name: "admin" },
     });
     
     if (!adminRole) return false;
     
+    // Check if any users have the admin role
     const adminUserCount = await prisma.userRole.count({
       where: {
         role_id: adminRole.id,

@@ -192,6 +192,7 @@ export function UserManagementPanel({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>User ID</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Roles</TableHead>
@@ -203,6 +204,7 @@ export function UserManagementPanel({
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
+                <TableCell className="font-mono text-xs">{user.id}</TableCell>
                 <TableCell className="font-medium">{user.email}</TableCell>
                 <TableCell>
                   {user.profile?.first_name || user.profile?.last_name
@@ -309,7 +311,7 @@ export function UserManagementPanel({
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">User ID:</span>
-                  <span>{selectedUser.id}</span>
+                  <span className="font-mono text-sm">{selectedUser.id}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Name:</span>

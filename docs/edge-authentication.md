@@ -23,7 +23,7 @@ We maintain two separate authentication implementations:
   - Handles all server-side authentication
 
 - **`lib/auth/edge-auth.ts`** - Edge Runtime (Middleware)
-  - Uses `jose` library (Edge-compatible)
+  - Uses `jose` library v6 (Edge-compatible)
   - Limited Edge Runtime environment
   - Handles middleware authentication checks
 

@@ -8,6 +8,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { Shield, ArrowRight, CheckCircle, User } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 interface HomeProps {
   searchParams: Promise<{
     message?: string;

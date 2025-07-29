@@ -1,4 +1,4 @@
-import * as jose from 'jose';
+import { jwtVerify } from 'jose';
 import { NextRequest } from 'next/server';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -23,7 +23,7 @@ export async function verifyTokenEdge(token: string): Promise<EdgeSession | null
 
   try {
     const secret = new TextEncoder().encode(JWT_SECRET);
-    const { payload } = await jose.jwtVerify(token, secret, {
+    const { payload } = await jwtVerify(token, secret, {
       algorithms: ['HS256'],
     });
 

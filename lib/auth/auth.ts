@@ -37,13 +37,19 @@ export async function createSession(userId: string): Promise<string> {
 }
 
 export async function getSession(token?: string): Promise<{ userId: string } | null> {
-  const cookieStore = await cookies();
-  
   if (!token) {
-    token = cookieStore.get("auth-token")?.value;
-    
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Auth] Getting session from cookie:", token ? "token found" : "no token");
+    try {
+      const cookieStore = await cookies();
+      token = cookieStore.get("auth-token")?.value;
+      
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Auth] Getting session from cookie:", token ? "token found" : "no token");
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[Auth] Error accessing cookies:", error);
+      }
+      return null;
     }
   }
   

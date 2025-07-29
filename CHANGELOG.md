@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed @types/bcryptjs dependency as bcryptjs v3 now includes its own TypeScript definitions
 
+### Updated
+- Updated Prisma and @prisma/client from v6.11.0 to v6.13.0
+- Updated @hookform/resolvers from v5.1.1 to v5.2.1
+- Updated react-hook-form from v7.59.0 to v7.61.1
+- Updated @typescript-eslint/eslint-plugin and @typescript-eslint/parser from v8.35.1 to v8.38.0
+- Updated eslint from v9.30.0 to v9.32.0
+
 ## [0.1.0] - 2025-07-01
 
 ### Added

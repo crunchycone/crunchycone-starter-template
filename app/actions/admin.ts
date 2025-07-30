@@ -98,7 +98,9 @@ export async function getDatabaseTables(): Promise<DatabaseTable[]> {
 export async function getTableData(
   tableName: string,
   page: number = 1,
-  limit: number = 100
+  limit: number = 100,
+  sortColumn?: string,
+  sortDirection: 'asc' | 'desc' = 'asc'
 ): Promise<TableData> {
   // Authentication check
   const currentUser = await getCurrentUser();
@@ -115,23 +117,38 @@ export async function getTableData(
       throw new Error("Invalid table name");
     }
 
-    // Get total count
-    const countResult: Array<{ count: number }> = await prisma.$queryRawUnsafe(
-      `SELECT COUNT(*) as count FROM "${tableName}"`
-    );
-    const totalCount = countResult[0]?.count || 0;
-
     // Get column information
     const columns: Array<{ name: string }> = await prisma.$queryRawUnsafe(
       `PRAGMA table_info("${tableName}")`
     );
     const columnNames = columns.map(col => col.name);
 
-    // Get paginated data
-    const offset = (page - 1) * limit;
-    const rows = await prisma.$queryRawUnsafe(
-      `SELECT * FROM "${tableName}" LIMIT ${limit} OFFSET ${offset}`
+    // Validate sort column if provided
+    if (sortColumn) {
+      const isValidColumn = columnNames.includes(sortColumn);
+      if (!isValidColumn) {
+        throw new Error("Invalid sort column");
+      }
+    }
+
+    // Get total count
+    const countResult: Array<{ count: number }> = await prisma.$queryRawUnsafe(
+      `SELECT COUNT(*) as count FROM "${tableName}"`
     );
+    const totalCount = countResult[0]?.count || 0;
+
+    // Build query with optional sorting
+    const offset = (page - 1) * limit;
+    let query = `SELECT * FROM "${tableName}"`;
+    
+    if (sortColumn) {
+      // Use double quotes for column names to handle special characters
+      query += ` ORDER BY "${sortColumn}" ${sortDirection.toUpperCase()}`;
+    }
+    
+    query += ` LIMIT ${limit} OFFSET ${offset}`;
+
+    const rows = await prisma.$queryRawUnsafe(query);
 
     return {
       columns: columnNames,

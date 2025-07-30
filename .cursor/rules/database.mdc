@@ -131,3 +131,9 @@ npx prisma generate
 - `npx prisma generate` - Update Prisma client only
 - `npm run db:reset` - Reset database
 - `npm run db:studio` - Open Prisma Studio
+
+## Database Viewing Tools
+- Use the built-in admin database viewer at `/admin/database` for production
+- Use `npm run db:studio` (Prisma Studio) for development when needed
+- **DO NOT** install third-party database viewers like Prisma Viewer
+- The admin panel database viewer includes pagination, sorting, and security

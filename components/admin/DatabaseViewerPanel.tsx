@@ -20,7 +20,10 @@ import {
   ChevronLeft, 
   ChevronRight,
   AlertCircle,
-  Loader2
+  Loader2,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from "lucide-react";
 import { getDatabaseTables, getTableData } from "@/app/actions/admin";
 import type { DatabaseTable, TableData } from "@/app/actions/admin";
@@ -36,6 +39,8 @@ export function DatabaseViewerPanel() {
 
   const selectedTable = searchParams.get("table");
   const currentPage = parseInt(searchParams.get("page") || "1");
+  const sortColumn = searchParams.get("sortBy");
+  const sortDirection = (searchParams.get("sortDir") || "asc") as "asc" | "desc";
   const itemsPerPage = 100;
 
   // Load tables on mount
@@ -46,11 +51,11 @@ export function DatabaseViewerPanel() {
   // Load table data when URL params change
   useEffect(() => {
     if (selectedTable) {
-      loadTableData(selectedTable, currentPage);
+      loadTableData(selectedTable, currentPage, sortColumn, sortDirection);
     } else {
       setTableData(null);
     }
-  }, [selectedTable, currentPage]);
+  }, [selectedTable, currentPage, sortColumn, sortDirection]);
 
   const loadTables = async () => {
     try {
@@ -66,11 +71,22 @@ export function DatabaseViewerPanel() {
     }
   };
 
-  const loadTableData = async (tableName: string, page: number = 1) => {
+  const loadTableData = async (
+    tableName: string, 
+    page: number = 1,
+    sortCol: string | null,
+    sortDir: "asc" | "desc"
+  ) => {
     try {
       setTableLoading(true);
       setError(null);
-      const data = await getTableData(tableName, page, itemsPerPage);
+      const data = await getTableData(
+        tableName, 
+        page, 
+        itemsPerPage,
+        sortCol || undefined,
+        sortDir
+      );
       setTableData(data);
     } catch (err) {
       setError(`Failed to load data from table: ${tableName}`);
@@ -90,14 +106,62 @@ export function DatabaseViewerPanel() {
 
   const handlePreviousPage = () => {
     if (currentPage > 1 && selectedTable) {
-      router.push(`/admin/database?table=${encodeURIComponent(selectedTable)}&page=${currentPage - 1}`);
+      const params = new URLSearchParams();
+      params.set("table", selectedTable);
+      params.set("page", String(currentPage - 1));
+      if (sortColumn) {
+        params.set("sortBy", sortColumn);
+        params.set("sortDir", sortDirection);
+      }
+      router.push(`/admin/database?${params.toString()}`);
     }
   };
 
   const handleNextPage = () => {
     if (tableData && currentPage < Math.ceil(tableData.totalCount / itemsPerPage) && selectedTable) {
-      router.push(`/admin/database?table=${encodeURIComponent(selectedTable)}&page=${currentPage + 1}`);
+      const params = new URLSearchParams();
+      params.set("table", selectedTable);
+      params.set("page", String(currentPage + 1));
+      if (sortColumn) {
+        params.set("sortBy", sortColumn);
+        params.set("sortDir", sortDirection);
+      }
+      router.push(`/admin/database?${params.toString()}`);
     }
+  };
+
+  const handleSort = (column: string) => {
+    if (!selectedTable) return;
+    
+    const params = new URLSearchParams();
+    params.set("table", selectedTable);
+    params.set("page", "1"); // Reset to page 1 when sorting changes
+    
+    if (sortColumn === column) {
+      // Same column clicked
+      if (sortDirection === "asc") {
+        params.set("sortBy", column);
+        params.set("sortDir", "desc");
+      } else {
+        // Remove sorting (third click)
+        // Don't set sortBy or sortDir to remove them
+      }
+    } else {
+      // Different column clicked
+      params.set("sortBy", column);
+      params.set("sortDir", "asc");
+    }
+    
+    router.push(`/admin/database?${params.toString()}`);
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-3 w-3 opacity-50" />;
+    }
+    return sortDirection === "asc" 
+      ? <ArrowUp className="h-3 w-3" />
+      : <ArrowDown className="h-3 w-3" />;
   };
 
   const formatCellValue = (value: any): string => {
@@ -205,7 +269,17 @@ export function DatabaseViewerPanel() {
                 <TableRow>
                   {tableData.columns.map((column) => (
                     <TableHead key={column} className="font-semibold">
-                      {column}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 p-0 font-semibold hover:bg-transparent"
+                        onClick={() => handleSort(column)}
+                      >
+                        <span className="flex items-center gap-1">
+                          {column}
+                          {getSortIcon(column)}
+                        </span>
+                      </Button>
                     </TableHead>
                   ))}
                 </TableRow>

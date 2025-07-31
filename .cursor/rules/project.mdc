@@ -5,6 +5,14 @@ alwaysApply: true
 
 # Production Starter Template - Project Overview
 
+## Working Directory Context
+**IMPORTANT**: This is a Next.js project. When executing commands:
+- Always check if `package.json` exists in the current directory
+- If not found, look for it in subdirectories
+- Change to the project root directory (where `package.json` is located) before running npm/npx commands
+- The project root contains: `package.json`, `next.config.js`, `tsconfig.json`, `.env`, and `prisma/` folder
+- Example: If opened from parent directory, first `cd` into the project folder before running `npm run dev`
+
 ## Project Architecture
 
 This is a production-ready Next.js 15 starter template with complete authentication, admin dashboard, and role-based access control.

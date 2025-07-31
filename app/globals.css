@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom animation for debug bubble - pulse 3 times only */
+@keyframes pulse-3-times {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-3 {
+  animation: pulse-3-times 1s ease-in-out 3;
+}
+
+/* Hide Next.js default dev indicator */
+nextjs-portal,
+[data-nextjs-portal],
+#__next-build-indicator,
+.__next-build-indicator,
+[class*="nextjs-build-indicator"],
+[class*="nextjs-portal"],
+[class*="nextjs-toast"],
+[class*="nextjs__container"],
+div[style*="bottom:1rem"][style*="right:1rem"],
+div[style*="bottom: 1rem"][style*="right: 1rem"],
+div[style*="position:fixed"][style*="z-index:99999"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

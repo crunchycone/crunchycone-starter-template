@@ -16,6 +16,12 @@
   animation: pulse-3-times 1s ease-in-out 3;
 }
 
+/* Ensure debug bubble is always on top */
+#crunchycone-debug-bubble {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
 /* Hide Next.js default dev indicator */
 nextjs-portal,
 [data-nextjs-portal],

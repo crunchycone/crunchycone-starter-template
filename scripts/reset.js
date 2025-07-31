@@ -131,7 +131,27 @@ async function main() {
       logSuccess('Cleaned Next.js build cache');
     }
 
-    // Step 4: Reset database with Prisma
+    // Step 4: Check for migrations and reset database
+    const migrationsPath = path.join(process.cwd(), 'prisma', 'migrations');
+    const hasMigrations = fs.existsSync(migrationsPath) && 
+      fs.readdirSync(migrationsPath).some(f => f.match(/^\d+_/));
+
+    if (!hasMigrations) {
+      logInfo('No migrations found, creating initial migration...');
+      try {
+        execSync('npx prisma migrate dev --name init --skip-seed', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        logSuccess('Initial migration created');
+      } catch (error) {
+        logError('Failed to create initial migration');
+        console.error(error.message);
+        process.exit(1);
+      }
+    }
+
+    // Step 5: Reset database with Prisma
     logInfo('Resetting database with Prisma...');
     try {
       execSync('npx prisma migrate reset --force', { 

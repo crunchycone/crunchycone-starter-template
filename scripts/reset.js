@@ -47,6 +47,10 @@ async function main() {
     log('\n🔄 CrunchyCone Starter Template Reset', '\x1b[1m\x1b[34m'); // Bold Blue
     log('=====================================\n');
     
+    // Check if database exists for first-run detection
+    const dbPath = path.join(process.cwd(), 'db', 'prod.db');
+    const isFirstRun = !fs.existsSync(dbPath);
+    
     logWarning('This will reset the project to its initial state:');
     console.log('  • Remove existing database');
     console.log('  • Create fresh database with default schema');
@@ -54,9 +58,11 @@ async function main() {
     console.log('  • Clean Next.js build cache');
     console.log('  • Reset to first-time user experience');
     
-    const skipConfirmation = hasYesFlag();
+    const skipConfirmation = hasYesFlag() || isFirstRun;
     
-    if (skipConfirmation) {
+    if (isFirstRun) {
+      logInfo('First-time setup detected, skipping confirmation.');
+    } else if (hasYesFlag()) {
       logInfo('--yes flag detected, skipping confirmation.');
     } else {
       const confirmed = await askForConfirmation();
@@ -70,7 +76,6 @@ async function main() {
     log('\n🚀 Starting reset process...\n');
 
     // Step 1: Remove existing database
-    const dbPath = path.join(process.cwd(), 'db', 'prod.db');
     if (fs.existsSync(dbPath)) {
       fs.unlinkSync(dbPath);
       logSuccess('Removed existing database');

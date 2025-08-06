@@ -28,18 +28,7 @@ This guide will help you set up your development environment step by step.
 - **Run**: `npm install`
 - **Success message**: "✅ Lock file created"
 
-### Step 2: Setup Database
-#### When `prisma/db/prod.db` doesn't exist:
-- **What to do**: Let's create your database
-- **Run**: `npm run db:reset --yes`
-- **What this does**: Creates a fresh database with initial data
-- **Success message**: "✅ Database ready! Default roles created."
-
-**Why this is important**:
-- Your app needs a database to store information
-- Includes default user and admin roles
-
-### Step 3: Configure Environment
+### Step 2: Configure Environment
 #### When `.env` file doesn't exist:
 - **What to do**: Set up your environment configuration
 - **Run**: `cp .env.example .env`
@@ -50,6 +39,21 @@ This guide will help you set up your development environment step by step.
   ```
 - **What this does**: Generates a secure secret key
 - **Success message**: "✅ Environment configured!"
+
+**Why this is important**:
+- Database setup needs environment variables
+- JWT secret is required for authentication
+
+### Step 3: Setup Database
+#### When `prisma/db/prod.db` doesn't exist:
+- **What to do**: Let's create your database
+- **Run**: `npm run db:reset --yes`
+- **What this does**: Creates a fresh database with initial data
+- **Success message**: "✅ Database ready! Default roles created."
+
+**Why this is important**:
+- Your app needs a database to store information
+- Includes default user and admin roles
 
 ### Step 4: Generate Prisma Client
 #### When `node_modules/.prisma/client/index.js` doesn't exist:
@@ -81,13 +85,13 @@ You should see the welcome page, and you can:
 - **Solution**: Run `npm install` first
 - This means dependencies aren't installed yet
 
-**"Database file not found"**
-- **Solution**: Run `npm run db:reset --yes`
-- This creates your database
-
 **"JWT_SECRET is not defined"**
 - **Solution**: Run `cp .env.example .env`
 - This sets up your environment file
+
+**"Database file not found"**
+- **Solution**: Run `npm run db:reset --yes`
+- This creates your database
 
 **"Cannot find module '.prisma/client'"**
 - **Solution**: Run `npx prisma generate`
@@ -101,11 +105,11 @@ Here's everything in one place:
 # 1. Install dependencies (do this first!)
 npm install
 
-# 2. Setup database (do this second!)
-npm run db:reset --yes
-
-# 3. Configure environment
+# 2. Configure environment (do this second!)
 cp .env.example .env
+
+# 3. Setup database (do this third!)
+npm run db:reset --yes
 
 # 4. Start developing! 🚀
 npm run dev
@@ -127,8 +131,8 @@ npx prisma migrate dev --name "your-change-description"
 # Complete reset (removes all data)
 rm -rf node_modules prisma/db/prod.db .env
 npm install
-npm run db:reset --yes
 cp .env.example .env
+npm run db:reset --yes
 npm run dev  # You're back!
 ```
 

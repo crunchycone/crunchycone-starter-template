@@ -6,23 +6,24 @@
 1. [ ] **Dependencies installed?** Check: `ls node_modules`
    - ❌ If not found → **RUN FIRST**: `npm install`
    - ⚠️ **NOTHING WORKS WITHOUT THIS**
-2. [ ] **Database exists?** Check: `ls prisma/db/prod.db`
-   - ❌ If not found → **RUN SECOND**: `npm run db:reset --yes`
+2. [ ] **Environment configured?** Check: `ls .env`
+   - ❌ If not found → **RUN SECOND**: `cp .env.example .env`
+   - ⚠️ **DATABASE SETUP NEEDS THIS**
+3. [ ] **Database exists?** Check: `ls prisma/db/prod.db`
+   - ❌ If not found → **RUN THIRD**: `npm run db:reset --yes`
    - ⚠️ **APP WON'T START WITHOUT THIS**
-3. [ ] **Environment configured?** Check: `ls .env`
-   - ❌ If not found → **RUN THIRD**: `cp .env.example .env`
 4. [ ] **Getting TypeScript/Prisma errors?**
    - ❌ → **RUN**: `npx prisma generate`
 
 ### 🎯 QUICK START (First Time Setup - EXACT ORDER)
 ```bash
 1. npm install              # FIRST - Install dependencies (nothing works without this)
-2. npm run db:reset --yes   # SECOND - Create database (app won't start without this)
-3. cp .env.example .env     # THIRD - Setup environment
+2. cp .env.example .env     # SECOND - Setup environment (database needs this)
+3. npm run db:reset --yes   # THIRD - Create database (app won't start without this)
 4. npm run dev              # LAST - Start development server
 ```
 
-⚠️ **CRITICAL**: Must run commands in this EXACT order. Dependencies MUST be installed before database setup!
+⚠️ **CRITICAL**: Must run commands in this EXACT order. Environment MUST be configured before database setup!
 
 ### ⚠️ CRITICAL: Schema Change Workflow
 **If you modify `prisma/schema.prisma`:**

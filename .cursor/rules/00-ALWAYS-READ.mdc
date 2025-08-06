@@ -10,16 +10,16 @@
   - This installs all the packages your project needs
   - ✅ When done → Continue to step 2
 
-### 2️⃣ Setup Database (Second Step)
-- **Check**: Does `prisma/db/prod.db` exist?
-  - If not → Run: `npm run db:reset --yes`
-  - This creates your database with initial data
-  - ✅ When done → Continue to step 3
-
-### 3️⃣ Configure Environment
+### 2️⃣ Configure Environment (Second Step)
 - **Check**: Does `.env` file exist?
   - If not → Run: `cp .env.example .env`
   - This sets up your environment variables
+  - ✅ When done → Continue to step 3
+
+### 3️⃣ Setup Database (Third Step)
+- **Check**: Does `prisma/db/prod.db` exist?
+  - If not → Run: `npm run db:reset --yes`
+  - This creates your database with initial data
   - ✅ When done → Continue to step 4
 
 ### 4️⃣ Start Development Server
@@ -71,13 +71,19 @@ npx prisma generate
 npx prisma migrate dev --name "sync-database"
 ```
 
+### Issue: "JWT_SECRET is not defined"
+**Solution**: Environment file is missing
+```bash
+cp .env.example .env
+```
+
 ## ✨ Quick Start for New Projects
 
 Run these commands in order:
 ```bash
 npm install              # 1. Install dependencies
-npm run db:reset --yes   # 2. Setup database
-cp .env.example .env     # 3. Configure environment
+cp .env.example .env     # 2. Configure environment
+npm run db:reset --yes   # 3. Setup database
 npm run dev              # 4. Start coding! 🚀
 ```
 
@@ -89,8 +95,8 @@ If you need to start over:
 ```bash
 rm -rf node_modules prisma/db/prod.db .env
 npm install              
-npm run db:reset --yes   
 cp .env.example .env     
+npm run db:reset --yes   
 npm run dev              # Back up and running!
 ```
 
@@ -102,4 +108,4 @@ For detailed information, check the other rule files:
 - `03-IMPORTANT-server-actions.mdc` - Server actions patterns
 
 ---
-💡 **Remember**: The order matters! Dependencies → Database → Environment → Dev Server
+💡 **Remember**: The order matters! Dependencies → Environment → Database → Dev Server

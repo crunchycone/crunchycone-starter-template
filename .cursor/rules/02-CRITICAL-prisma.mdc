@@ -15,9 +15,11 @@ This guide helps you manage your database schema and migrations effectively.
 ### Before Working with the Database:
 1. **Dependencies installed?** Check for `node_modules` folder
    - If missing → Run: `npm install`
-2. **Database exists?** Check for `prisma/db/prod.db`
+2. **Environment configured?** Check for `.env` file
+   - If missing → Run: `cp .env.example .env`
+3. **Database exists?** Check for `prisma/db/prod.db`
    - If missing → Run: `npm run db:reset --yes`
-3. **Ready to code?** Start the dev server:
+4. **Ready to code?** Start the dev server:
    ```bash
    npm run dev
    ```

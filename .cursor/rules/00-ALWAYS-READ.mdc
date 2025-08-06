@@ -13,7 +13,14 @@
 ### 2️⃣ Configure Environment (Second Step)
 - **Check**: Does `.env` file exist?
   - If not → Run: `cp .env.example .env`
-  - This sets up your environment variables
+  - Then generate a secure JWT secret:
+    ```bash
+    # Try UUID first (if available)
+    uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+    # Update the .env file
+    sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
+    ```
+  - This sets up your environment variables with a secure JWT secret
   - ✅ When done → Continue to step 3
 
 ### 3️⃣ Setup Database (Third Step)
@@ -81,10 +88,20 @@ cp .env.example .env
 
 Run these commands in order:
 ```bash
-npm install              # 1. Install dependencies
-cp .env.example .env     # 2. Configure environment
-npm run db:reset --yes   # 3. Setup database
-npm run dev              # 4. Start coding! 🚀
+# 1. Install dependencies
+npm install
+
+# 2. Configure environment
+cp .env.example .env
+# Generate secure JWT secret
+uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
+
+# 3. Setup database
+npm run db:reset --yes
+
+# 4. Start coding! 🚀
+npm run dev
 ```
 
 Your app will be running at http://localhost:3000
@@ -95,7 +112,10 @@ If you need to start over:
 ```bash
 rm -rf node_modules prisma/db/prod.db .env
 npm install              
-cp .env.example .env     
+cp .env.example .env
+# Generate secure JWT secret
+uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
 npm run db:reset --yes   
 npm run dev              # Back up and running!
 ```

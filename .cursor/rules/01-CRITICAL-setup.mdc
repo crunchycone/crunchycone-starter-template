@@ -33,12 +33,15 @@ This guide will help you set up your development environment step by step.
 - **What to do**: Set up your environment configuration
 - **Run**: `cp .env.example .env`
 - **What this does**: Creates your local environment settings
-- **Then run**: 
+- **Then generate a secure JWT secret**:
   ```bash
-  node -e "const crypto = require('crypto'); const fs = require('fs'); const envFile = fs.readFileSync('.env', 'utf8'); const newEnv = envFile.replace('JWT_SECRET=\"your-secret-key-change-in-production\"', 'JWT_SECRET=\"' + crypto.randomBytes(32).toString('hex') + '\"'); fs.writeFileSync('.env', newEnv);"
+  # Try UUID first (if available), fallback to crypto
+  uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+  # Update the .env file
+  sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
   ```
-- **What this does**: Generates a secure secret key
-- **Success message**: "✅ Environment configured!"
+- **What this does**: Generates a secure secret key (UUID v4 if available, otherwise random hex)
+- **Success message**: "✅ Environment configured with secure JWT secret!"
 
 **Why this is important**:
 - Database setup needs environment variables
@@ -107,6 +110,9 @@ npm install
 
 # 2. Configure environment (do this second!)
 cp .env.example .env
+# Generate secure JWT secret
+uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
 
 # 3. Setup database (do this third!)
 npm run db:reset --yes
@@ -132,6 +138,9 @@ npx prisma migrate dev --name "your-change-description"
 rm -rf node_modules prisma/db/prod.db .env
 npm install
 cp .env.example .env
+# Generate secure JWT secret
+uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
 npm run db:reset --yes
 npm run dev  # You're back!
 ```

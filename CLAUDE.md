@@ -8,6 +8,7 @@
    - ⚠️ **NOTHING WORKS WITHOUT THIS**
 2. [ ] **Environment configured?** Check: `ls .env`
    - ❌ If not found → **RUN SECOND**: `cp .env.example .env`
+   - Then generate JWT secret: `uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"); sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env`
    - ⚠️ **DATABASE SETUP NEEDS THIS**
 3. [ ] **Database exists?** Check: `ls prisma/db/prod.db`
    - ❌ If not found → **RUN THIRD**: `npm run db:reset --yes`
@@ -17,10 +18,20 @@
 
 ### 🎯 QUICK START (First Time Setup - EXACT ORDER)
 ```bash
-1. npm install              # FIRST - Install dependencies (nothing works without this)
-2. cp .env.example .env     # SECOND - Setup environment (database needs this)
-3. npm run db:reset --yes   # THIRD - Create database (app won't start without this)
-4. npm run dev              # LAST - Start development server
+# 1. Install dependencies (nothing works without this)
+npm install
+
+# 2. Setup environment (database needs this)
+cp .env.example .env
+# Generate secure JWT secret
+uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
+
+# 3. Create database (app won't start without this)
+npm run db:reset --yes
+
+# 4. Start development server
+npm run dev
 ```
 
 ⚠️ **CRITICAL**: Must run commands in this EXACT order. Environment MUST be configured before database setup!

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:open": "npm run dev & sleep 3 && (command -v xdg-open > /dev/null && xdg-open http://localhost:3000 || command -v open > /dev/null && open http://localhost:3000 || command -v start > /dev/null && start http://localhost:3000)",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

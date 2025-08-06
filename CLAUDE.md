@@ -30,8 +30,8 @@ sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SE
 # 3. Create database (app won't start without this)
 npm run db:reset --yes
 
-# 4. Start development server
-npm run dev
+# 4. Start development server (opens browser automatically)
+npm run dev:open
 ```
 
 ⚠️ **CRITICAL**: Must run commands in this EXACT order. Environment MUST be configured before database setup!

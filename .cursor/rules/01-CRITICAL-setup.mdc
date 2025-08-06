@@ -69,10 +69,10 @@ This guide will help you set up your development environment step by step.
 
 Once all setup steps are complete:
 ```bash
-npm run dev
+npm run dev:open
 ```
 
-Your application will be available at:
+This will automatically open your browser at:
 - 🌐 **http://localhost:3000**
 
 You should see the welcome page, and you can:
@@ -117,11 +117,11 @@ sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SE
 # 3. Setup database (do this third!)
 npm run db:reset --yes
 
-# 4. Start developing! 🚀
-npm run dev
+# 4. Start developing! 🚀 (Opens browser automatically)
+npm run dev:open
 ```
 
-Visit **http://localhost:3000** and you're ready to go!
+The browser will open automatically at **http://localhost:3000** and you're ready to go!
 
 ## 💡 Helpful Tips
 
@@ -142,7 +142,7 @@ cp .env.example .env
 uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
 npm run db:reset --yes
-npm run dev  # You're back!
+npm run dev:open  # You're back with browser!
 ```
 
 ### Quick Database Reset
@@ -153,8 +153,8 @@ npm run db:reset --yes
 
 ## 🎯 Next Steps
 
-After running `npm run dev`:
-1. Visit http://localhost:3000
+After running `npm run dev:open` (browser opens automatically):
+1. Browser automatically opens to http://localhost:3000
 2. Set up your admin account (first time)
 3. Explore the admin dashboard
 4. Start building your features!

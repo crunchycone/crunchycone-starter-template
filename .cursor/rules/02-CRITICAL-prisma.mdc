@@ -21,8 +21,9 @@ This guide helps you manage your database schema and migrations effectively.
    - If missing → Run: `npm run db:reset --yes`
 4. **Ready to code?** Start the dev server:
    ```bash
-   npm run dev
+   npm run dev:open
    ```
+   This will automatically open your browser at http://localhost:3000
 
 ## 🔄 Schema Changes Made Simple
 
@@ -125,8 +126,8 @@ npm run db:reset
 # Just regenerate types (no schema changes)
 npx prisma generate
 
-# Start developing
-npm run dev
+# Start developing (opens browser automatically)
+npm run dev:open
 ```
 
 ## 💡 Pro Tips
@@ -177,13 +178,13 @@ npx prisma db push  # Dev only - syncs without migration
 # Complete database reset
 rm -f prisma/db/prod.db
 npm run db:reset --yes
-npm run dev  # Back to coding!
+npm run dev:open  # Back to coding with browser!
 ```
 
 ## ✅ You're Doing Great When...
 
 - No TypeScript errors about database types
-- `npm run dev` starts without issues
+- `npm run dev:open` starts without issues and opens browser
 - You can create, read, update, delete records
 - Prisma Studio shows your data correctly
 
@@ -191,9 +192,9 @@ npm run dev  # Back to coding!
 
 Once everything is working:
 ```bash
-npm run dev
+npm run dev:open
 ```
-Visit **http://localhost:3000** and start building!
+Browser will automatically open **http://localhost:3000** and start building!
 
 ---
 💡 **Key takeaway**: When you change the schema, use `migrate dev`. It handles everything for you!

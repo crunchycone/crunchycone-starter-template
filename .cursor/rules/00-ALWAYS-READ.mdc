@@ -30,8 +30,8 @@
   - ✅ When done → Continue to step 4
 
 ### 4️⃣ Start Development Server
-- **All set?** Run: `npm run dev`
-- Your app will be available at http://localhost:3000
+- **All set?** Run: `npm run dev:open`
+- This will start the server AND automatically open your browser at http://localhost:3000
 - 🎉 You're ready to code!
 
 ## 📚 Working with the Database
@@ -100,8 +100,8 @@ sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SE
 # 3. Setup database
 npm run db:reset --yes
 
-# 4. Start coding! 🚀
-npm run dev
+# 4. Start coding! 🚀 (Opens browser automatically)
+npm run dev:open
 ```
 
 Your app will be running at http://localhost:3000
@@ -117,7 +117,7 @@ cp .env.example .env
 uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
 npm run db:reset --yes   
-npm run dev              # Back up and running!
+npm run dev:open         # Back up and running with browser!
 ```
 
 ## 📖 Additional Resources

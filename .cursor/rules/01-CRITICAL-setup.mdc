@@ -31,16 +31,8 @@ This guide will help you set up your development environment step by step.
 ### Step 2: Configure Environment
 #### When `.env` file doesn't exist:
 - **What to do**: Set up your environment configuration
-- **Run**: `cp .env.example .env`
-- **What this does**: Creates your local environment settings
-- **Then generate a secure JWT secret**:
-  ```bash
-  # Try UUID first (if available), fallback to crypto
-  uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-  # Update the .env file
-  sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
-  ```
-- **What this does**: Generates a secure secret key (UUID v4 if available, otherwise random hex)
+- **Run**: `npm run setup-env`
+- **What this does**: Creates .env file and generates a secure JWT secret automatically
 - **Success message**: "✅ Environment configured with secure JWT secret!"
 
 **Why this is important**:
@@ -89,8 +81,8 @@ You should see the welcome page, and you can:
 - This means dependencies aren't installed yet
 
 **"JWT_SECRET is not defined"**
-- **Solution**: Run `cp .env.example .env`
-- This sets up your environment file
+- **Solution**: Run `npm run setup-env`
+- This sets up your environment file with secure JWT secret
 
 **"Database file not found"**
 - **Solution**: Run `npm run db:reset --yes`
@@ -109,10 +101,7 @@ Here's everything in one place:
 npm install
 
 # 2. Configure environment (do this second!)
-cp .env.example .env
-# Generate secure JWT secret
-uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
+npm run setup-env
 
 # 3. Setup database (do this third!)
 npm run db:reset --yes
@@ -137,10 +126,7 @@ npx prisma migrate dev --name "your-change-description"
 # Complete reset (removes all data)
 rm -rf node_modules prisma/db/prod.db .env
 npm install
-cp .env.example .env
-# Generate secure JWT secret
-uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
+npm run setup-env
 npm run db:reset --yes
 npm run dev:open  # You're back with browser!
 ```

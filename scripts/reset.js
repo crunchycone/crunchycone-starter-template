@@ -42,8 +42,61 @@ function hasYesFlag() {
   return process.argv.includes('--yes') || process.argv.includes('-y');
 }
 
+function hasJwtOnlyFlag() {
+  return process.argv.includes('--jwt-only') || process.argv.includes('--jwt');
+}
+
+async function generateJwtOnly() {
+  try {
+    log('\n🔐 JWT Secret Generation', '\x1b[1m\x1b[34m'); // Bold Blue
+    log('========================\n');
+    
+    const envPath = path.join(process.cwd(), '.env');
+    const envExamplePath = path.join(process.cwd(), '.env.example');
+    const crypto = require('crypto');
+    
+    // Step 1: Create .env if it doesn't exist
+    if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
+      fs.copyFileSync(envExamplePath, envPath);
+      logSuccess('Created .env file from .env.example');
+    } else if (!fs.existsSync(envPath)) {
+      logError('.env file not found and no .env.example to copy from');
+      process.exit(1);
+    }
+    
+    // Step 2: Generate JWT_SECRET
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const hasDefaultJwtSecret = envContent.includes('JWT_SECRET="your-secret-key-change-in-production"');
+    
+    if (hasDefaultJwtSecret || envContent.match(/JWT_SECRET=""/)) {
+      const jwtSecret = crypto.randomBytes(32).toString('hex');
+      const updatedEnvContent = envContent.replace(
+        /JWT_SECRET="[^"]*"/,
+        `JWT_SECRET="${jwtSecret}"`
+      );
+      fs.writeFileSync(envPath, updatedEnvContent);
+      logSuccess('Generated secure JWT_SECRET');
+    } else {
+      logInfo('JWT_SECRET already configured');
+    }
+    
+    log('\n✅ JWT generation completed!', '\x1b[1m\x1b[32m');
+    return true;
+    
+  } catch (error) {
+    logError(`JWT generation failed: ${error.message}`);
+    return false;
+  }
+}
+
 async function main() {
   try {
+    // Handle JWT-only mode
+    if (hasJwtOnlyFlag()) {
+      const success = await generateJwtOnly();
+      process.exit(success ? 0 : 1);
+    }
+    
     log('\n🔄 CrunchyCone Starter Template Reset', '\x1b[1m\x1b[34m'); // Bold Blue
     log('=====================================\n');
     

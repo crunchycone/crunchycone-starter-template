@@ -12,14 +12,7 @@
 
 ### 2️⃣ Configure Environment (Second Step)
 - **Check**: Does `.env` file exist?
-  - If not → Run: `cp .env.example .env`
-  - Then generate a secure JWT secret:
-    ```bash
-    # Try UUID first (if available)
-    uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-    # Update the .env file
-    sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
-    ```
+  - If not → Run: `npm run setup-env`
   - This sets up your environment variables with a secure JWT secret
   - ✅ When done → Continue to step 3
 
@@ -81,7 +74,7 @@ npx prisma migrate dev --name "sync-database"
 ### Issue: "JWT_SECRET is not defined"
 **Solution**: Environment file is missing
 ```bash
-cp .env.example .env
+npm run setup-env
 ```
 
 ## ✨ Quick Start for New Projects
@@ -92,10 +85,7 @@ Run these commands in order:
 npm install
 
 # 2. Configure environment
-cp .env.example .env
-# Generate secure JWT secret
-uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
+npm run setup-env
 
 # 3. Setup database
 npm run db:reset --yes
@@ -112,10 +102,7 @@ If you need to start over:
 ```bash
 rm -rf node_modules prisma/db/prod.db .env
 npm install              
-cp .env.example .env
-# Generate secure JWT secret
-uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
+npm run setup-env
 npm run db:reset --yes   
 npm run dev:open         # Back up and running with browser!
 ```

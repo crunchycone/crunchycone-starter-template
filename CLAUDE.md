@@ -7,8 +7,8 @@
    - ❌ If not found → **RUN FIRST**: `npm install`
    - ⚠️ **NOTHING WORKS WITHOUT THIS**
 2. [ ] **Environment configured?** Check: `ls .env`
-   - ❌ If not found → **RUN SECOND**: `cp .env.example .env`
-   - Then generate JWT secret: `uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"); sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env`
+   - ❌ If not found → **RUN SECOND**: `npm run setup-env`
+   - This creates .env and generates secure JWT secret automatically
    - ⚠️ **DATABASE SETUP NEEDS THIS**
 3. [ ] **Database exists?** Check: `ls prisma/db/prod.db`
    - ❌ If not found → **RUN THIRD**: `npm run db:reset --yes`
@@ -22,10 +22,7 @@
 npm install
 
 # 2. Setup environment (database needs this)
-cp .env.example .env
-# Generate secure JWT secret
-uuidgen > /dev/null 2>&1 && JWT_SECRET=$(uuidgen) || JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-sed -i 's/JWT_SECRET="your-secret-key-change-in-production"/JWT_SECRET="'$JWT_SECRET'"/' .env
+npm run setup-env
 
 # 3. Create database (app won't start without this)
 npm run db:reset --yes

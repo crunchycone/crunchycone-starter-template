@@ -1,5 +1,39 @@
 # CrunchyCone Starter Template - Project Guide
 
+## ⚠️ INITIAL SETUP CHECKLIST (RUN IN THIS EXACT ORDER!)
+
+### 🚨 BEFORE YOU START - CHECK THESE IN ORDER:
+1. [ ] **Dependencies installed?** Check: `ls node_modules`
+   - ❌ If not found → **RUN FIRST**: `npm install`
+   - ⚠️ **NOTHING WORKS WITHOUT THIS**
+2. [ ] **Database exists?** Check: `ls prisma/db/prod.db`
+   - ❌ If not found → **RUN SECOND**: `npm run db:reset --yes`
+   - ⚠️ **APP WON'T START WITHOUT THIS**
+3. [ ] **Environment configured?** Check: `ls .env`
+   - ❌ If not found → **RUN THIRD**: `cp .env.example .env`
+4. [ ] **Getting TypeScript/Prisma errors?**
+   - ❌ → **RUN**: `npx prisma generate`
+
+### 🎯 QUICK START (First Time Setup - EXACT ORDER)
+```bash
+1. npm install              # FIRST - Install dependencies (nothing works without this)
+2. npm run db:reset --yes   # SECOND - Create database (app won't start without this)
+3. cp .env.example .env     # THIRD - Setup environment
+4. npm run dev              # LAST - Start development server
+```
+
+⚠️ **CRITICAL**: Must run commands in this EXACT order. Dependencies MUST be installed before database setup!
+
+### ⚠️ CRITICAL: Schema Change Workflow
+**If you modify `prisma/schema.prisma`:**
+```bash
+# ALWAYS use migrate (includes generate automatically)
+npx prisma migrate dev --name "describe-your-changes"
+
+# NEVER run just generate after schema changes
+# ❌ npx prisma generate  # WRONG - creates type/database mismatch
+```
+
 ## Overview
 
 This is a production-ready Next.js starter template with authentication, admin dashboard, and role-based access control. The application uses TypeScript, Tailwind CSS, Prisma ORM with SQLite, and shadcn/ui components.

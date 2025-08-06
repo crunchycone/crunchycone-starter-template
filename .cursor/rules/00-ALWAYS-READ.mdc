@@ -1,0 +1,149 @@
+# ⚠️ CRITICAL RULES - ALWAYS CHECK THESE FIRST ⚠️
+
+## 🚨 STOP: BEFORE ANY TASK, CHECK THESE IN ORDER:
+
+### 1️⃣ DEPENDENCIES INSTALLED? (ABSOLUTE FIRST PRIORITY)
+- [ ] **Does `node_modules` folder exist?**
+  - ❌ If NO → **RUN IMMEDIATELY**: `npm install`
+  - ⚠️ **NOTHING WILL WORK WITHOUT THIS**
+  - ✅ If YES → Continue to step 2
+
+### 2️⃣ DATABASE SETUP (SECOND PRIORITY)
+- [ ] **Does `prisma/db/prod.db` exist?**
+  - ❌ If NO → **RUN IMMEDIATELY**: `npm run db:reset --yes`
+  - ⚠️ **APPLICATION WILL BE BROKEN WITHOUT THIS**
+  - ✅ If YES → Continue
+
+### 3️⃣ ENVIRONMENT CONFIGURED?
+- [ ] **Does `.env` file exist?**
+  - ❌ If NO → **RUN**: `cp .env.example .env`
+  - ✅ If YES → Continue
+
+### 4️⃣ SCHEMA CHANGES
+- [ ] **Did you modify `prisma/schema.prisma`?**
+  - ❌ If YES → **RUN IMMEDIATELY**: `npx prisma migrate dev --name "description"`
+  - ⚠️ **NEVER** run `prisma generate` alone after schema changes
+  - ⚠️ **ALWAYS** use migrate which runs generate automatically
+
+### 5️⃣ TYPE ERRORS
+- [ ] **Getting TypeScript errors about Prisma types?**
+  - ❌ Error: "Cannot find module '.prisma/client'" → **RUN**: `npx prisma generate`
+  - ❌ Error: "Property does not exist on type" → **RUN**: `npx prisma generate`
+
+## 🔴 CRITICAL WARNINGS
+
+### ⚠️ DEPENDENCIES MISSING = NOTHING WORKS
+**FAILURE TO RUN `npm install` FIRST WILL CAUSE:**
+- ❌ Cannot run ANY commands
+- ❌ Cannot start the application
+- ❌ Cannot run database setup
+- ❌ Cannot generate Prisma client
+- ❌ All scripts will fail
+
+### ⚠️ DATABASE MISSING = APPLICATION BROKEN
+**FAILURE TO RUN `npm run db:reset --yes` SECOND WILL CAUSE:**
+- ❌ Application crashes on startup
+- ❌ All API routes return 500 errors
+- ❌ Cannot sign in or sign up
+- ❌ Admin dashboard inaccessible
+- ❌ TypeScript compilation errors
+
+### ⚠️ SCHEMA CHANGES WITHOUT MIGRATION = DATA CORRUPTION
+**FAILURE TO RUN MIGRATIONS AFTER SCHEMA CHANGES WILL CAUSE:**
+- ❌ Database schema mismatch with Prisma Client
+- ❌ Runtime crashes when accessing new fields
+- ❌ Data integrity issues
+- ❌ TypeScript type mismatches
+
+## 📋 PRIORITY ORDER (ALWAYS FOLLOW THIS)
+
+### 🔴 PRIORITY 1: Dependencies (MUST DO FIRST)
+```bash
+npm install  # Without this, NOTHING else works
+```
+
+### 🔴 PRIORITY 2: Database (MUST DO SECOND)
+```bash
+npm run db:reset --yes  # Without this, app won't start
+```
+
+### 🟡 PRIORITY 3: Environment
+```bash
+cp .env.example .env  # Needed for JWT and configs
+```
+
+### 🟢 PRIORITY 4: Start Development
+```bash
+npm run dev  # Only after 1, 2, and 3 are done
+```
+
+## 🔍 AUTO-DETECT ERROR PATTERNS
+
+### Common Errors and Immediate Solutions:
+```
+Error: "command not found: prisma" or "Cannot find module"
+→ MISSING: Dependencies not installed
+→ RUN: npm install
+
+Error: "P1003: Database file not found"
+→ MISSING: Database not created
+→ RUN: npm run db:reset --yes
+
+Error: "Cannot find module '.prisma/client'"
+→ RUN: npx prisma generate
+
+Error: "Table 'main.User' doesn't exist"
+→ RUN: npm run db:reset --yes
+
+Error: "unknown field" or "unknown column"
+→ RUN: npx prisma migrate dev --name "fix-schema"
+
+Error: "JWT_SECRET is not defined"
+→ MISSING: .env file
+→ RUN: cp .env.example .env
+```
+
+## ✅ SUCCESS INDICATORS
+
+You know setup is correct when:
+- ✅ Folder exists: `node_modules` (FIRST CHECK)
+- ✅ File exists: `prisma/db/prod.db` (SECOND CHECK)
+- ✅ File exists: `.env`
+- ✅ No TypeScript errors in IDE
+- ✅ `npm run dev` starts without errors
+- ✅ Can navigate to `/auth/setup-admin` or `/auth/signin`
+
+## 🎯 QUICK REFERENCE - CORRECT ORDER
+
+**First time setup? RUN IN THIS EXACT ORDER:**
+```bash
+1. npm install              # FIRST - Install dependencies
+2. npm run db:reset --yes   # SECOND - Create database
+3. cp .env.example .env     # THIRD - Setup environment
+4. npm run dev              # LAST - Start development
+```
+
+**Changed schema.prisma?**
+```bash
+npx prisma migrate dev --name "your-change-description"
+```
+
+**Getting type errors?**
+```bash
+npx prisma generate
+```
+
+**Everything broken? NUCLEAR RESET IN ORDER:**
+```bash
+1. rm -rf node_modules prisma/db/prod.db .env
+2. npm install              # FIRST PRIORITY
+3. cp .env.example .env
+4. npm run db:reset --yes   # SECOND PRIORITY
+5. npm run dev
+```
+
+---
+⚠️ **GOLDEN RULE**: 
+1️⃣ FIRST: Dependencies (`npm install`)
+2️⃣ SECOND: Database (`npm run db:reset --yes`)
+Without these two, NOTHING else matters!

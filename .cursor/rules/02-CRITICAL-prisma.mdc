@@ -1,0 +1,191 @@
+---
+description: CRITICAL Prisma schema and migration rules - DATABASE INTEGRITY
+globs: ["prisma/schema.prisma", "prisma/**/*.ts", "**/*.ts", "**/*.tsx"]
+priority: 2
+---
+
+# 🔴 CRITICAL: PRISMA DATABASE RULES
+
+## ⚠️ THESE RULES PREVENT DATABASE CORRUPTION AND DATA LOSS ⚠️
+
+## 🚨 BEFORE ANY DATABASE WORK - CHECK THESE FIRST:
+
+### 1. ❌ DATABASE EXISTS?
+```bash
+# Check if database file exists
+ls prisma/db/prod.db
+# If not found, RUN IMMEDIATELY:
+npm run db:reset --yes
+```
+
+### 2. ❌ GETTING TYPE ERRORS?
+```bash
+# If TypeScript shows Prisma errors, RUN:
+npx prisma generate
+```
+
+## 🔴 CRITICAL: SCHEMA CHANGE WORKFLOW
+
+### ⚠️ When `prisma/schema.prisma` is modified:
+
+**❌ NEVER DO THIS:**
+```bash
+# DON'T run generate alone after schema changes
+npx prisma generate  # ❌ WRONG - Types update but database doesn't!
+```
+
+**✅ ALWAYS DO THIS:**
+```bash
+# Create migration FIRST (includes generate automatically)
+npx prisma migrate dev --name "describe-your-changes"  # ✅ CORRECT
+```
+
+### 🎯 DECISION TREE FOR SCHEMA CHANGES:
+
+```
+Did you modify schema.prisma?
+├─ YES → What type of change?
+│   ├─ STRUCTURAL (models/fields/relations)?
+│   │   └─ RUN: npx prisma migrate dev --name "description"
+│   └─ NON-STRUCTURAL (comments/formatting)?
+│       └─ RUN: npx prisma generate
+└─ NO → Continue working
+```
+
+## ⚠️ CRITICAL WARNINGS
+
+### 🚨 SCHEMA/DATABASE MISMATCH = RUNTIME CRASHES
+**FAILURE TO RUN MIGRATIONS AFTER SCHEMA CHANGES CAUSES:**
+- ❌ "Column doesn't exist" errors at runtime
+- ❌ "Table not found" crashes
+- ❌ Data writes fail silently
+- ❌ TypeScript shows fields that don't exist in database
+- ❌ Production deployment failures
+
+### 🚨 RUNNING GENERATE WITHOUT MIGRATE = BROKEN STATE
+**THIS CREATES A DANGEROUS MISMATCH:**
+- ❌ TypeScript thinks fields exist
+- ❌ Database doesn't have those fields
+- ❌ Runtime crashes when accessing new fields
+- ❌ Data corruption possible
+
+## 📋 MIGRATION NAMING CONVENTIONS
+
+Use descriptive names that explain the change:
+- ✅ `add-user-profile-table`
+- ✅ `update-user-add-email-verified`
+- ✅ `remove-deprecated-fields`
+- ✅ `add-indexes-for-performance`
+- ❌ `update` (too vague)
+- ❌ `fix` (not descriptive)
+- ❌ `changes` (meaningless)
+
+## 🔍 ERROR DETECTION & FIXES
+
+### Common Prisma Errors and Solutions:
+
+```
+Error: "unknown column 'User.newField'"
+→ CAUSE: Schema changed but migration not run
+→ FIX: npx prisma migrate dev --name "add-new-field"
+
+Error: "Table 'main.NewModel' doesn't exist"
+→ CAUSE: Model added but migration not created
+→ FIX: npx prisma migrate dev --name "add-new-model"
+
+Error: "Cannot find module '.prisma/client'"
+→ CAUSE: Prisma client not generated
+→ FIX: npx prisma generate
+
+Error: "Unique constraint failed"
+→ CAUSE: Duplicate data violating unique constraint
+→ FIX: Check your data/seed for duplicates
+
+Error: "Foreign key constraint failed"
+→ CAUSE: Referencing non-existent record
+→ FIX: Ensure referenced records exist first
+```
+
+## 🎯 QUICK COMMAND REFERENCE
+
+### Essential Commands:
+```bash
+# After changing schema.prisma (ALWAYS USE THIS)
+npx prisma migrate dev --name "your-change-description"
+
+# Reset database completely (DELETES ALL DATA)
+npm run db:reset
+
+# View database in browser
+npm run db:studio
+
+# Generate types only (ONLY for non-structural changes)
+npx prisma generate
+```
+
+## ⚠️ CRITICAL SCHEMA CONVENTIONS
+
+### ALWAYS Include in Every Model:
+```prisma
+model YourModel {
+  id         String    @id @default("")  // ULID auto-generated
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?  // For soft deletes
+  
+  // Your fields here
+}
+```
+
+### CRITICAL Import Rule:
+```typescript
+// ❌ NEVER import directly
+import { PrismaClient } from '@prisma/client'  // ❌ WRONG
+
+// ✅ ALWAYS import from lib
+import { prisma } from '@/lib/prisma'  // ✅ CORRECT - has ULID middleware
+```
+
+## 🆘 EMERGENCY RECOVERY
+
+### If Database is Corrupted:
+```bash
+# Nuclear reset - loses all data
+rm -f prisma/db/prod.db
+npm run db:reset --yes
+```
+
+### If Migrations are Broken:
+```bash
+# Reset migrations (dev only!)
+rm -rf prisma/migrations
+npx prisma migrate dev --name "initial"
+```
+
+### If Types Don't Match Database:
+```bash
+# Regenerate everything
+npx prisma generate
+npx prisma db push --force-reset  # Dev only!
+```
+
+## ✅ SUCCESS INDICATORS
+
+You're doing it right when:
+- ✅ No TypeScript errors about Prisma types
+- ✅ `npm run dev` starts without database errors
+- ✅ Can create/read/update/delete records
+- ✅ Prisma Studio shows your schema correctly
+
+## 📝 CHECKLIST FOR SCHEMA CHANGES
+
+Before committing schema changes:
+- [ ] Modified `schema.prisma`
+- [ ] Ran `npx prisma migrate dev --name "description"`
+- [ ] Migration file created in `prisma/migrations/`
+- [ ] Tested that migration works
+- [ ] Committed both schema AND migration files
+- [ ] No TypeScript errors
+
+---
+⚠️ **GOLDEN RULE**: When schema.prisma changes, ALWAYS migrate first, NEVER just generate!

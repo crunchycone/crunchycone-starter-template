@@ -1,0 +1,163 @@
+---
+description: CRITICAL Project setup automation rules - MUST RUN IN ORDER
+alwaysApply: true
+priority: 1
+---
+
+# 🔴 CRITICAL: PROJECT SETUP RULES
+
+## ⚠️ THIS FILE CONTAINS CRITICAL SETUP STEPS IN PRIORITY ORDER ⚠️
+
+## 🚨 PRIORITY ORDER - MUST FOLLOW THIS SEQUENCE:
+
+### 1️⃣ DEPENDENCIES (ABSOLUTE FIRST PRIORITY)
+
+#### When `node_modules` doesn't exist:
+**❌ NOTHING WILL WORK WITHOUT THIS - MUST DO FIRST**
+
+- Show message: "🚨 CRITICAL: Dependencies not installed. NOTHING will work without this!"
+- Show message: "Installing dependencies now..."
+- **RUN IMMEDIATELY**: `npm install`
+- Show message: "✅ Dependencies installed - proceeding to database setup"
+
+**FAILURE TO RUN THIS FIRST WILL CAUSE:**
+- ❌ Cannot run ANY npm scripts
+- ❌ Cannot setup database
+- ❌ Cannot generate Prisma client
+- ❌ Cannot start development server
+- ❌ All commands will fail with "command not found"
+
+#### Secondary Check - When `package-lock.json` doesn't exist but `node_modules` exists:
+- Show message: "📦 Package lock file missing. Regenerating lock file..."
+- **RUN**: `npm install`
+- Show message: "✅ Dependencies installed and lock file created"
+
+### 2️⃣ DATABASE SETUP (SECOND PRIORITY)
+
+#### When `prisma/db/prod.db` doesn't exist:
+**❌ APPLICATION WILL BE COMPLETELY BROKEN WITHOUT THIS**
+
+- Show message: "🚨 CRITICAL: Database file does not exist. Application WILL NOT WORK!"
+- Show message: "Setting up database with migrations and seed data..."
+- **RUN IMMEDIATELY**: `npm run db:reset --yes`
+- Show message: "✅ Database setup complete! Default roles (user, admin) have been created."
+
+**FAILURE TO RUN THIS SECOND WILL CAUSE:**
+- ❌ Cannot start the application
+- ❌ All pages return errors
+- ❌ Cannot sign in or sign up
+- ❌ TypeScript compilation fails
+- ❌ Prisma client errors
+
+### 3️⃣ ENVIRONMENT SETUP (THIRD PRIORITY)
+
+#### When `.env` file doesn't exist:
+- Show message: "🔐 Environment variables not configured. Creating .env file..."
+- **RUN**: `cp .env.example .env`
+- Show message: "🔐 Generating secure JWT_SECRET..."
+- **RUN**: `node -e "const crypto = require('crypto'); const fs = require('fs'); const envFile = fs.readFileSync('.env', 'utf8'); const newEnv = envFile.replace('JWT_SECRET=\"your-secret-key-change-in-production\"', 'JWT_SECRET=\"' + crypto.randomBytes(32).toString('hex') + '\"'); fs.writeFileSync('.env', newEnv);"`
+- Show message: "✅ Generated secure JWT_SECRET in .env file"
+
+### 4️⃣ PRISMA CLIENT GENERATION (FOURTH PRIORITY)
+
+#### When `node_modules/.prisma/client/index.js` doesn't exist:
+- Show message: "⚠️ Prisma client not generated. Generating now..."
+- **RUN**: `npx prisma generate`
+- Show message: "✅ Prisma client generated"
+
+## ✅ VERIFY COMPLETE SETUP
+
+### All of these MUST exist IN THIS ORDER for the app to work:
+1. ✅ `node_modules` - **FIRST: Dependencies installed**
+2. ✅ `prisma/db/prod.db` - **SECOND: Database exists**
+3. ✅ `.env` - **THIRD: Environment configured**
+4. ✅ `node_modules/.prisma/client/index.js` - **FOURTH: Prisma client ready**
+
+When all exist, show:
+```
+✅ ✅ ✅ PROJECT SETUP COMPLETE ✅ ✅ ✅
+You can now run 'npm run dev' to start the development server.
+```
+
+## 🔍 ERROR DETECTION PATTERNS
+
+### Detect and fix these errors IN ORDER:
+
+```
+Error: "command not found" or "Cannot find module" (any npm package)
+→ PRIORITY 1 ISSUE: Dependencies not installed
+→ FIX: npm install
+
+Error: "Database file not found" or "SQLITE_CANTOPEN"
+→ PRIORITY 2 ISSUE: Database doesn't exist
+→ FIX: npm run db:reset --yes
+
+Error: "JWT_SECRET is not defined"
+→ PRIORITY 3 ISSUE: Environment not configured
+→ FIX: cp .env.example .env && generate JWT secret
+
+Error: "Cannot find module '.prisma/client'"
+→ PRIORITY 4 ISSUE: Prisma client not generated
+→ FIX: npx prisma generate
+```
+
+## 📋 SETUP CHECKLIST (MUST RUN IN THIS EXACT ORDER)
+
+### The ONLY correct sequence:
+
+1. **Install Dependencies (FIRST - NOTHING works without this)**
+   ```bash
+   npm install
+   ```
+
+2. **Setup Database (SECOND - App won't start without this)**
+   ```bash
+   npm run db:reset --yes
+   ```
+
+3. **Setup Environment (THIRD)**
+   ```bash
+   cp .env.example .env
+   # Then generate JWT secret
+   ```
+
+4. **Start Development (LAST)**
+   ```bash
+   npm run dev
+   ```
+
+## ⚠️ COMMON MISTAKES TO AVOID
+
+1. **❌ DON'T** try to run database setup before installing dependencies
+   - **✅ DO** always run `npm install` FIRST
+
+2. **❌ DON'T** try to start the app without the database
+   - **✅ DO** always run `npm run db:reset --yes` SECOND
+
+3. **❌ DON'T** run commands out of order
+   - **✅ DO** follow the exact sequence: dependencies → database → environment → dev
+
+4. **❌ DON'T** run `prisma generate` alone after schema changes
+   - **✅ DO** run `prisma migrate dev` instead (it includes generate)
+
+5. **❌ DON'T** skip steps thinking they're optional
+   - **✅ DO** complete ALL steps in order
+
+## 🆘 EMERGENCY RECOVERY
+
+If everything is broken, run IN THIS EXACT ORDER:
+```bash
+# Nuclear option - complete reset IN ORDER
+1. rm -rf node_modules prisma/db/prod.db .env
+2. npm install              # FIRST PRIORITY
+3. npm run db:reset --yes   # SECOND PRIORITY  
+4. cp .env.example .env     # THIRD PRIORITY
+5. npm run dev              # LAST
+```
+
+---
+⚠️ **REMEMBER THE PRIORITY ORDER**:
+1️⃣ **FIRST**: Dependencies (`npm install`) - Without this, NOTHING works
+2️⃣ **SECOND**: Database (`npm run db:reset --yes`) - Without this, app won't start
+3️⃣ **THIRD**: Environment (`.env`) - For configuration
+4️⃣ **LAST**: Start dev server

@@ -1,163 +1,150 @@
 ---
-description: CRITICAL Project setup automation rules - MUST RUN IN ORDER
+description: Project setup automation guide - Getting started smoothly
 alwaysApply: true
 priority: 1
 ---
 
-# 🔴 CRITICAL: PROJECT SETUP RULES
+# 🚀 Project Setup Guide
 
-## ⚠️ THIS FILE CONTAINS CRITICAL SETUP STEPS IN PRIORITY ORDER ⚠️
+## Welcome! Let's get your project up and running.
 
-## 🚨 PRIORITY ORDER - MUST FOLLOW THIS SEQUENCE:
+This guide will help you set up your development environment step by step.
 
-### 1️⃣ DEPENDENCIES (ABSOLUTE FIRST PRIORITY)
+## 📦 Setup Steps (Please follow in order)
 
+### Step 1: Install Dependencies
 #### When `node_modules` doesn't exist:
-**❌ NOTHING WILL WORK WITHOUT THIS - MUST DO FIRST**
+- **What to do**: Let's install the project dependencies
+- **Run**: `npm install`
+- **What this does**: Downloads all the packages your project needs
+- **Success message**: "✅ Dependencies installed successfully!"
 
-- Show message: "🚨 CRITICAL: Dependencies not installed. NOTHING will work without this!"
-- Show message: "Installing dependencies now..."
-- **RUN IMMEDIATELY**: `npm install`
-- Show message: "✅ Dependencies installed - proceeding to database setup"
+**Why this is important**:
+- Provides all the tools and libraries your app needs
+- Required before any other setup steps can work
 
-**FAILURE TO RUN THIS FIRST WILL CAUSE:**
-- ❌ Cannot run ANY npm scripts
-- ❌ Cannot setup database
-- ❌ Cannot generate Prisma client
-- ❌ Cannot start development server
-- ❌ All commands will fail with "command not found"
+#### Additional check - When `package-lock.json` doesn't exist but `node_modules` exists:
+- **What to do**: Regenerate the lock file for consistency
+- **Run**: `npm install`
+- **Success message**: "✅ Lock file created"
 
-#### Secondary Check - When `package-lock.json` doesn't exist but `node_modules` exists:
-- Show message: "📦 Package lock file missing. Regenerating lock file..."
-- **RUN**: `npm install`
-- Show message: "✅ Dependencies installed and lock file created"
-
-### 2️⃣ DATABASE SETUP (SECOND PRIORITY)
-
+### Step 2: Setup Database
 #### When `prisma/db/prod.db` doesn't exist:
-**❌ APPLICATION WILL BE COMPLETELY BROKEN WITHOUT THIS**
+- **What to do**: Let's create your database
+- **Run**: `npm run db:reset --yes`
+- **What this does**: Creates a fresh database with initial data
+- **Success message**: "✅ Database ready! Default roles created."
 
-- Show message: "🚨 CRITICAL: Database file does not exist. Application WILL NOT WORK!"
-- Show message: "Setting up database with migrations and seed data..."
-- **RUN IMMEDIATELY**: `npm run db:reset --yes`
-- Show message: "✅ Database setup complete! Default roles (user, admin) have been created."
+**Why this is important**:
+- Your app needs a database to store information
+- Includes default user and admin roles
 
-**FAILURE TO RUN THIS SECOND WILL CAUSE:**
-- ❌ Cannot start the application
-- ❌ All pages return errors
-- ❌ Cannot sign in or sign up
-- ❌ TypeScript compilation fails
-- ❌ Prisma client errors
-
-### 3️⃣ ENVIRONMENT SETUP (THIRD PRIORITY)
-
+### Step 3: Configure Environment
 #### When `.env` file doesn't exist:
-- Show message: "🔐 Environment variables not configured. Creating .env file..."
-- **RUN**: `cp .env.example .env`
-- Show message: "🔐 Generating secure JWT_SECRET..."
-- **RUN**: `node -e "const crypto = require('crypto'); const fs = require('fs'); const envFile = fs.readFileSync('.env', 'utf8'); const newEnv = envFile.replace('JWT_SECRET=\"your-secret-key-change-in-production\"', 'JWT_SECRET=\"' + crypto.randomBytes(32).toString('hex') + '\"'); fs.writeFileSync('.env', newEnv);"`
-- Show message: "✅ Generated secure JWT_SECRET in .env file"
+- **What to do**: Set up your environment configuration
+- **Run**: `cp .env.example .env`
+- **What this does**: Creates your local environment settings
+- **Then run**: 
+  ```bash
+  node -e "const crypto = require('crypto'); const fs = require('fs'); const envFile = fs.readFileSync('.env', 'utf8'); const newEnv = envFile.replace('JWT_SECRET=\"your-secret-key-change-in-production\"', 'JWT_SECRET=\"' + crypto.randomBytes(32).toString('hex') + '\"'); fs.writeFileSync('.env', newEnv);"
+  ```
+- **What this does**: Generates a secure secret key
+- **Success message**: "✅ Environment configured!"
 
-### 4️⃣ PRISMA CLIENT GENERATION (FOURTH PRIORITY)
-
+### Step 4: Generate Prisma Client
 #### When `node_modules/.prisma/client/index.js` doesn't exist:
-- Show message: "⚠️ Prisma client not generated. Generating now..."
-- **RUN**: `npx prisma generate`
-- Show message: "✅ Prisma client generated"
+- **What to do**: Generate the database client
+- **Run**: `npx prisma generate`
+- **What this does**: Creates TypeScript types for your database
+- **Success message**: "✅ Prisma client ready!"
 
-## ✅ VERIFY COMPLETE SETUP
+## 🎉 All Done! Time to Start Developing
 
-### All of these MUST exist IN THIS ORDER for the app to work:
-1. ✅ `node_modules` - **FIRST: Dependencies installed**
-2. ✅ `prisma/db/prod.db` - **SECOND: Database exists**
-3. ✅ `.env` - **THIRD: Environment configured**
-4. ✅ `node_modules/.prisma/client/index.js` - **FOURTH: Prisma client ready**
-
-When all exist, show:
-```
-✅ ✅ ✅ PROJECT SETUP COMPLETE ✅ ✅ ✅
-You can now run 'npm run dev' to start the development server.
-```
-
-## 🔍 ERROR DETECTION PATTERNS
-
-### Detect and fix these errors IN ORDER:
-
-```
-Error: "command not found" or "Cannot find module" (any npm package)
-→ PRIORITY 1 ISSUE: Dependencies not installed
-→ FIX: npm install
-
-Error: "Database file not found" or "SQLITE_CANTOPEN"
-→ PRIORITY 2 ISSUE: Database doesn't exist
-→ FIX: npm run db:reset --yes
-
-Error: "JWT_SECRET is not defined"
-→ PRIORITY 3 ISSUE: Environment not configured
-→ FIX: cp .env.example .env && generate JWT secret
-
-Error: "Cannot find module '.prisma/client'"
-→ PRIORITY 4 ISSUE: Prisma client not generated
-→ FIX: npx prisma generate
-```
-
-## 📋 SETUP CHECKLIST (MUST RUN IN THIS EXACT ORDER)
-
-### The ONLY correct sequence:
-
-1. **Install Dependencies (FIRST - NOTHING works without this)**
-   ```bash
-   npm install
-   ```
-
-2. **Setup Database (SECOND - App won't start without this)**
-   ```bash
-   npm run db:reset --yes
-   ```
-
-3. **Setup Environment (THIRD)**
-   ```bash
-   cp .env.example .env
-   # Then generate JWT secret
-   ```
-
-4. **Start Development (LAST)**
-   ```bash
-   npm run dev
-   ```
-
-## ⚠️ COMMON MISTAKES TO AVOID
-
-1. **❌ DON'T** try to run database setup before installing dependencies
-   - **✅ DO** always run `npm install` FIRST
-
-2. **❌ DON'T** try to start the app without the database
-   - **✅ DO** always run `npm run db:reset --yes` SECOND
-
-3. **❌ DON'T** run commands out of order
-   - **✅ DO** follow the exact sequence: dependencies → database → environment → dev
-
-4. **❌ DON'T** run `prisma generate` alone after schema changes
-   - **✅ DO** run `prisma migrate dev` instead (it includes generate)
-
-5. **❌ DON'T** skip steps thinking they're optional
-   - **✅ DO** complete ALL steps in order
-
-## 🆘 EMERGENCY RECOVERY
-
-If everything is broken, run IN THIS EXACT ORDER:
+Once all setup steps are complete:
 ```bash
-# Nuclear option - complete reset IN ORDER
-1. rm -rf node_modules prisma/db/prod.db .env
-2. npm install              # FIRST PRIORITY
-3. npm run db:reset --yes   # SECOND PRIORITY  
-4. cp .env.example .env     # THIRD PRIORITY
-5. npm run dev              # LAST
+npm run dev
 ```
+
+Your application will be available at:
+- 🌐 **http://localhost:3000**
+
+You should see the welcome page, and you can:
+- Set up your admin account (first time only)
+- Sign in and explore the features
+- Start building your application!
+
+## 🔍 Troubleshooting Guide
+
+### If You See These Errors:
+
+**"command not found" or "Cannot find module"**
+- **Solution**: Run `npm install` first
+- This means dependencies aren't installed yet
+
+**"Database file not found"**
+- **Solution**: Run `npm run db:reset --yes`
+- This creates your database
+
+**"JWT_SECRET is not defined"**
+- **Solution**: Run `cp .env.example .env`
+- This sets up your environment file
+
+**"Cannot find module '.prisma/client'"**
+- **Solution**: Run `npx prisma generate`
+- This generates the Prisma client
+
+## 📋 Complete Setup Checklist
+
+Here's everything in one place:
+
+```bash
+# 1. Install dependencies (do this first!)
+npm install
+
+# 2. Setup database (do this second!)
+npm run db:reset --yes
+
+# 3. Configure environment
+cp .env.example .env
+
+# 4. Start developing! 🚀
+npm run dev
+```
+
+Visit **http://localhost:3000** and you're ready to go!
+
+## 💡 Helpful Tips
+
+### Working with Schema Changes
+When you modify `prisma/schema.prisma`:
+```bash
+# Use migrate to update database AND generate types
+npx prisma migrate dev --name "your-change-description"
+```
+
+### Need a Fresh Start?
+```bash
+# Complete reset (removes all data)
+rm -rf node_modules prisma/db/prod.db .env
+npm install
+npm run db:reset --yes
+cp .env.example .env
+npm run dev  # You're back!
+```
+
+### Quick Database Reset
+```bash
+# Reset database only (keeps dependencies)
+npm run db:reset --yes
+```
+
+## 🎯 Next Steps
+
+After running `npm run dev`:
+1. Visit http://localhost:3000
+2. Set up your admin account (first time)
+3. Explore the admin dashboard
+4. Start building your features!
 
 ---
-⚠️ **REMEMBER THE PRIORITY ORDER**:
-1️⃣ **FIRST**: Dependencies (`npm install`) - Without this, NOTHING works
-2️⃣ **SECOND**: Database (`npm run db:reset --yes`) - Without this, app won't start
-3️⃣ **THIRD**: Environment (`.env`) - For configuration
-4️⃣ **LAST**: Start dev server
+📌 **Pro tip**: Keep `npm run dev` running while you work - it auto-refreshes when you make changes!

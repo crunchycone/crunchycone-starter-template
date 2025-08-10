@@ -7,20 +7,17 @@ const protectedRoles = ["user", "admin"];
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
     const session = await getSession();
     if (!session || !(await isAdmin(session.userId))) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const roleId = params.id;
-    
+    const { id: roleId } = await params;
+
     // Find the role
     const role = await prisma.role.findUnique({
       where: {
@@ -28,22 +25,16 @@ export async function DELETE(
         deleted_at: null,
       },
     });
-    
+
     if (!role) {
-      return NextResponse.json(
-        { error: "Role not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Role not found" }, { status: 404 });
     }
-    
+
     // Prevent deletion of protected roles
     if (protectedRoles.includes(role.name)) {
-      return NextResponse.json(
-        { error: `Cannot delete the "${role.name}" role` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: `Cannot delete the "${role.name}" role` }, { status: 400 });
     }
-    
+
     // Check if role has any users
     const userCount = await prisma.userRole.count({
       where: {
@@ -54,29 +45,26 @@ export async function DELETE(
         },
       },
     });
-    
+
     if (userCount > 0) {
       return NextResponse.json(
         { error: "Cannot delete role with assigned users" },
         { status: 400 }
       );
     }
-    
+
     // Soft delete the role
     await prisma.role.update({
       where: { id: roleId },
       data: { deleted_at: new Date() },
     });
-    
+
     return NextResponse.json({
       success: true,
       message: "Role deleted successfully",
     });
-  } catch (error) {
-    console.error("Delete role error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete role" },
-      { status: 500 }
-    );
+  } catch {
+    console.error("Delete role error:");
+    return NextResponse.json({ error: "Failed to delete role" }, { status: 500 });
   }
 }

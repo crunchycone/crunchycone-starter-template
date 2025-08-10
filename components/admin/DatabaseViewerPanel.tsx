@@ -11,19 +11,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Database, 
-  Table as TableIcon, 
-  ChevronLeft, 
+import {
+  Database,
+  Table as TableIcon,
+  ChevronLeft,
   ChevronRight,
   AlertCircle,
   Loader2,
   ArrowUp,
   ArrowDown,
-  ArrowUpDown
+  ArrowUpDown,
 } from "lucide-react";
 import { getDatabaseTables, getTableData } from "@/app/actions/admin";
 import type { DatabaseTable, TableData } from "@/app/actions/admin";
@@ -72,7 +71,7 @@ export function DatabaseViewerPanel() {
   };
 
   const loadTableData = async (
-    tableName: string, 
+    tableName: string,
     page: number = 1,
     sortCol: string | null,
     sortDir: "asc" | "desc"
@@ -80,13 +79,7 @@ export function DatabaseViewerPanel() {
     try {
       setTableLoading(true);
       setError(null);
-      const data = await getTableData(
-        tableName, 
-        page, 
-        itemsPerPage,
-        sortCol || undefined,
-        sortDir
-      );
+      const data = await getTableData(tableName, page, itemsPerPage, sortCol || undefined, sortDir);
       setTableData(data);
     } catch (err) {
       setError(`Failed to load data from table: ${tableName}`);
@@ -118,7 +111,11 @@ export function DatabaseViewerPanel() {
   };
 
   const handleNextPage = () => {
-    if (tableData && currentPage < Math.ceil(tableData.totalCount / itemsPerPage) && selectedTable) {
+    if (
+      tableData &&
+      currentPage < Math.ceil(tableData.totalCount / itemsPerPage) &&
+      selectedTable
+    ) {
       const params = new URLSearchParams();
       params.set("table", selectedTable);
       params.set("page", String(currentPage + 1));
@@ -132,11 +129,11 @@ export function DatabaseViewerPanel() {
 
   const handleSort = (column: string) => {
     if (!selectedTable) return;
-    
+
     const params = new URLSearchParams();
     params.set("table", selectedTable);
     params.set("page", "1"); // Reset to page 1 when sorting changes
-    
+
     if (sortColumn === column) {
       // Same column clicked
       if (sortDirection === "asc") {
@@ -151,7 +148,7 @@ export function DatabaseViewerPanel() {
       params.set("sortBy", column);
       params.set("sortDir", "asc");
     }
-    
+
     router.push(`/admin/database?${params.toString()}`);
   };
 
@@ -159,12 +156,14 @@ export function DatabaseViewerPanel() {
     if (sortColumn !== column) {
       return <ArrowUpDown className="h-3 w-3 opacity-50" />;
     }
-    return sortDirection === "asc" 
-      ? <ArrowUp className="h-3 w-3" />
-      : <ArrowDown className="h-3 w-3" />;
+    return sortDirection === "asc" ? (
+      <ArrowUp className="h-3 w-3" />
+    ) : (
+      <ArrowDown className="h-3 w-3" />
+    );
   };
 
-  const formatCellValue = (value: any): string => {
+  const formatCellValue = (value: unknown): string => {
     if (value === null) return "NULL";
     if (value === undefined) return "";
     if (typeof value === "object") return JSON.stringify(value);
@@ -241,18 +240,12 @@ export function DatabaseViewerPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToTables}
-          >
+          <Button variant="ghost" size="sm" onClick={handleBackToTables}>
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to Tables
           </Button>
           <h3 className="text-lg font-semibold">{selectedTable}</h3>
-          {tableData && (
-            <Badge variant="secondary">{tableData.totalCount} total rows</Badge>
-          )}
+          {tableData && <Badge variant="secondary">{tableData.totalCount} total rows</Badge>}
         </div>
       </div>
 
@@ -290,9 +283,7 @@ export function DatabaseViewerPanel() {
                     <TableRow key={index}>
                       {tableData.columns.map((column) => (
                         <TableCell key={column} className="max-w-xs truncate">
-                          <span className="font-mono text-sm">
-                            {formatCellValue(row[column])}
-                          </span>
+                          <span className="font-mono text-sm">{formatCellValue(row[column])}</span>
                         </TableCell>
                       ))}
                     </TableRow>
@@ -315,7 +306,7 @@ export function DatabaseViewerPanel() {
           {tableData.totalCount > itemsPerPage && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
+                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
                 {Math.min(currentPage * itemsPerPage, tableData.totalCount)} of{" "}
                 {tableData.totalCount} rows
               </p>

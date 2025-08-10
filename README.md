@@ -79,18 +79,21 @@ A production-ready Next.js starter template with authentication, admin dashboard
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/crunchycone-starter-template.git
 cd crunchycone-starter-template
 ```
 
 2. Reset the project to initial state:
+
 ```bash
 npm install
 npm run reset
 ```
 
 3. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -102,6 +105,7 @@ npm run dev
 If you're using [Cursor IDE](https://cursor.sh/), you can set up this project with a single command:
 
 1. **Clone and Open in Cursor**:
+
 ```bash
 git clone https://github.com/yourusername/crunchycone-starter-template.git
 cd crunchycone-starter-template
@@ -109,11 +113,13 @@ cursor .
 ```
 
 2. **Auto-Setup with AI**: In Cursor, simply ask Claude:
+
 ```
 "setup this project"
 ```
 
 Claude will automatically:
+
 - ✅ Install all dependencies (`npm install`)
 - ✅ Reset the database to fresh state (`npm run reset`)
 - ✅ Generate a secure JWT_SECRET automatically
@@ -121,6 +127,7 @@ Claude will automatically:
 - ✅ Open [http://localhost:3000](http://localhost:3000) for you
 
 3. **Create Admin Account**: Visit the opened localhost URL and:
+
 - You'll be redirected to `/auth/setup-admin`
 - Enter your email and password for the admin account
 - Start using the application immediately
@@ -130,6 +137,7 @@ Claude will automatically:
 ### First-Time Setup
 
 When you first run the application:
+
 1. You'll be redirected to `/auth/setup-admin`
 2. Create the first admin account
 3. This account will have full admin privileges
@@ -160,6 +168,7 @@ crunchycone-starter-template/
 ## Supported User Flows
 
 ### 🚀 First-Time Setup Flow
+
 1. **Fresh Installation** → Visit any page
 2. **No Admin Detection** → Automatic redirect to `/auth/setup-admin`
 3. **Admin Account Creation** → Create first administrator account
@@ -169,6 +178,7 @@ crunchycone-starter-template/
 ### 👤 User Registration & Authentication Flows
 
 #### Standard Sign-Up Flow
+
 1. **Visit Sign-Up** → `/auth/signup`
 2. **Enter Details** → Email, password, optional profile information
 3. **Email Verification** → Receive verification email (console logged in dev)
@@ -176,6 +186,7 @@ crunchycone-starter-template/
 5. **Account Activated** → Can now sign in
 
 #### Email/Password Sign-In Flow
+
 1. **Visit Sign-In** → `/auth/signin`
 2. **Enter Credentials** → Email and password
 3. **Authentication** → Server verifies credentials
@@ -183,6 +194,7 @@ crunchycone-starter-template/
 5. **Redirect to Dashboard** → Home page or intended destination
 
 #### Magic Link Sign-In Flow
+
 1. **Visit Sign-In** → `/auth/signin` → Magic Link tab
 2. **Enter Email** → Request magic link
 3. **Email Sent** → Receive magic link email (console logged in dev)
@@ -190,6 +202,7 @@ crunchycone-starter-template/
 5. **Authenticated** → Redirected to home with success message
 
 #### Password Reset Flow
+
 1. **Forgot Password** → Click "Forgot your password?" on sign-in page
 2. **Request Reset** → `/auth/forgot-password` → Enter email
 3. **Email Sent** → Receive reset link (console logged in dev)
@@ -200,6 +213,7 @@ crunchycone-starter-template/
 ### 🛡️ Admin Management Flows
 
 #### User Management
+
 1. **Access Admin Panel** → `/admin/users` (admin only)
 2. **Search Users** → Real-time search by email
 3. **View User Details** → Profile information and roles
@@ -208,6 +222,7 @@ crunchycone-starter-template/
 6. **Protection** → Cannot remove own admin role
 
 #### Role Management
+
 1. **Access Role Panel** → `/admin/roles` (admin only)
 2. **View All Roles** → System and custom roles listed
 3. **Create Custom Role** → Add new roles beyond user/admin
@@ -217,6 +232,7 @@ crunchycone-starter-template/
 ### 🎨 Theme & Personalization Flows
 
 #### Theme Switching
+
 1. **Theme Toggle** → Available on all pages (top-right)
 2. **Options Available** → Light, Dark, System
 3. **Persistence** → Theme choice saved across sessions
@@ -225,6 +241,7 @@ crunchycone-starter-template/
 ### 🔧 Developer & Admin Workflows
 
 #### Project Reset Flow
+
 1. **Reset Command** → `npm run reset` or `npm run reset --yes`
 2. **Confirmation** → Interactive prompt (unless --yes flag)
 3. **Database Reset** → Removes existing database
@@ -233,6 +250,7 @@ crunchycone-starter-template/
 6. **Ready State** → Returns to first-time setup state
 
 #### Database Management
+
 1. **Migrations** → `npx prisma migrate dev --name "description"`
 2. **Client Generation** → Automatic after migrations
 3. **Seeding** → `npm run db:seed` for default data
@@ -241,18 +259,21 @@ crunchycone-starter-template/
 ### 📧 Email Verification Flows
 
 #### Email Verification
+
 - **Purpose** → Verify user email addresses
 - **Trigger** → Automatic after sign-up
 - **Expiry** → 24 hours
 - **Action** → Click link to verify email
 
 #### Password Reset
+
 - **Purpose** → Reset forgotten passwords
 - **Trigger** → User request via forgot password form
 - **Expiry** → 1 hour
 - **Action** → Click link to set new password
 
 #### Magic Link
+
 - **Purpose** → Passwordless authentication
 - **Trigger** → User request via sign-in form
 - **Expiry** → 24 hours
@@ -261,11 +282,13 @@ crunchycone-starter-template/
 ### 🔒 Security & Protection Flows
 
 #### Admin Protection
+
 - **Self-Demotion Prevention** → Admin cannot remove own admin role
 - **Last Admin Protection** → Cannot delete the last admin user
 - **System Role Protection** → Cannot delete user/admin roles
 
 #### Session Management
+
 - **HTTP-Only Cookies** → Secure token storage
 - **Automatic Expiry** → Sessions expire after 7 days
 - **Logout Functionality** → Manual session termination
@@ -276,6 +299,7 @@ crunchycone-starter-template/
 ### Authentication Architecture
 
 The authentication system uses a multi-layered approach:
+
 - **Password Hashing**: bcrypt with salt rounds for secure storage
 - **JWT Tokens**: Stateless authentication with different token types
 - **Session Management**: HTTP-only cookies for CSRF protection
@@ -291,6 +315,7 @@ The authentication system uses a multi-layered approach:
 ### Database Design Patterns
 
 All models follow consistent patterns:
+
 - **Standard Fields**: `id`, `created_at`, `updated_at`, `deleted_at`
 - **Soft Deletes**: Records marked as deleted, never physically removed
 - **Relationships**: Proper foreign keys and indexes
@@ -331,6 +356,7 @@ npm run distribute
 ```
 
 The `npm run distribute` command creates a clean distribution package that:
+
 - ✅ Excludes `.git`, `node_modules`, `.next`, and build artifacts
 - ✅ Excludes environment files (keeps `.env.example`)
 - ✅ Excludes database files (for fresh setup)
@@ -339,12 +365,14 @@ The `npm run distribute` command creates a clean distribution package that:
 - ✅ Includes distribution documentation
 
 **Usage:**
+
 1. Run `npm run distribute` in your project
 2. Navigate to the created distribution folder
 3. Zip the folder: `zip -r distribution-name.zip project-folder/`
 4. Share the zip file with others
 
 **Recipients can then:**
+
 1. Extract the zip file
 2. Run `./setup.sh` (or follow manual setup in DISTRIBUTION.md)
 3. Start developing immediately
@@ -352,6 +380,7 @@ The `npm run distribute` command creates a clean distribution package that:
 ### Project Reset
 
 The `npm run reset` command resets the project to its initial state:
+
 - Removes existing database
 - Creates fresh database with schema and seed data
 - Copies .env.example to .env (if needed)
@@ -360,12 +389,14 @@ The `npm run reset` command resets the project to its initial state:
 - Prompts for confirmation before proceeding (unless `--yes` flag is used)
 
 **Options:**
+
 - `npm run reset` - Interactive mode with confirmation prompt
 - `npm run reset --yes` (or `-y`) - Skip confirmation and reset immediately
 - `npm run reset --new-secret` - Also generates a new JWT_SECRET
 - `npm run reset --yes --new-secret` - Skip confirmation and generate new JWT_SECRET
 
 This is useful for:
+
 - Setting up the project for new developers
 - Starting fresh during development
 - Demonstrating the first-time setup flow
@@ -436,6 +467,7 @@ EMAIL_PROVIDER="console"  # or sendgrid, resend, aws-ses, smtp
 ### Database
 
 For production, consider migrating from SQLite to:
+
 - PostgreSQL (recommended)
 - MySQL
 - SQL Server
@@ -458,6 +490,7 @@ npm run build
 ## Documentation
 
 Detailed guides are available in the `docs/` folder:
+
 - [Email Providers Guide](./docs/email-providers.md)
 - [Authentication Providers Guide](./docs/auth-providers.md)
 - [Theme Customization Guide](./docs/theme-customization.md)
@@ -478,6 +511,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## Support
 
 For issues, questions, or contributions:
+
 - Open an issue on GitHub
 - Check existing documentation
 - Review closed issues for solutions

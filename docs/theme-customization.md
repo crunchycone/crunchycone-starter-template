@@ -5,6 +5,7 @@ This guide explains how to create and customize themes in the CrunchyCone starte
 ## Overview
 
 The application uses:
+
 - **next-themes** for theme management
 - **Tailwind CSS** with CSS variables for theming
 - **shadcn/ui** components that adapt to themes
@@ -52,6 +53,7 @@ The theme system uses CSS variables defined in `app/globals.css`:
 ### Color Format
 
 Colors use HSL format: `hue saturation% lightness%`
+
 - Example: `222.2 84% 4.9%` = hsl(222.2, 84%, 4.9%)
 
 ## Creating a New Theme
@@ -332,7 +334,7 @@ export function ThemeEditor() {
             <TabsTrigger value="secondary">Secondary</TabsTrigger>
             <TabsTrigger value="accent">Accent</TabsTrigger>
           </TabsList>
-          
+
           {Object.entries(colors).map(([colorName, colorValue]) => (
             <TabsContent key={colorName} value={colorName} className="space-y-4">
               <div
@@ -341,7 +343,7 @@ export function ThemeEditor() {
                   backgroundColor: `hsl(${colorValue.h}, ${colorValue.s}%, ${colorValue.l}%)`,
                 }}
               />
-              
+
               <div className="space-y-2">
                 <div>
                   <Label>Hue: {colorValue.h}°</Label>
@@ -352,7 +354,7 @@ export function ThemeEditor() {
                     step={1}
                   />
                 </div>
-                
+
                 <div>
                   <Label>Saturation: {colorValue.s}%</Label>
                   <Slider
@@ -362,7 +364,7 @@ export function ThemeEditor() {
                     step={1}
                   />
                 </div>
-                
+
                 <div>
                   <Label>Lightness: {colorValue.l}%</Label>
                   <Slider
@@ -384,7 +386,7 @@ export function ThemeEditor() {
           </pre>
         </div>
 
-        <Button 
+        <Button
           onClick={() => navigator.clipboard.writeText(generateCSS())}
           className="w-full"
         >
@@ -429,14 +431,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const body = await request.json();
-  
+
   const theme = await prisma.customTheme.create({
     data: {
       user_id: session.userId,
@@ -458,14 +457,14 @@ model CustomTheme {
   id         Int       @id @default(autoincrement())
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
-  
+
   user_id    Int
   name       String
   config     Json      // Store theme configuration
   is_public  Boolean   @default(false)
-  
+
   user       User      @relation(fields: [user_id], references: [id])
-  
+
   @@index([user_id])
   @@index([is_public])
 }
@@ -488,7 +487,7 @@ model UserPreferences {
   id         Int       @id @default(autoincrement())
   user_id    Int       @unique
   theme      String    @default("system")
-  
+
   user       User      @relation(fields: [user_id], references: [id])
 }
 ```
@@ -500,7 +499,7 @@ Create a live preview component:
 ```typescript
 export function ThemePreview({ theme }: { theme: ThemeConfig }) {
   return (
-    <div 
+    <div
       className="p-4 rounded-lg border"
       style={{
         '--background': theme.colors.light.background,
@@ -543,7 +542,7 @@ export async function getPublicThemes() {
       },
     },
     orderBy: {
-      created_at: 'desc',
+      created_at: "desc",
     },
   });
 
@@ -558,11 +557,13 @@ export async function getPublicThemes() {
 ```typescript
 export function hslToHex(h: number, s: number, l: number): string {
   l /= 100;
-  const a = s * Math.min(l, 1 - l) / 100;
+  const a = (s * Math.min(l, 1 - l)) / 100;
   const f = (n: number) => {
     const k = (n + h / 30) % 12;
     const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color).toString(16).padStart(2, '0');
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, "0");
   };
   return `#${f(0)}${f(8)}${f(4)}`;
 }
@@ -577,12 +578,12 @@ export function getContrastRatio(color1: string, color2: string): number {
 }
 
 export function isAccessible(
-  background: string, 
-  foreground: string, 
-  level: 'AA' | 'AAA' = 'AA'
+  background: string,
+  foreground: string,
+  level: "AA" | "AAA" = "AA"
 ): boolean {
   const ratio = getContrastRatio(background, foreground);
-  return level === 'AA' ? ratio >= 4.5 : ratio >= 7;
+  return level === "AA" ? ratio >= 4.5 : ratio >= 7;
 }
 ```
 
@@ -622,9 +623,7 @@ Minimize theme CSS:
 ```typescript
 // Only include active themes
 export function getActiveThemeCSS(activeThemes: string[]) {
-  return activeThemes
-    .map(theme => getThemeCSS(theme))
-    .join('\n');
+  return activeThemes.map((theme) => getThemeCSS(theme)).join("\n");
 }
 ```
 
@@ -634,7 +633,7 @@ Use CSS custom properties for instant switching:
 
 ```typescript
 // No page reload needed
-document.documentElement.className = 'theme-ocean';
+document.documentElement.className = "theme-ocean";
 ```
 
 ### 3. SSR Compatibility
@@ -698,6 +697,6 @@ Prevent hydration mismatches:
 ```typescript
 // Log theme changes
 const { theme, systemTheme } = useTheme();
-console.log('Current theme:', theme);
-console.log('System theme:', systemTheme);
+console.log("Current theme:", theme);
+console.log("System theme:", systemTheme);
 ```

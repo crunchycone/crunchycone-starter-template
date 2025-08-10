@@ -6,20 +6,29 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const setupSchema = z.object({
-  email: z.string().email({ error: "Invalid email address" }),
-  password: z.string().min(8, { error: "Password must be at least 8 characters" }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  error: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const setupSchema = z
+  .object({
+    email: z.string().email({ error: "Invalid email address" }),
+    password: z.string().min(8, { error: "Password must be at least 8 characters" }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    error: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type SetupFormData = z.infer<typeof setupSchema>;
 
@@ -72,7 +81,7 @@ export function SetupAdminForm() {
       <CardHeader>
         <CardTitle>Welcome to Your App</CardTitle>
         <CardDescription>
-          Let's set up your administrator account to get started.
+          Let&apos;s set up your administrator account to get started.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -85,11 +94,7 @@ export function SetupAdminForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="admin@example.com"
-                      {...field}
-                    />
+                    <Input type="email" placeholder="admin@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,10 +107,7 @@ export function SetupAdminForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <PasswordInput
-                      placeholder="Enter a secure password"
-                      {...field}
-                    />
+                    <PasswordInput placeholder="Enter a secure password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -118,10 +120,7 @@ export function SetupAdminForm() {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <PasswordInput
-                      placeholder="Confirm your password"
-                      {...field}
-                    />
+                    <PasswordInput placeholder="Confirm your password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

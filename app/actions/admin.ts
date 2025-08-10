@@ -10,9 +10,9 @@ export async function checkAdminExists(): Promise<boolean> {
     const adminRole = await prisma.role.findUnique({
       where: { name: "admin" },
     });
-    
+
     if (!adminRole) return false;
-    
+
     // Check if any users have the admin role
     const adminUserCount = await prisma.userRole.count({
       where: {
@@ -23,10 +23,10 @@ export async function checkAdminExists(): Promise<boolean> {
         },
       },
     });
-    
+
     return adminUserCount > 0;
-  } catch (error) {
-    console.error("Error checking admin existence:", error);
+  } catch {
+    console.error("Error checking admin existence:");
     return false;
   }
 }
@@ -38,10 +38,10 @@ export async function isDatabaseEmpty(): Promise<boolean> {
         deleted_at: null,
       },
     });
-    
+
     return userCount === 0;
-  } catch (error) {
-    console.error("Error checking if database is empty:", error);
+  } catch {
+    console.error("Error checking if database is empty:");
     return false;
   }
 }
@@ -53,7 +53,7 @@ export interface DatabaseTable {
 
 export interface TableData {
   columns: string[];
-  rows: Record<string, any>[];
+  rows: Record<string, unknown>[];
   totalCount: number;
 }
 
@@ -89,8 +89,8 @@ export async function getDatabaseTables(): Promise<DatabaseTable[]> {
     );
 
     return tablesWithCount;
-  } catch (error) {
-    console.error("Error fetching database tables:", error);
+  } catch {
+    console.error("Error fetching database tables:");
     throw new Error("Failed to fetch database tables");
   }
 }
@@ -100,7 +100,7 @@ export async function getTableData(
   page: number = 1,
   limit: number = 100,
   sortColumn?: string,
-  sortDirection: 'asc' | 'desc' = 'asc'
+  sortDirection: "asc" | "desc" = "asc"
 ): Promise<TableData> {
   // Authentication check
   const currentUser = await getCurrentUser();
@@ -111,8 +111,8 @@ export async function getTableData(
   try {
     // Validate table name to prevent SQL injection
     const validTables = await getDatabaseTables();
-    const isValidTable = validTables.some(t => t.name === tableName);
-    
+    const isValidTable = validTables.some((t) => t.name === tableName);
+
     if (!isValidTable) {
       throw new Error("Invalid table name");
     }
@@ -121,7 +121,7 @@ export async function getTableData(
     const columns: Array<{ name: string }> = await prisma.$queryRawUnsafe(
       `PRAGMA table_info("${tableName}")`
     );
-    const columnNames = columns.map(col => col.name);
+    const columnNames = columns.map((col) => col.name);
 
     // Validate sort column if provided
     if (sortColumn) {
@@ -140,23 +140,23 @@ export async function getTableData(
     // Build query with optional sorting
     const offset = (page - 1) * limit;
     let query = `SELECT * FROM "${tableName}"`;
-    
+
     if (sortColumn) {
       // Use double quotes for column names to handle special characters
       query += ` ORDER BY "${sortColumn}" ${sortDirection.toUpperCase()}`;
     }
-    
+
     query += ` LIMIT ${limit} OFFSET ${offset}`;
 
     const rows = await prisma.$queryRawUnsafe(query);
 
     return {
       columns: columnNames,
-      rows: rows as Record<string, any>[],
+      rows: rows as Record<string, unknown>[],
       totalCount,
     };
-  } catch (error) {
-    console.error(`Error fetching data from table ${tableName}:`, error);
+  } catch {
+    console.error(`Error fetching data from table ${tableName}`);
     throw new Error(`Failed to fetch data from table ${tableName}`);
   }
 }

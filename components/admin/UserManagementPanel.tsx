@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Search, Mail, Shield, UserX, Plus, X } from "lucide-react";
+import { MoreHorizontal, Search, Mail, Shield, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
@@ -108,7 +108,7 @@ export function UserManagementPanel({
         type: "success",
         message: `Password reset link sent to ${email}`,
       });
-    } catch (error) {
+    } catch {
       setActionMessage({
         type: "error",
         message: "Failed to send password reset link",
@@ -138,25 +138,25 @@ export function UserManagementPanel({
         const updatedUser = { ...selectedUser };
         if (hasRole) {
           // Remove role
-          updatedUser.roles = updatedUser.roles.filter(r => r.role.name !== roleName);
+          updatedUser.roles = updatedUser.roles.filter((r) => r.role.name !== roleName);
         } else {
           // Add role
-          const newRole = availableRoles.find(r => r.name === roleName);
+          const newRole = availableRoles.find((r) => r.name === roleName);
           if (newRole) {
             updatedUser.roles.push({ role: newRole });
           }
         }
         setSelectedUser(updatedUser);
-        
+
         // Update the user in the list
-        setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+        setUsers(users.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
       }
-      
+
       setActionMessage({
         type: "success",
         message: `Role ${hasRole ? "removed" : "added"} successfully`,
       });
-    } catch (error) {
+    } catch {
       setActionMessage({
         type: "error",
         message: "Failed to update user role",
@@ -218,14 +218,10 @@ export function UserManagementPanel({
                         {r.role.name}
                       </Badge>
                     ))}
-                    {user.roles.length === 0 && (
-                      <Badge variant="outline">user</Badge>
-                    )}
+                    {user.roles.length === 0 && <Badge variant="outline">user</Badge>}
                   </div>
                 </TableCell>
-                <TableCell>
-                  {new Date(user.created_at).toLocaleDateString()}
-                </TableCell>
+                <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>
                   {user.last_signed_in
                     ? new Date(user.last_signed_in).toLocaleDateString()
@@ -298,9 +294,7 @@ export function UserManagementPanel({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
-            <DialogDescription>
-              Detailed information about {selectedUser?.email}
-            </DialogDescription>
+            <DialogDescription>Detailed information about {selectedUser?.email}</DialogDescription>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
@@ -325,9 +319,7 @@ export function UserManagementPanel({
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Joined:</span>
-                  <span>
-                    {new Date(selectedUser.created_at).toLocaleString()}
-                  </span>
+                  <span>{new Date(selectedUser.created_at).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Last Sign In:</span>
@@ -343,9 +335,7 @@ export function UserManagementPanel({
                     {selectedUser.roles.map((r) => (
                       <Badge key={r.role.name}>{r.role.name}</Badge>
                     ))}
-                    {selectedUser.roles.length === 0 && (
-                      <Badge variant="outline">user</Badge>
-                    )}
+                    {selectedUser.roles.length === 0 && <Badge variant="outline">user</Badge>}
                   </div>
                 </div>
               </div>
@@ -358,9 +348,7 @@ export function UserManagementPanel({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Manage Roles</DialogTitle>
-            <DialogDescription>
-              Add or remove roles for {selectedUser?.email}
-            </DialogDescription>
+            <DialogDescription>Add or remove roles for {selectedUser?.email}</DialogDescription>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
@@ -379,7 +367,9 @@ export function UserManagementPanel({
                         {userRole.role.name}
                         {!(selectedUser.id === currentUserId && userRole.role.name === "admin") && (
                           <button
-                            onClick={() => handleRoleToggle(selectedUser.id, userRole.role.name, true)}
+                            onClick={() =>
+                              handleRoleToggle(selectedUser.id, userRole.role.name, true)
+                            }
                             disabled={isLoading}
                             className="ml-1 hover:text-destructive"
                           >
@@ -390,11 +380,12 @@ export function UserManagementPanel({
                     ))
                   )}
                 </div>
-                {selectedUser.id === currentUserId && selectedUser.roles.some(r => r.role.name === "admin") && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    You cannot remove your own admin role
-                  </p>
-                )}
+                {selectedUser.id === currentUserId &&
+                  selectedUser.roles.some((r) => r.role.name === "admin") && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      You cannot remove your own admin role
+                    </p>
+                  )}
               </div>
 
               <div>
@@ -411,7 +402,9 @@ export function UserManagementPanel({
                     </SelectTrigger>
                     <SelectContent>
                       {availableRoles
-                        .filter(role => !selectedUser.roles.some(ur => ur.role.name === role.name))
+                        .filter(
+                          (role) => !selectedUser.roles.some((ur) => ur.role.name === role.name)
+                        )
                         .map((role) => (
                           <SelectItem key={role.id} value={role.name}>
                             {role.name}

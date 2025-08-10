@@ -12,23 +12,23 @@ export async function hasRole(userId: string, roleName: string): Promise<boolean
       deleted_at: null,
     },
   });
-  
+
   return !!userRole;
 }
 
 export async function requireRole(roleName: string) {
   const session = await getSession();
-  
+
   if (!session) {
     redirect("/auth/signin");
   }
-  
+
   const hasRequiredRole = await hasRole(session.userId, roleName);
-  
+
   if (!hasRequiredRole) {
     redirect("/");
   }
-  
+
   return session;
 }
 
@@ -38,11 +38,11 @@ export async function isAdmin(userId: string): Promise<boolean> {
 
 export async function getCurrentUser() {
   const session = await getSession();
-  
+
   if (!session) {
     return null;
   }
-  
+
   const user = await prisma.user.findUnique({
     where: {
       id: session.userId,
@@ -60,6 +60,6 @@ export async function getCurrentUser() {
       },
     },
   });
-  
+
   return user;
 }

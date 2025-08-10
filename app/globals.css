@@ -4,7 +4,8 @@
 
 /* Custom animation for debug bubble - pulse 3 times only */
 @keyframes pulse-3-times {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

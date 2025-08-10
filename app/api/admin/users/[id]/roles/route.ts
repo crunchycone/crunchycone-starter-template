@@ -8,45 +8,36 @@ const roleSchema = z.object({
   roleName: z.string(),
 });
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Check admin authentication
     const session = await getSession();
     if (!session || !(await isAdmin(session.userId))) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = params.id;
+    const { id: userId } = await params;
     const body = await request.json();
     const validationResult = roleSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: validationResult.error.errors },
+        { error: "Invalid input", details: validationResult.error.flatten() },
         { status: 400 }
       );
     }
-    
+
     const { roleName } = validationResult.data;
-    
+
     // Find role
     const role = await prisma.role.findUnique({
       where: { name: roleName },
     });
-    
+
     if (!role) {
-      return NextResponse.json(
-        { error: "Role not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Role not found" }, { status: 404 });
     }
-    
+
     // Check if user already has this role
     const existingUserRole = await prisma.userRole.findFirst({
       where: {
@@ -55,14 +46,11 @@ export async function POST(
         deleted_at: null,
       },
     });
-    
+
     if (existingUserRole) {
-      return NextResponse.json(
-        { error: "User already has this role" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "User already has this role" }, { status: 400 });
     }
-    
+
     // Add role to user
     await prisma.userRole.create({
       data: {
@@ -70,61 +58,52 @@ export async function POST(
         role_id: role.id,
       },
     });
-    
+
     return NextResponse.json({
       success: true,
       message: "Role added successfully",
     });
-  } catch (error) {
-    console.error("Add role error:", error);
-    return NextResponse.json(
-      { error: "Failed to add role" },
-      { status: 500 }
-    );
+  } catch {
+    console.error("Add role error:");
+    return NextResponse.json({ error: "Failed to add role" }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
     const session = await getSession();
     if (!session || !(await isAdmin(session.userId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id: userId } = await params;
+    const body = await request.json();
+    const validationResult = roleSchema.safeParse(body);
+
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: "Invalid input", details: validationResult.error.flatten() },
+        { status: 400 }
       );
     }
 
-    const userId = params.id;
-    const body = await request.json();
-    const validationResult = roleSchema.safeParse(body);
-    
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { error: "Invalid input", details: validationResult.error.errors },
-        { status: 400 }
-      );
-    }
-    
     const { roleName } = validationResult.data;
-    
+
     // Prevent users from removing their own admin role
     if (userId === session.userId && roleName === "admin") {
-      return NextResponse.json(
-        { error: "Cannot remove your own admin role" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Cannot remove your own admin role" }, { status: 400 });
     }
-    
+
     // Prevent removing last admin
     if (roleName === "admin") {
       const adminRole = await prisma.role.findUnique({
         where: { name: "admin" },
       });
-      
+
       if (adminRole) {
         const adminCount = await prisma.userRole.count({
           where: {
@@ -135,28 +114,22 @@ export async function DELETE(
             },
           },
         });
-        
+
         if (adminCount <= 1) {
-          return NextResponse.json(
-            { error: "Cannot remove the last admin" },
-            { status: 400 }
-          );
+          return NextResponse.json({ error: "Cannot remove the last admin" }, { status: 400 });
         }
       }
     }
-    
+
     // Find role
     const role = await prisma.role.findUnique({
       where: { name: roleName },
     });
-    
+
     if (!role) {
-      return NextResponse.json(
-        { error: "Role not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Role not found" }, { status: 404 });
     }
-    
+
     // Soft delete the user role
     await prisma.userRole.updateMany({
       where: {
@@ -168,16 +141,13 @@ export async function DELETE(
         deleted_at: new Date(),
       },
     });
-    
+
     return NextResponse.json({
       success: true,
       message: "Role removed successfully",
     });
-  } catch (error) {
-    console.error("Remove role error:", error);
-    return NextResponse.json(
-      { error: "Failed to remove role" },
-      { status: 500 }
-    );
+  } catch {
+    console.error("Remove role error:");
+    return NextResponse.json({ error: "Failed to remove role" }, { status: 500 });
   }
 }

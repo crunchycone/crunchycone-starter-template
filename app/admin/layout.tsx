@@ -10,13 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await requireRole("admin");
 
   return (
@@ -84,48 +79,48 @@ export default async function AdminLayout({
                   <Menu className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href="/admin">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/users">
-                  <Users className="mr-2 h-4 w-4" />
-                  Users
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/roles">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Roles
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/database">
-                  <Database className="mr-2 h-4 w-4" />
-                  Database Viewer
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/admin/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <Separator className="my-1" />
-              <DropdownMenuItem asChild>
-                <form action="/api/auth/logout" method="post" className="w-full">
-                  <button type="submit" className="flex w-full items-center">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </button>
-                </form>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/admin">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/users">
+                    <Users className="mr-2 h-4 w-4" />
+                    Users
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/roles">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Roles
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/database">
+                    <Database className="mr-2 h-4 w-4" />
+                    Database Viewer
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <Separator className="my-1" />
+                <DropdownMenuItem asChild>
+                  <form action="/api/auth/logout" method="post" className="w-full">
+                    <button type="submit" className="flex w-full items-center">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </button>
+                  </form>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -133,9 +128,7 @@ export default async function AdminLayout({
       {/* Main Content */}
       <div className="md:pl-64">
         <main className="py-6">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
-            {children}
-          </div>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">{children}</div>
         </main>
       </div>
     </div>

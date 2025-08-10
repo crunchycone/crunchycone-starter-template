@@ -7,6 +7,7 @@ This document explains the Edge Runtime-compatible authentication implementation
 ## Problem Solved
 
 The original implementation faced issues where JWT tokens could not be verified in middleware due to:
+
 - Edge Runtime vs Node.js runtime differences
 - Environment variable access patterns
 - `jsonwebtoken` library incompatibility with Edge Runtime
@@ -30,6 +31,7 @@ We maintain two separate authentication implementations:
 ### 2. Token Structure
 
 JWT tokens contain minimal information for security:
+
 ```json
 {
   "userId": "user-id-here",
@@ -42,6 +44,7 @@ JWT tokens contain minimal information for security:
 ### 3. Cookie Configuration
 
 Cookies are configured with explicit security settings:
+
 ```typescript
 {
   httpOnly: true,              // Not accessible via JavaScript
@@ -61,7 +64,7 @@ Cookies are configured with explicit security settings:
 export async function verifyTokenEdge(token: string): Promise<EdgeSession | null> {
   const secret = new TextEncoder().encode(JWT_SECRET);
   const { payload } = await jose.jwtVerify(token, secret, {
-    algorithms: ['HS256'],
+    algorithms: ["HS256"],
   });
   // ... validation logic
 }
@@ -78,6 +81,7 @@ export async function verifyTokenEdge(token: string): Promise<EdgeSession | null
 ### Protected Routes
 
 The middleware automatically protects:
+
 - `/admin/*` - Admin dashboard
 - `/profile/*` - User profiles
 - `/dashboard/*` - User dashboards
@@ -85,6 +89,7 @@ The middleware automatically protects:
 ### Debug Logging
 
 In development mode, comprehensive logging helps troubleshoot issues:
+
 - Token generation/verification
 - Session creation/retrieval
 - Middleware decisions
@@ -101,6 +106,7 @@ In development mode, comprehensive logging helps troubleshoot issues:
 ## Invalid Token Handling
 
 When a JWT token becomes invalid (e.g., after changing JWT_SECRET):
+
 - The token is treated as if no session exists
 - Users are redirected to sign in
 - Cookies cannot be deleted in Server Components (Next.js limitation)
@@ -120,6 +126,7 @@ To test the implementation:
 ### Token Verification Fails in Middleware
 
 Check:
+
 - JWT_SECRET is available in Edge Runtime
 - Token format matches expected structure
 - jose library is properly installed
@@ -127,6 +134,7 @@ Check:
 ### Cookies Not Being Sent
 
 Verify:
+
 - Same domain/subdomain
 - HTTPS in production
 - SameSite policy compatibility
@@ -134,6 +142,7 @@ Verify:
 ### Debug Mode
 
 Enable debug logging by running in development:
+
 ```bash
 NODE_ENV=development npm run dev
 ```

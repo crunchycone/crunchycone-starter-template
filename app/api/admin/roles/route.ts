@@ -5,21 +5,22 @@ import { isAdmin } from "@/lib/auth/permissions";
 import { z } from "zod";
 
 const createRoleSchema = z.object({
-  name: z.string()
+  name: z
+    .string()
     .min(1, "Role name is required")
     .max(50, "Role name must be less than 50 characters")
-    .regex(/^[a-z0-9_-]+$/, "Role name must contain only lowercase letters, numbers, hyphens, and underscores"),
+    .regex(
+      /^[a-z0-9_-]+$/,
+      "Role name must contain only lowercase letters, numbers, hyphens, and underscores"
+    ),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Check admin authentication
     const session = await getSession();
     if (!session || !(await isAdmin(session.userId))) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const roles = await prisma.role.findMany({
@@ -46,12 +47,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ roles });
-  } catch (error) {
-    console.error("Get roles error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch roles" },
-      { status: 500 }
-    );
+  } catch {
+    console.error("Get roles error:");
+    return NextResponse.json({ error: "Failed to fetch roles" }, { status: 500 });
   }
 }
 
@@ -60,50 +58,41 @@ export async function POST(request: NextRequest) {
     // Check admin authentication
     const session = await getSession();
     if (!session || !(await isAdmin(session.userId))) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
     const validationResult = createRoleSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: validationResult.error.errors },
+        { error: "Invalid input", details: validationResult.error.flatten() },
         { status: 400 }
       );
     }
-    
+
     const { name } = validationResult.data;
-    
+
     // Check if role already exists
     const existingRole = await prisma.role.findUnique({
       where: { name },
     });
-    
+
     if (existingRole) {
-      return NextResponse.json(
-        { error: "Role already exists" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Role already exists" }, { status: 400 });
     }
-    
+
     // Create new role
     const role = await prisma.role.create({
       data: { name },
     });
-    
+
     return NextResponse.json({
       success: true,
       role,
     });
-  } catch (error) {
-    console.error("Create role error:", error);
-    return NextResponse.json(
-      { error: "Failed to create role" },
-      { status: 500 }
-    );
+  } catch {
+    console.error("Create role error:");
+    return NextResponse.json({ error: "Failed to create role" }, { status: 500 });
   }
 }

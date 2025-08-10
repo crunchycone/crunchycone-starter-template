@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+
 - Updated jose from v5 to v6 for Edge Runtime authentication
 - Improved import specificity in edge-auth.ts for better tree-shaking
 - Updated zod from v3 to v4 with new error customization syntax
@@ -15,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated validation in SignUpForm, SignInForm, SetupAdminForm, ForgotPasswordPage, and RoleManagementPanel
 
 ### Removed
+
 - Removed @types/bcryptjs dependency as bcryptjs v3 now includes its own TypeScript definitions
 
 ### Updated
+
 - Updated Prisma and @prisma/client from v6.11.0 to v6.13.0
 - Updated @hookform/resolvers from v5.1.1 to v5.2.1
 - Updated react-hook-form from v7.59.0 to v7.61.1
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-07-01
 
 ### Added
+
 - Initial release of CrunchyCone Starter Template
 - Complete authentication system with email/password and magic links
 - JWT-based session management with HTTP-only cookies
@@ -45,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Responsive design for all screen sizes
 
 ### Security
+
 - Password hashing with bcrypt
 - Secure JWT token generation and validation
 - HTTP-only cookies for session storage
@@ -54,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevention of self-demotion for admin users
 
 ### Documentation
+
 - Comprehensive README with quick start guide
 - Technical documentation in CLAUDE.md
 - Email provider implementation guide

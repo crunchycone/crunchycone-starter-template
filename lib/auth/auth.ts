@@ -20,7 +20,7 @@ export async function createSession(userId: string): Promise<string> {
 
   const token = generateToken(userId, "access");
   const cookieStore = await cookies();
-  
+
   cookieStore.set("auth-token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -28,7 +28,7 @@ export async function createSession(userId: string): Promise<string> {
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: "/",
   });
-  
+
   if (process.env.NODE_ENV === "development") {
     console.log("[Auth] Session created successfully");
   }
@@ -41,37 +41,37 @@ export async function getSession(token?: string): Promise<{ userId: string } | n
     try {
       const cookieStore = await cookies();
       token = cookieStore.get("auth-token")?.value;
-      
+
       if (process.env.NODE_ENV === "development") {
         console.log("[Auth] Getting session from cookie:", token ? "token found" : "no token");
       }
-    } catch (error) {
+    } catch {
       if (process.env.NODE_ENV === "development") {
-        console.log("[Auth] Error accessing cookies:", error);
+        console.log("[Auth] Error accessing cookies");
       }
       return null;
     }
   }
-  
+
   if (!token) {
     if (process.env.NODE_ENV === "development") {
       console.log("[Auth] No session token found");
     }
     return null;
   }
-  
+
   const decoded = verifyToken(token);
   if (!decoded || decoded.type !== "access") {
     if (process.env.NODE_ENV === "development") {
       console.log("[Auth] Invalid session token:", decoded ? "wrong type" : "decode failed");
     }
-    
+
     // Note: Cannot delete cookies in Server Components
     // Invalid tokens will be ignored and treated as no session
-    
+
     return null;
   }
-  
+
   if (process.env.NODE_ENV === "development") {
     console.log("[Auth] Valid session found for user:", decoded.userId);
   }

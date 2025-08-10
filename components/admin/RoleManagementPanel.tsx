@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -45,10 +44,13 @@ type Role = {
 };
 
 const createRoleSchema = z.object({
-  name: z.string()
+  name: z
+    .string()
     .min(1, { error: "Role name is required" })
     .max(50, { error: "Role name must be less than 50 characters" })
-    .regex(/^[a-z0-9_-]+$/, { error: "Role name must contain only lowercase letters, numbers, hyphens, and underscores" }),
+    .regex(/^[a-z0-9_-]+$/, {
+      error: "Role name must contain only lowercase letters, numbers, hyphens, and underscores",
+    }),
 });
 
 type CreateRoleData = z.infer<typeof createRoleSchema>;
@@ -58,7 +60,6 @@ type RoleManagementPanelProps = {
 };
 
 export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) {
-  const router = useRouter();
   const [roles, setRoles] = useState(initialRoles);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,17 +103,17 @@ export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) 
 
       form.reset();
       setIsCreateOpen(false);
-      
+
       // Refresh the roles list
-      const rolesResponse = await fetch('/api/admin/roles');
+      const rolesResponse = await fetch("/api/admin/roles");
       if (rolesResponse.ok) {
         const { roles: updatedRoles } = await rolesResponse.json();
         setRoles(updatedRoles);
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "Failed to create role",
+        text: "Failed to create role",
       });
     } finally {
       setIsLoading(false);
@@ -152,11 +153,11 @@ export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) 
       });
 
       // Remove the role from the local state
-      setRoles(roles.filter(role => role.id !== roleId));
-    } catch (error) {
+      setRoles(roles.filter((role) => role.id !== roleId));
+    } catch {
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "Failed to delete role",
+        text: "Failed to delete role",
       });
     } finally {
       setIsLoading(false);
@@ -189,7 +190,8 @@ export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) 
             <DialogHeader>
               <DialogTitle>Create New Role</DialogTitle>
               <DialogDescription>
-                Add a new role to the system. Role names should be lowercase and can contain letters, numbers, hyphens, and underscores.
+                Add a new role to the system. Role names should be lowercase and can contain
+                letters, numbers, hyphens, and underscores.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -201,21 +203,14 @@ export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) 
                     <FormItem>
                       <FormLabel>Role Name</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="e.g., moderator, editor, viewer"
-                          {...field}
-                        />
+                        <Input placeholder="e.g., moderator, editor, viewer" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <div className="flex gap-2 justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsCreateOpen(false)}
-                  >
+                  <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isLoading}>
@@ -242,7 +237,7 @@ export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) 
           <TableBody>
             {roles.map((role) => {
               const isProtected = protectedRoles.includes(role.name);
-              
+
               return (
                 <TableRow key={role.id}>
                   <TableCell className="font-medium">
@@ -260,9 +255,7 @@ export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) 
                     )}
                   </TableCell>
                   <TableCell>{role._count.users}</TableCell>
-                  <TableCell>
-                    {new Date(role.created_at).toLocaleDateString()}
-                  </TableCell>
+                  <TableCell>{new Date(role.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     {!isProtected && (
                       <Button
@@ -275,9 +268,7 @@ export function RoleManagementPanel({ initialRoles }: RoleManagementPanelProps) 
                       </Button>
                     )}
                     {role._count.users > 0 && !isProtected && (
-                      <span className="text-xs text-muted-foreground ml-2">
-                        Has users
-                      </span>
+                      <span className="text-xs text-muted-foreground ml-2">Has users</span>
                     )}
                   </TableCell>
                 </TableRow>

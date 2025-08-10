@@ -23,7 +23,7 @@ export class ConsoleEmailProvider implements EmailProvider {
 // Email templates
 export function getVerificationEmailTemplate(token: string, appUrl: string): EmailOptions {
   const verificationUrl = `${appUrl}/auth/verify-email?token=${token}`;
-  
+
   return {
     to: "", // Will be set by caller
     subject: "Verify your email address",
@@ -57,7 +57,7 @@ This link will expire in 24 hours. If you didn't create an account, you can safe
 
 export function getPasswordResetEmailTemplate(token: string, appUrl: string): EmailOptions {
   const resetUrl = `${appUrl}/auth/reset-password?token=${token}`;
-  
+
   return {
     to: "", // Will be set by caller
     subject: "Reset your password",
@@ -91,7 +91,7 @@ This link will expire in 1 hour. If you didn't request a password reset, you can
 
 export function getMagicLinkEmailTemplate(token: string, appUrl: string): EmailOptions {
   const magicLinkUrl = `${appUrl}/api/auth/magic-link?token=${token}`;
-  
+
   return {
     to: "", // Will be set by caller
     subject: "Sign in to your account",
@@ -132,12 +132,12 @@ export function setEmailProvider(provider: EmailProvider) {
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
   const fromAddress = process.env.EMAIL_FROM || "noreply@example.com";
-  
+
   // Add from address to options
   const fullOptions = {
     ...options,
     from: fromAddress,
   };
-  
+
   await emailProvider.sendEmail(fullOptions);
 }

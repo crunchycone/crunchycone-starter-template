@@ -92,9 +92,7 @@ export default async function AdminDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(stats.recentSignups / 7).toFixed(1)}
-            </div>
+            <div className="text-2xl font-bold">{(stats.recentSignups / 7).toFixed(1)}</div>
             <p className="text-xs text-muted-foreground">7 day average</p>
           </CardContent>
         </Card>

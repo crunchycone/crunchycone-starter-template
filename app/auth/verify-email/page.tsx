@@ -1,10 +1,9 @@
-import { Suspense } from 'react';
-import { verifyToken } from '@/lib/auth/auth';
-import { prisma } from '@/lib/prisma';
-import { redirect } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Suspense } from "react";
+import { verifyToken } from "@/lib/auth/auth";
+import { prisma } from "@/lib/prisma";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface VerifyEmailPageProps {
   searchParams: Promise<{
@@ -21,9 +20,7 @@ async function VerifyEmailContent({ searchParams }: VerifyEmailPageProps) {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-destructive">Invalid Verification Link</CardTitle>
-          <CardDescription>
-            No verification token provided.
-          </CardDescription>
+          <CardDescription>No verification token provided.</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
@@ -40,20 +37,20 @@ async function VerifyEmailContent({ searchParams }: VerifyEmailPageProps) {
   try {
     // Verify the token
     const decoded = verifyToken(token);
-    
+
     if (!decoded) {
-      throw new Error('Invalid or expired token');
+      throw new Error("Invalid or expired token");
     }
-    
-    if (decoded.type !== 'verification') {
-      throw new Error('Invalid token type');
+
+    if (decoded.type !== "verification") {
+      throw new Error("Invalid token type");
     }
 
     // Check if user exists and update verification status
     const user = await prisma.user.findUnique({
-      where: { 
+      where: {
         id: decoded.userId,
-        deleted_at: null 
+        deleted_at: null,
       },
     });
 
@@ -78,8 +75,8 @@ async function VerifyEmailContent({ searchParams }: VerifyEmailPageProps) {
       );
     }
 
-    // For this template, we'll just show success since we don't have an email_verified field
-    // In a real app, you'd update the user's email_verified status here
+    // For this template, we&apos;ll just show success since we don't have an email_verified field
+    // In a real app, you&apos;d update the user's email_verified status here
     // await prisma.user.update({
     //   where: { id: user.id },
     //   data: { email_verified: true }
@@ -89,9 +86,7 @@ async function VerifyEmailContent({ searchParams }: VerifyEmailPageProps) {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-green-600">Email Verified Successfully!</CardTitle>
-          <CardDescription>
-            Your email address has been verified.
-          </CardDescription>
+          <CardDescription>Your email address has been verified.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -102,34 +97,36 @@ async function VerifyEmailContent({ searchParams }: VerifyEmailPageProps) {
               <Button className="w-full">Sign In</Button>
             </Link>
             <Link href="/">
-              <Button variant="outline" className="w-full">Go to Home</Button>
+              <Button variant="outline" className="w-full">
+                Go to Home
+              </Button>
             </Link>
           </div>
         </CardContent>
       </Card>
     );
+  } catch {
+    console.error("Email verification error:");
 
-  } catch (error) {
-    console.error('Email verification error:', error);
-    
     return (
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-destructive">Verification Failed</CardTitle>
-          <CardDescription>
-            The verification link is invalid or has expired.
-          </CardDescription>
+          <CardDescription>The verification link is invalid or has expired.</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Verification links expire after 24 hours. You may need to request a new verification email.
+            Verification links expire after 24 hours. You may need to request a new verification
+            email.
           </p>
           <div className="space-y-2">
             <Link href="/auth/signin">
               <Button className="w-full">Sign In</Button>
             </Link>
             <Link href="/auth/signup">
-              <Button variant="outline" className="w-full">Create New Account</Button>
+              <Button variant="outline" className="w-full">
+                Create New Account
+              </Button>
             </Link>
           </div>
         </CardContent>
@@ -141,15 +138,17 @@ async function VerifyEmailContent({ searchParams }: VerifyEmailPageProps) {
 export default function VerifyEmailPage({ searchParams }: VerifyEmailPageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <Suspense fallback={
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          </CardContent>
-        </Card>
-      }>
+      <Suspense
+        fallback={
+          <Card className="w-full max-w-md">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            </CardContent>
+          </Card>
+        }
+      >
         <VerifyEmailContent searchParams={searchParams} />
       </Suspense>
     </div>

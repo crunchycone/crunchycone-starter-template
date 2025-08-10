@@ -5,21 +5,30 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UserPlus } from "lucide-react";
 
-const signUpSchema = z.object({
-  email: z.string().email({ error: "Invalid email address" }),
-  password: z.string().min(8, { error: "Password must be at least 8 characters" }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  error: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const signUpSchema = z
+  .object({
+    email: z.string().email({ error: "Invalid email address" }),
+    password: z.string().min(8, { error: "Password must be at least 8 characters" }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    error: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type SignUpData = z.infer<typeof signUpSchema>;
 
@@ -73,15 +82,11 @@ export function SignUpForm() {
       <div className="space-y-4">
         <Alert>
           <AlertDescription>
-            We've sent a verification email to {form.getValues("email")}. 
-            Please check your inbox and click the verification link to complete your registration.
+            We&apos;ve sent a verification email to {form.getValues("email")}. Please check your
+            inbox and click the verification link to complete your registration.
           </AlertDescription>
         </Alert>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => router.push("/auth/signin")}
-        >
+        <Button variant="outline" className="w-full" onClick={() => router.push("/auth/signin")}>
           Go to Sign In
         </Button>
       </div>
@@ -98,11 +103,7 @@ export function SignUpForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input
-                  type="email"
-                  placeholder="you@example.com"
-                  {...field}
-                />
+                <Input type="email" placeholder="you@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -115,10 +116,7 @@ export function SignUpForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <PasswordInput
-                  placeholder="Create a secure password"
-                  {...field}
-                />
+                <PasswordInput placeholder="Create a secure password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -131,10 +129,7 @@ export function SignUpForm() {
             <FormItem>
               <FormLabel>Confirm Password</FormLabel>
               <FormControl>
-                <PasswordInput
-                  placeholder="Confirm your password"
-                  {...field}
-                />
+                <PasswordInput placeholder="Confirm your password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

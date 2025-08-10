@@ -5,6 +5,7 @@ This guide explains how to add different authentication providers (OAuth, social
 ## Overview
 
 The current authentication system supports:
+
 - Email/Password authentication
 - Magic link authentication
 
@@ -425,7 +426,7 @@ export function SignInForm() {
           <Chrome className="mr-2 h-4 w-4" />
           Continue with Google
         </Button>
-        
+
         <Button
           variant="outline"
           className="w-full"
@@ -464,17 +465,17 @@ Prevent CSRF attacks by using state parameter:
 
 ```typescript
 // Generate state
-const state = crypto.randomBytes(16).toString('hex');
+const state = crypto.randomBytes(16).toString("hex");
 // Store in session/cookie
-cookies().set('oauth_state', state, { httpOnly: true, maxAge: 600 });
+cookies().set("oauth_state", state, { httpOnly: true, maxAge: 600 });
 
 // Add to OAuth URL
-params.append('state', state);
+params.append("state", state);
 
 // Verify in callback
-const storedState = cookies().get('oauth_state')?.value;
+const storedState = cookies().get("oauth_state")?.value;
 if (state !== storedState) {
-  throw new Error('Invalid state parameter');
+  throw new Error("Invalid state parameter");
 }
 ```
 
@@ -489,7 +490,7 @@ const existingUser = await prisma.user.findUnique({
   include: { authMethods: true },
 });
 
-if (existingUser && !existingUser.authMethods.find(m => m.provider === provider)) {
+if (existingUser && !existingUser.authMethods.find((m) => m.provider === provider)) {
   // Link account or show error
   return NextResponse.redirect("/auth/link-account");
 }
@@ -504,7 +505,7 @@ Consider email verification for OAuth users:
 await prisma.authMethod.create({
   data: {
     user_id: user.id,
-    provider: 'google',
+    provider: "google",
     provider_user_id: googleUserId,
     email_verified: true, // OAuth providers verify emails
   },
@@ -521,14 +522,14 @@ model AuthMethod {
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
   deleted_at      DateTime?
-  
+
   user_id         Int
   provider        String    // 'email', 'google', 'github', etc.
   provider_user_id String?  // ID from OAuth provider
   email_verified  Boolean   @default(false)
-  
+
   user            User      @relation(fields: [user_id], references: [id])
-  
+
   @@unique([provider, provider_user_id])
   @@index([user_id])
 }
@@ -550,10 +551,10 @@ Allow users to link multiple auth methods:
 export async function linkAuthMethod(userId: number, provider: string) {
   // Redirect to OAuth flow with linking parameter
   const params = new URLSearchParams({
-    linking: 'true',
+    linking: "true",
     user_id: userId.toString(),
   });
-  
+
   return NextResponse.redirect(`/api/auth/${provider}?${params}`);
 }
 ```
@@ -570,9 +571,9 @@ model SocialProfile {
   avatar_url      String?
   profile_url     String?
   raw_data        Json?     // Store full profile data
-  
+
   user            User      @relation(fields: [user_id], references: [id])
-  
+
   @@unique([user_id, provider])
 }
 ```
@@ -589,9 +590,9 @@ model OAuthToken {
   access_token    String    @db.Text
   refresh_token   String?   @db.Text
   expires_at      DateTime?
-  
+
   user            User      @relation(fields: [user_id], references: [id])
-  
+
   @@unique([user_id, provider])
 }
 ```
@@ -645,6 +646,7 @@ ngrok http 3000
 ### 2. Update OAuth Redirect URIs
 
 Use the ngrok URL for redirect URIs:
+
 ```
 https://your-subdomain.ngrok.io/api/auth/callback/google
 ```

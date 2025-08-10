@@ -8,9 +8,7 @@ export default function SignUpPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>
-            Sign up to get started with your new account
-          </CardDescription>
+          <CardDescription>Sign up to get started with your new account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <SignUpForm />

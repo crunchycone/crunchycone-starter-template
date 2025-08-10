@@ -14,14 +14,14 @@ export async function POST(request: NextRequest) {
     const adminRole = await prisma.role.findUnique({
       where: { name: "admin" },
     });
-    
+
     if (!adminRole) {
       return NextResponse.json(
         { error: "Admin role not found. Please run database seed." },
         { status: 500 }
       );
     }
-    
+
     const adminUserCount = await prisma.userRole.count({
       where: {
         role_id: adminRole.id,
@@ -31,30 +31,27 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-    
+
     if (adminUserCount > 0) {
-      return NextResponse.json(
-        { error: "Admin user already exists" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Admin user already exists" }, { status: 400 });
     }
-    
+
     // Parse and validate request body
     const body = await request.json();
     const validationResult = setupSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: validationResult.error.errors },
+        { error: "Invalid input", details: validationResult.error.flatten() },
         { status: 400 }
       );
     }
-    
+
     const { email, password } = validationResult.data;
-    
+
     // Hash password
     const hashedPassword = await hashPassword(password);
-    
+
     // Create user with admin role in a transaction
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
@@ -64,14 +61,14 @@ export async function POST(request: NextRequest) {
           last_signed_in: new Date(),
         },
       });
-      
+
       // Create user profile
       await tx.userProfile.create({
         data: {
           user_id: newUser.id,
         },
       });
-      
+
       // Assign admin role
       await tx.userRole.create({
         data: {
@@ -79,22 +76,19 @@ export async function POST(request: NextRequest) {
           role_id: adminRole.id,
         },
       });
-      
+
       return newUser;
     });
-    
+
     // Create session
     await createSession(user.id);
-    
+
     return NextResponse.json({
       success: true,
       message: "Admin user created successfully",
     });
-  } catch (error) {
-    console.error("Setup admin error:", error);
-    return NextResponse.json(
-      { error: "Failed to create admin user" },
-      { status: 500 }
-    );
+  } catch {
+    console.error("Setup admin error:");
+    return NextResponse.json({ error: "Failed to create admin user" }, { status: 500 });
   }
 }

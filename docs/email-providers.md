@@ -37,8 +37,8 @@ npm install @sendgrid/mail
 Create `lib/email/providers/sendgrid.ts`:
 
 ```typescript
-import sgMail from '@sendgrid/mail';
-import { EmailProvider, EmailOptions } from '../email';
+import sgMail from "@sendgrid/mail";
+import { EmailProvider, EmailOptions } from "../email";
 
 export class SendGridProvider implements EmailProvider {
   constructor(apiKey: string) {
@@ -49,14 +49,14 @@ export class SendGridProvider implements EmailProvider {
     try {
       await sgMail.send({
         to: options.to,
-        from: options.from || process.env.EMAIL_FROM || 'noreply@example.com',
+        from: options.from || process.env.EMAIL_FROM || "noreply@example.com",
         subject: options.subject,
         text: options.text || options.html,
         html: options.html,
       });
     } catch (error) {
-      console.error('SendGrid error:', error);
-      throw new Error('Failed to send email');
+      console.error("SendGrid error:", error);
+      throw new Error("Failed to send email");
     }
   }
 }
@@ -73,8 +73,8 @@ npm install resend
 Create `lib/email/providers/resend.ts`:
 
 ```typescript
-import { Resend } from 'resend';
-import { EmailProvider, EmailOptions } from '../email';
+import { Resend } from "resend";
+import { EmailProvider, EmailOptions } from "../email";
 
 export class ResendProvider implements EmailProvider {
   private resend: Resend;
@@ -86,15 +86,15 @@ export class ResendProvider implements EmailProvider {
   async sendEmail(options: EmailOptions): Promise<void> {
     try {
       await this.resend.emails.send({
-        from: options.from || process.env.EMAIL_FROM || 'noreply@example.com',
+        from: options.from || process.env.EMAIL_FROM || "noreply@example.com",
         to: options.to,
         subject: options.subject,
         text: options.text,
         html: options.html,
       });
     } catch (error) {
-      console.error('Resend error:', error);
-      throw new Error('Failed to send email');
+      console.error("Resend error:", error);
+      throw new Error("Failed to send email");
     }
   }
 }
@@ -112,7 +112,7 @@ Create `lib/email/providers/aws-ses.ts`:
 
 ```typescript
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import { EmailProvider, EmailOptions } from '../email';
+import { EmailProvider, EmailOptions } from "../email";
 
 export class AWSSESProvider implements EmailProvider {
   private client: SESClient;
@@ -127,7 +127,7 @@ export class AWSSESProvider implements EmailProvider {
   async sendEmail(options: EmailOptions): Promise<void> {
     try {
       const command = new SendEmailCommand({
-        Source: options.from || process.env.EMAIL_FROM || 'noreply@example.com',
+        Source: options.from || process.env.EMAIL_FROM || "noreply@example.com",
         Destination: {
           ToAddresses: [options.to],
         },
@@ -144,8 +144,8 @@ export class AWSSESProvider implements EmailProvider {
 
       await this.client.send(command);
     } catch (error) {
-      console.error('AWS SES error:', error);
-      throw new Error('Failed to send email');
+      console.error("AWS SES error:", error);
+      throw new Error("Failed to send email");
     }
   }
 }
@@ -163,8 +163,8 @@ npm install --save-dev @types/nodemailer
 Create `lib/email/providers/smtp.ts`:
 
 ```typescript
-import nodemailer from 'nodemailer';
-import { EmailProvider, EmailOptions } from '../email';
+import nodemailer from "nodemailer";
+import { EmailProvider, EmailOptions } from "../email";
 
 export class SMTPProvider implements EmailProvider {
   private transporter: nodemailer.Transporter;
@@ -184,15 +184,15 @@ export class SMTPProvider implements EmailProvider {
   async sendEmail(options: EmailOptions): Promise<void> {
     try {
       await this.transporter.sendMail({
-        from: options.from || process.env.EMAIL_FROM || 'noreply@example.com',
+        from: options.from || process.env.EMAIL_FROM || "noreply@example.com",
         to: options.to,
         subject: options.subject,
         text: options.text,
         html: options.html,
       });
     } catch (error) {
-      console.error('SMTP error:', error);
-      throw new Error('Failed to send email');
+      console.error("SMTP error:", error);
+      throw new Error("Failed to send email");
     }
   }
 }
@@ -232,65 +232,69 @@ SMTP_PASS=your-app-password
 Create `lib/email/config.ts`:
 
 ```typescript
-import { setEmailProvider } from './email';
-import { ConsoleEmailProvider } from './email';
-import { SendGridProvider } from './providers/sendgrid';
-import { ResendProvider } from './providers/resend';
-import { AWSSESProvider } from './providers/aws-ses';
-import { SMTPProvider } from './providers/smtp';
+import { setEmailProvider } from "./email";
+import { ConsoleEmailProvider } from "./email";
+import { SendGridProvider } from "./providers/sendgrid";
+import { ResendProvider } from "./providers/resend";
+import { AWSSESProvider } from "./providers/aws-ses";
+import { SMTPProvider } from "./providers/smtp";
 
 export function initializeEmailProvider() {
-  const provider = process.env.EMAIL_PROVIDER || 'console';
+  const provider = process.env.EMAIL_PROVIDER || "console";
 
   switch (provider) {
-    case 'sendgrid':
+    case "sendgrid":
       if (!process.env.SENDGRID_API_KEY) {
-        throw new Error('SENDGRID_API_KEY is required');
+        throw new Error("SENDGRID_API_KEY is required");
       }
       setEmailProvider(new SendGridProvider(process.env.SENDGRID_API_KEY));
       break;
 
-    case 'resend':
+    case "resend":
       if (!process.env.RESEND_API_KEY) {
-        throw new Error('RESEND_API_KEY is required');
+        throw new Error("RESEND_API_KEY is required");
       }
       setEmailProvider(new ResendProvider(process.env.RESEND_API_KEY));
       break;
 
-    case 'aws-ses':
+    case "aws-ses":
       if (!process.env.AWS_REGION) {
-        throw new Error('AWS_REGION is required');
+        throw new Error("AWS_REGION is required");
       }
-      setEmailProvider(new AWSSESProvider(
-        process.env.AWS_REGION,
-        process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
-          ? {
-              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            }
-          : undefined
-      ));
+      setEmailProvider(
+        new AWSSESProvider(
+          process.env.AWS_REGION,
+          process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+            ? {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+              }
+            : undefined
+        )
+      );
       break;
 
-    case 'smtp':
+    case "smtp":
       if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        throw new Error('SMTP configuration is incomplete');
+        throw new Error("SMTP configuration is incomplete");
       }
-      setEmailProvider(new SMTPProvider({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_PORT === '465',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      }));
+      setEmailProvider(
+        new SMTPProvider({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || "587"),
+          secure: process.env.SMTP_PORT === "465",
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        })
+      );
       break;
 
-    case 'console':
+    case "console":
     default:
       setEmailProvider(new ConsoleEmailProvider());
-      console.log('Using ConsoleEmailProvider (emails will be logged to console)');
+      console.log("Using ConsoleEmailProvider (emails will be logged to console)");
       break;
   }
 }
@@ -301,10 +305,10 @@ export function initializeEmailProvider() {
 Add to `app/layout.tsx` or create an initializer:
 
 ```typescript
-import { initializeEmailProvider } from '@/lib/email/config';
+import { initializeEmailProvider } from "@/lib/email/config";
 
 // Initialize email provider on app start
-if (typeof window === 'undefined') {
+if (typeof window === "undefined") {
   initializeEmailProvider();
 }
 ```
@@ -325,14 +329,16 @@ For development, you can use services like:
 // For testing only - Ethereal Email
 const testAccount = await nodemailer.createTestAccount();
 
-setEmailProvider(new SMTPProvider({
-  host: 'smtp.ethereal.email',
-  port: 587,
-  auth: {
-    user: testAccount.user,
-    pass: testAccount.pass,
-  },
-}));
+setEmailProvider(
+  new SMTPProvider({
+    host: "smtp.ethereal.email",
+    port: 587,
+    auth: {
+      user: testAccount.user,
+      pass: testAccount.pass,
+    },
+  })
+);
 ```
 
 ## Best Practices
@@ -375,21 +381,21 @@ setEmailProvider(new SMTPProvider({
 ### Email Queues with BullMQ
 
 ```typescript
-import { Queue, Worker } from 'bullmq';
-import { sendEmail } from '@/lib/email/email';
+import { Queue, Worker } from "bullmq";
+import { sendEmail } from "@/lib/email/email";
 
 // Create queue
-export const emailQueue = new Queue('emails');
+export const emailQueue = new Queue("emails");
 
 // Add to queue
-await emailQueue.add('send-email', {
+await emailQueue.add("send-email", {
   to: user.email,
-  subject: 'Welcome!',
-  html: '<h1>Welcome</h1>',
+  subject: "Welcome!",
+  html: "<h1>Welcome</h1>",
 });
 
 // Process queue
-new Worker('emails', async (job) => {
+new Worker("emails", async (job) => {
   await sendEmail(job.data);
 });
 ```

@@ -5,33 +5,33 @@ import { verifyToken, createSession } from "@/lib/auth/auth";
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const token = searchParams.get('token');
+    const token = searchParams.get("token");
 
     if (!token) {
-      return NextResponse.redirect(new URL('/auth/signin?error=no_token', request.url));
+      return NextResponse.redirect(new URL("/auth/signin?error=no_token", request.url));
     }
 
     // Verify the token
     const decoded = verifyToken(token);
-    
+
     if (!decoded) {
-      return NextResponse.redirect(new URL('/auth/signin?error=invalid_token', request.url));
+      return NextResponse.redirect(new URL("/auth/signin?error=invalid_token", request.url));
     }
-    
-    if (decoded.type !== 'magic_link') {
-      return NextResponse.redirect(new URL('/auth/signin?error=invalid_token_type', request.url));
+
+    if (decoded.type !== "magic_link") {
+      return NextResponse.redirect(new URL("/auth/signin?error=invalid_token_type", request.url));
     }
 
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { 
+      where: {
         id: decoded.userId,
-        deleted_at: null 
+        deleted_at: null,
       },
     });
 
     if (!user) {
-      return NextResponse.redirect(new URL('/auth/signin?error=user_not_found', request.url));
+      return NextResponse.redirect(new URL("/auth/signin?error=user_not_found", request.url));
     }
 
     // Update last signed in
@@ -44,10 +44,9 @@ export async function GET(request: NextRequest) {
     await createSession(user.id);
 
     // Redirect to home page with success message
-    return NextResponse.redirect(new URL('/?message=magic_link_success', request.url));
-
-  } catch (error) {
-    console.error('Magic link authentication error:', error);
-    return NextResponse.redirect(new URL('/auth/signin?error=authentication_failed', request.url));
+    return NextResponse.redirect(new URL("/?message=magic_link_success", request.url));
+  } catch {
+    console.error("Magic link authentication error:");
+    return NextResponse.redirect(new URL("/auth/signin?error=authentication_failed", request.url));
   }
 }

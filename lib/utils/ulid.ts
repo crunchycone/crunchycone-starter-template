@@ -33,7 +33,7 @@ export const ulidMiddleware: Prisma.Middleware = async (params, next) => {
     } else if (params.action === "createMany") {
       // Multiple creates
       if (Array.isArray(params.args.data)) {
-        params.args.data = params.args.data.map((item: any) => ({
+        params.args.data = params.args.data.map((item: { id?: string }) => ({
           ...item,
           id: item.id || generateId(),
         }));

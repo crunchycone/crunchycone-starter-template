@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
@@ -115,14 +122,10 @@ export function SignInForm() {
         <Alert>
           <Mail className="h-4 w-4" />
           <AlertDescription>
-            Check your email! We've sent a magic link to sign in.
+            Check your email! We&apos;ve sent a magic link to sign in.
           </AlertDescription>
         </Alert>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => setMagicLinkSent(false)}
-        >
+        <Button variant="outline" className="w-full" onClick={() => setMagicLinkSent(false)}>
           Back to Sign In
         </Button>
       </div>
@@ -135,10 +138,13 @@ export function SignInForm() {
         <TabsTrigger value="password">Email & Password</TabsTrigger>
         <TabsTrigger value="magiclink">Magic Link</TabsTrigger>
       </TabsList>
-      
+
       <TabsContent value="password" className="space-y-4">
         <Form {...emailPasswordForm}>
-          <form onSubmit={emailPasswordForm.handleSubmit(onEmailPasswordSubmit)} className="space-y-4">
+          <form
+            onSubmit={emailPasswordForm.handleSubmit(onEmailPasswordSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={emailPasswordForm.control}
               name="email"
@@ -146,11 +152,7 @@ export function SignInForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      {...field}
-                    />
+                    <Input type="email" placeholder="you@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -163,10 +165,7 @@ export function SignInForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <PasswordInput
-                      placeholder="Enter your password"
-                      {...field}
-                    />
+                    <PasswordInput placeholder="Enter your password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -181,10 +180,10 @@ export function SignInForm() {
               <Lock className="mr-2 h-4 w-4" />
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
-            
+
             <div className="text-center">
-              <Link 
-                href="/auth/forgot-password" 
+              <Link
+                href="/auth/forgot-password"
                 className="text-sm text-muted-foreground hover:text-primary hover:underline"
               >
                 Forgot your password?
@@ -193,7 +192,7 @@ export function SignInForm() {
           </form>
         </Form>
       </TabsContent>
-      
+
       <TabsContent value="magiclink" className="space-y-4">
         <Form {...magicLinkForm}>
           <form onSubmit={magicLinkForm.handleSubmit(onMagicLinkSubmit)} className="space-y-4">
@@ -204,11 +203,7 @@ export function SignInForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      {...field}
-                    />
+                    <Input type="email" placeholder="you@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

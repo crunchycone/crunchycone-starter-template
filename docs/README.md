@@ -5,7 +5,9 @@ This directory contains detailed guides for extending the CrunchyCone starter te
 ## Available Guides
 
 ### 📧 [Email Providers](./email-providers.md)
+
 Learn how to implement different email providers:
+
 - SendGrid
 - Resend
 - AWS SES
@@ -13,7 +15,9 @@ Learn how to implement different email providers:
 - Development tools (Mailtrap, Ethereal)
 
 ### 🔐 [Authentication Providers](./auth-providers.md)
+
 Add OAuth and social login providers:
+
 - Google OAuth
 - GitHub OAuth
 - Facebook Login
@@ -22,7 +26,9 @@ Add OAuth and social login providers:
 - Generic OAuth2 implementation
 
 ### 🎨 [Theme Customization](./theme-customization.md)
+
 Create and customize themes:
+
 - Adding preset themes
 - User-customizable themes
 - Dynamic theme loading
@@ -39,6 +45,7 @@ Create and customize themes:
 ## Contributing
 
 When adding new features or providers:
+
 1. Update the relevant documentation
 2. Include code examples
 3. Document environment variables

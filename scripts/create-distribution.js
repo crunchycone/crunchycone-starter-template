@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
 
 function log(message) {
   console.log(`📦 ${message}`);
@@ -44,7 +44,7 @@ function copyFolderRecursiveSync(source, target, excludeDirs = []) {
     files = fs.readdirSync(source);
     files.forEach(function (file) {
       const curSource = path.join(source, file);
-      
+
       // Skip excluded directories
       if (excludeDirs.includes(file)) {
         log(`Skipping excluded directory: ${file}`);
@@ -66,8 +66,8 @@ function copyDirectoryContents(source, target, excludeDirs = [], excludeFiles = 
   }
 
   const items = fs.readdirSync(source);
-  
-  items.forEach(item => {
+
+  items.forEach((item) => {
     const sourcePath = path.join(source, item);
     const targetPath = path.join(target, item);
     const stat = fs.lstatSync(sourcePath);
@@ -97,61 +97,53 @@ function copyDirectoryContents(source, target, excludeDirs = [], excludeFiles = 
 function createDistribution() {
   const projectRoot = process.cwd();
   const projectName = path.basename(projectRoot);
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const distName = `${projectName}-distribution-${timestamp}`;
-  const distPath = path.join(projectRoot, '..', distName);
+  const distPath = path.join(projectRoot, "..", distName);
 
-  log('Creating distribution package...');
+  log("Creating distribution package...");
   log(`Distribution name: ${distName}`);
 
   try {
     // Create distribution directory
-    log('Creating distribution directory...');
+    log("Creating distribution directory...");
     if (fs.existsSync(distPath)) {
       fs.rmSync(distPath, { recursive: true, force: true });
     }
     fs.mkdirSync(distPath, { recursive: true });
 
     // List of directories to exclude
-    const excludeDirs = [
-      '.git',
-      '.next',
-      'node_modules',
-      'dist',
-      'build',
-      '.turbo',
-      'coverage'
-    ];
+    const excludeDirs = [".git", ".next", "node_modules", "dist", "build", ".turbo", "coverage"];
 
     // List of files to exclude
     const excludeFiles = [
-      '.env',
-      '.env.local',
-      '.env.development.local',
-      '.env.test.local',
-      '.env.production.local',
-      'db/prod.db',
-      'db/prod.db-journal',
-      'npm-debug.log*',
-      'yarn-debug.log*',
-      'yarn-error.log*'
+      ".env",
+      ".env.local",
+      ".env.development.local",
+      ".env.test.local",
+      ".env.production.local",
+      "db/prod.db",
+      "db/prod.db-journal",
+      "npm-debug.log*",
+      "yarn-debug.log*",
+      "yarn-error.log*",
     ];
 
-    log('Copying project files...');
+    log("Copying project files...");
 
     // Create the project directory in the distribution
     const projectDistPath = path.join(distPath, projectName);
-    
+
     // Copy all project contents to the distribution directory
     copyDirectoryContents(projectRoot, projectDistPath, excludeDirs, excludeFiles);
 
     // Ensure .env.example exists in distribution
-    const envExampleTarget = path.join(projectDistPath, '.env.example');
-    
+    const envExampleTarget = path.join(projectDistPath, ".env.example");
+
     if (fs.existsSync(envExampleTarget)) {
-      success('.env.example included in distribution');
+      success(".env.example included in distribution");
     } else {
-      log('Warning: .env.example not found in distribution');
+      log("Warning: .env.example not found in distribution");
     }
 
     // Create a setup script for the distribution
@@ -186,12 +178,12 @@ echo "2. Run 'npm run dev' to start development"
 echo "3. Visit http://localhost:3000 to setup your admin account"
 `;
 
-    const setupScriptPath = path.join(projectDistPath, 'setup.sh');
+    const setupScriptPath = path.join(projectDistPath, "setup.sh");
     fs.writeFileSync(setupScriptPath, setupScript);
-    
+
     // Make setup script executable (on Unix systems)
     try {
-      fs.chmodSync(setupScriptPath, '755');
+      fs.chmodSync(setupScriptPath, "755");
     } catch (e) {
       // Ignore chmod errors on Windows
     }
@@ -257,27 +249,26 @@ For issues and questions, please refer to the original repository.
 Generated on: ${new Date().toISOString()}
 `;
 
-    const distReadmePath = path.join(projectDistPath, 'DISTRIBUTION.md');
+    const distReadmePath = path.join(projectDistPath, "DISTRIBUTION.md");
     fs.writeFileSync(distReadmePath, distributionReadme);
-    success('Created DISTRIBUTION.md');
+    success("Created DISTRIBUTION.md");
 
     success(`Distribution created successfully!`);
     success(`Location: ${distPath}`);
     success(`Size: ${(getDirSize(distPath) / 1024 / 1024).toFixed(2)} MB`);
-    
-    log('');
-    log('Distribution contents:');
+
+    log("");
+    log("Distribution contents:");
     log(`- Project files (excluding .git, node_modules, .next)`);
     log(`- .env.example (for configuration)`);
     log(`- setup.sh (automatic setup script)`);
     log(`- DISTRIBUTION.md (setup instructions)`);
-    
-    log('');
-    log('Next steps:');
+
+    log("");
+    log("Next steps:");
     log(`1. cd ${distPath}`);
     log(`2. zip -r ${distName}.zip ${path.basename(projectRoot)}/`);
     log(`3. Distribute the ${distName}.zip file`);
-
   } catch (err) {
     error(`Failed to create distribution: ${err.message}`);
   }
@@ -285,20 +276,20 @@ Generated on: ${new Date().toISOString()}
 
 function getDirSize(dirPath) {
   let size = 0;
-  
+
   function calculateSize(itemPath) {
     const stat = fs.lstatSync(itemPath);
-    
+
     if (stat.isFile()) {
       size += stat.size;
     } else if (stat.isDirectory()) {
       const items = fs.readdirSync(itemPath);
-      items.forEach(item => {
+      items.forEach((item) => {
         calculateSize(path.join(itemPath, item));
       });
     }
   }
-  
+
   calculateSize(dirPath);
   return size;
 }

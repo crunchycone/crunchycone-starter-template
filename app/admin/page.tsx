@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserCheck, Clock, TrendingUp } from "lucide-react";
 
+// Force dynamic rendering for Docker builds
+export const dynamic = "force-dynamic";
+
 async function getStats() {
   const [totalUsers, activeUsers, recentSignups] = await Promise.all([
     prisma.user.count({

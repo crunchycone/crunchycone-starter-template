@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { UserManagementPanel } from "@/components/admin/UserManagementPanel";
 import { getCurrentUser } from "@/lib/auth/permissions";
+
+// Force dynamic rendering for Docker builds
+export const dynamic = "force-dynamic";
+
 const ITEMS_PER_PAGE = 10;
 
 async function getRoles() {

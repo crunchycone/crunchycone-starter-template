@@ -1,5 +1,8 @@
 import { DatabaseViewerPanel } from "@/components/admin/DatabaseViewerPanel";
 
+// Force dynamic rendering for Docker builds
+export const dynamic = "force-dynamic";
+
 export default async function DatabasePage() {
   return (
     <div className="space-y-6">

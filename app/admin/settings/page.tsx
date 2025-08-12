@@ -1,6 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+// Force dynamic rendering for Docker builds
+export const dynamic = "force-dynamic";
+
 export default function AdminSettingsPage() {
   return (
     <div className="space-y-6">

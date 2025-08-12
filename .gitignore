@@ -45,7 +45,7 @@ next-env.d.ts
 /db/*
 !db/.keep
 /prisma/db/
-/prisma/migrations
+# /prisma/migrations  # DO NOT IGNORE - Migrations MUST be tracked in Git for automated deployments!
 
 # IDE
 .vscode/

@@ -53,7 +53,31 @@ export const ulidMiddleware: Prisma.Middleware = async (params, next) => {
  * Create a Prisma client with ULID middleware
  */
 export function createPrismaClient() {
-  const prisma = new PrismaClient();
+  let prisma: PrismaClient;
+
+  // Check if we're using Turso (libSQL)
+  if (process.env.DATABASE_URL?.startsWith("libsql://") && process.env.TURSO_AUTH_TOKEN) {
+    try {
+      // Import Turso adapter - webpack is configured to handle these files
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { PrismaLibSQL } = require("@prisma/adapter-libsql");
+
+      const adapter = new PrismaLibSQL({
+        url: process.env.DATABASE_URL,
+        authToken: process.env.TURSO_AUTH_TOKEN,
+      });
+
+      prisma = new PrismaClient({ adapter });
+      console.log("✅ Turso adapter initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize Turso adapter, falling back to standard client:", error);
+      prisma = new PrismaClient();
+    }
+  } else {
+    // Standard SQLite/PostgreSQL/MySQL
+    prisma = new PrismaClient();
+  }
+
   prisma.$use(ulidMiddleware);
   return prisma;
 }

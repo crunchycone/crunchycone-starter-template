@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { RoleManagementPanel } from "@/components/admin/RoleManagementPanel";
 
+// Force dynamic rendering for Docker builds
+export const dynamic = "force-dynamic";
+
 async function getRoles() {
   const roles = await prisma.role.findMany({
     where: {

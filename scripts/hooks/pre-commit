@@ -1,0 +1,28 @@
+#!/bin/sh
+# Pre-commit hook to prevent committing database files
+
+# Check if database files are being committed
+if git diff --cached --name-only | grep -E "(\.db$|\.db-shm$|\.db-wal$|^db/.*\.db|^prisma/db/)" > /dev/null; then
+    echo ""
+    echo "❌ ERROR: Attempting to commit database files!"
+    echo ""
+    echo "Database files should not be committed to the repository."
+    echo "The following database files were detected in your commit:"
+    echo ""
+    git diff --cached --name-only | grep -E "(\.db$|\.db-shm$|\.db-wal$|^db/.*\.db|^prisma/db/)" | sed 's/^/  - /'
+    echo ""
+    echo "To fix this:"
+    echo "1. Remove these files from staging:"
+    echo "   git reset HEAD <file>"
+    echo ""
+    echo "2. To ignore them locally (recommended):"
+    echo "   echo '/db/*' >> .git/info/exclude"
+    echo "   echo '/prisma/db/' >> .git/info/exclude"
+    echo ""
+    echo "3. Or ensure they're in .gitignore"
+    echo ""
+    exit 1
+fi
+
+# All checks passed
+exit 0

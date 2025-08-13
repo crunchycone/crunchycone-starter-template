@@ -50,36 +50,6 @@ This guide will help you set up your development environment step by step.
 - Your app needs a database to store information
 - Includes default user and admin roles
 
-### Step 3.5: (Optional) Track Database in Git
-#### For demo/prototype projects using SQLite:
-If you want to track the SQLite database in Git (useful for demos, prototypes, or learning projects):
-
-**What to do**: Modify `.gitignore` to allow database tracking
-1. Edit `.gitignore` and comment out or remove these lines:
-   ```
-   /db/*
-   /prisma/db/
-   ```
-2. After making this change, add the database to Git:
-   ```bash
-   git add db/prod.db prisma/db/prod.db
-   git commit -m "Track database in Git for demo purposes"
-   ```
-
-**When to do this**:
-- ✅ Demo applications that need consistent state
-- ✅ Prototypes and proof-of-concepts
-- ✅ Single-developer projects
-- ✅ Teaching/learning projects where you want to share a pre-populated database
-
-**When NOT to do this**:
-- ❌ Multi-developer teams (causes merge conflicts)
-- ❌ Production applications
-- ❌ Projects with sensitive or personal data
-- ❌ Applications with frequent data changes
-
-**Note**: The template excludes databases from Git by default, which is the correct behavior for most production projects. Only change this if you specifically need to share the database state.
-
 ### Step 4: Generate Prisma Client
 #### When `node_modules/.prisma/client/index.js` doesn't exist:
 - **What to do**: Generate the database client

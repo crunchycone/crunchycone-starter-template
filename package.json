@@ -14,7 +14,8 @@
     "db:seed": "prisma db seed",
     "db:reset": "rm -f db/prod.db && prisma migrate dev --name init && prisma db seed",
     "db:studio": "prisma studio",
-    "prepare": "node scripts/install-hooks.js"
+    "hooks:install": "node scripts/install-hooks.js",
+    "hooks:remove": "rm -f .git/hooks/pre-commit"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"

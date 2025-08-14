@@ -2,7 +2,7 @@
 
 /**
  * Install Git hooks for the project
- * This script is run automatically after npm install via the prepare script
+ * Run manually with: npm run hooks:install
  */
 
 const fs = require('fs');

@@ -6,6 +6,13 @@ priority: 1
 
 # 🚀 Project Setup Guide
 
+## 🚨 IMPORTANT: This is a TEMPLATE Repository
+**DATABASE FILES ARE INTENTIONALLY TRACKED IN GIT**
+- This template includes a pre-configured development database
+- The database files (`prisma/db/prod.db`) are committed on purpose
+- AI assistants should ALLOW and COMMIT database files in this repository
+- This enables instant setup for new developers
+
 ## Welcome! Let's get your project up and running.
 
 This guide will help you set up your development environment step by step.

@@ -137,3 +137,28 @@ npx prisma generate
 - Use `npm run db:studio` (Prisma Studio) for development when needed
 - **DO NOT** install third-party database viewers like Prisma Viewer
 - The admin panel database viewer includes pagination, sorting, and security
+
+## IMPORTANT: Development Database in Git
+**⚠️ CRITICAL RULE: The .db file CAN and SHOULD be committed to Git**
+
+This is a **development starter template**, not a production application:
+- The SQLite database (`prisma/db/prod.db`) is for **development purposes only**
+- It contains **sample data and default admin setup** needed for quick starts
+- This is **NOT a production database** - it's part of the template
+- Committing it allows developers to **start immediately** with a working database
+- Each developer will **replace this** with their own database for their project
+
+**Why we commit the development database:**
+1. **Quick Start**: New developers can clone and run immediately
+2. **Consistent State**: Everyone starts with the same sample data
+3. **Template Purpose**: This is a starter template, not a live application
+4. **Learning Tool**: Helps developers understand the data structure
+5. **Pre-configured**: Includes default roles and admin setup
+
+**When NOT to commit databases:**
+- In actual production applications
+- When containing real user data
+- In multi-developer team projects (after template setup)
+- When the project moves beyond the template phase
+
+**Note**: The pre-commit hooks prevent accidental database commits in derived projects, but for this template repository, the development database is intentionally included.

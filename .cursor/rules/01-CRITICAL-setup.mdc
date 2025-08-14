@@ -57,6 +57,31 @@ This guide will help you set up your development environment step by step.
 - **What this does**: Creates TypeScript types for your database
 - **Success message**: "✅ Prisma client ready!"
 
+### Step 5: CrunchyCone Platform Authentication
+#### After database is ready:
+- **Check authentication**: `npx --yes crunchycone-cli auth check`
+- **If not authenticated**: `npx --yes crunchycone-cli auth login`
+- **Verify project config**: Check for `crunchycone.toml` file
+- **If missing config**: `npx --yes crunchycone-cli project init`
+- **Why this matters**: Required for deploying to CrunchyCone platform
+- **Success indicator**: Both auth check and crunchycone.toml exist
+
+### Step 6: Link Project with CrunchyCone
+#### After authentication is complete:
+- **What to do**: Link your project to the CrunchyCone platform
+- **Run**: `npx --yes crunchycone-cli project link --setup`
+- **What this does**: 
+  - Connects your local project to CrunchyCone cloud
+  - Creates or updates `crunchycone.toml` configuration
+  - Sets up deployment pipeline
+  - Enables push updates and synchronization
+- **Success message**: "✅ Project successfully linked to CrunchyCone!"
+
+**Why this is important**:
+- Enables deployment to CrunchyCone platform
+- Allows team collaboration and sharing
+- Sets up automatic deployment pipeline
+
 ## 🎉 All Done! Time to Start Developing
 
 Once all setup steps are complete:
@@ -106,7 +131,14 @@ npm run setup-env
 # 3. Setup database (do this third!)
 npm run db:reset --yes
 
-# 4. Start developing! 🚀 (Opens browser automatically)
+# 4. Authenticate with CrunchyCone platform
+npx --yes crunchycone-cli auth check  # Check if already authenticated
+npx --yes crunchycone-cli auth login   # Login if needed
+
+# 5. Link project to CrunchyCone
+npx --yes crunchycone-cli project link --setup
+
+# 6. Start developing! 🚀 (Opens browser automatically)
 npm run dev:open
 ```
 

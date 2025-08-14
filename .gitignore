@@ -41,12 +41,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# database
-/db/*
-!db/.keep
-/prisma/db/
-# /prisma/migrations  # DO NOT IGNORE - Migrations MUST be tracked in Git for automated deployments!
-
 # IDE
 .vscode/
 .idea/

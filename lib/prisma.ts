@@ -1,6 +1,6 @@
 import { createPrismaClient } from "./utils/ulid";
 
-// Create a single instance of Prisma Client with ULID middleware
+// Create a single instance of Prisma Client with ULID extension
 const globalForPrisma = globalThis as unknown as {
   prisma: ReturnType<typeof createPrismaClient> | undefined;
 };

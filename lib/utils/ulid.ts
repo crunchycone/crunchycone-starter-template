@@ -18,42 +18,95 @@ export function isValidUlid(id: string): boolean {
 }
 
 /**
- * Prisma middleware to automatically generate ULIDs for new records
+ * Prisma Client Extension for automatic ULID generation
  */
-export const ulidMiddleware: Prisma.Middleware = async (params, next) => {
-  // List of all models that use ULID
-  const modelsWithUlid = ["User", "UserProfile", "Role", "UserRole"];
-
-  if (modelsWithUlid.includes(params.model || "")) {
-    if (params.action === "create") {
-      // Single create
-      if (!params.args.data.id) {
-        params.args.data.id = generateId();
-      }
-    } else if (params.action === "createMany") {
-      // Multiple creates
-      if (Array.isArray(params.args.data)) {
-        params.args.data = params.args.data.map((item: { id?: string }) => ({
-          ...item,
-          id: item.id || generateId(),
-        }));
-      }
-    } else if (params.action === "upsert") {
-      // Upsert - only generate ID for create
-      if (!params.args.create.id) {
-        params.args.create.id = generateId();
-      }
-    }
-  }
-
-  return next(params);
-};
+export const ulidExtension = Prisma.defineExtension({
+  name: "ulid-extension",
+  query: {
+    user: {
+      create({ args, query }) {
+        args.data.id = args.data.id || generateId();
+        return query(args);
+      },
+      createMany({ args, query }) {
+        if (Array.isArray(args.data)) {
+          args.data = args.data.map((item) => ({
+            ...item,
+            id: item.id || generateId(),
+          }));
+        }
+        return query(args);
+      },
+      upsert({ args, query }) {
+        args.create.id = args.create.id || generateId();
+        return query(args);
+      },
+    },
+    userProfile: {
+      create({ args, query }) {
+        args.data.id = args.data.id || generateId();
+        return query(args);
+      },
+      createMany({ args, query }) {
+        if (Array.isArray(args.data)) {
+          args.data = args.data.map((item) => ({
+            ...item,
+            id: item.id || generateId(),
+          }));
+        }
+        return query(args);
+      },
+      upsert({ args, query }) {
+        args.create.id = args.create.id || generateId();
+        return query(args);
+      },
+    },
+    role: {
+      create({ args, query }) {
+        args.data.id = args.data.id || generateId();
+        return query(args);
+      },
+      createMany({ args, query }) {
+        if (Array.isArray(args.data)) {
+          args.data = args.data.map((item) => ({
+            ...item,
+            id: item.id || generateId(),
+          }));
+        }
+        return query(args);
+      },
+      upsert({ args, query }) {
+        args.create.id = args.create.id || generateId();
+        return query(args);
+      },
+    },
+    userRole: {
+      create({ args, query }) {
+        args.data.id = args.data.id || generateId();
+        return query(args);
+      },
+      createMany({ args, query }) {
+        if (Array.isArray(args.data)) {
+          args.data = args.data.map((item) => ({
+            ...item,
+            id: item.id || generateId(),
+          }));
+        }
+        return query(args);
+      },
+      upsert({ args, query }) {
+        args.create.id = args.create.id || generateId();
+        return query(args);
+      },
+    },
+  },
+});
 
 /**
- * Create a Prisma client with ULID middleware
+ * Create a Prisma client with ULID extension
  */
 export function createPrismaClient() {
-  let prisma: PrismaClient;
+  let basePrisma: PrismaClient;
 
   // Check if we're using Turso (libSQL)
   if (process.env.DATABASE_URL?.startsWith("libsql://") && process.env.TURSO_AUTH_TOKEN) {
@@ -67,17 +120,18 @@ export function createPrismaClient() {
         authToken: process.env.TURSO_AUTH_TOKEN,
       });
 
-      prisma = new PrismaClient({ adapter });
+      basePrisma = new PrismaClient({ adapter });
       console.log("✅ Turso adapter initialized successfully");
     } catch (error) {
       console.error("Failed to initialize Turso adapter, falling back to standard client:", error);
-      prisma = new PrismaClient();
+      basePrisma = new PrismaClient();
     }
   } else {
     // Standard SQLite/PostgreSQL/MySQL
-    prisma = new PrismaClient();
+    basePrisma = new PrismaClient();
   }
 
-  prisma.$use(ulidMiddleware);
+  // Apply ULID extension
+  const prisma = basePrisma.$extends(ulidExtension);
   return prisma;
 }

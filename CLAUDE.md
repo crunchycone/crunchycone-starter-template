@@ -94,6 +94,16 @@ crunchycone-starter-template/
 │   │   └── ulid.ts         # ULID generation and Prisma Client Extensions
 │   ├── prisma.ts           # Centralized Prisma client with ULID extension
 │   └── utils.ts            # General utilities
+├── themes/                  # TypeScript theme system
+│   ├── types.ts            # Theme TypeScript interfaces
+│   ├── index.ts            # Theme registry and utilities
+│   ├── base/               # Core system themes
+│   │   ├── light.ts        # Light theme definition
+│   │   └── dark.ts         # Dark theme definition
+│   └── custom/             # Custom themes
+│       ├── ocean.ts        # Ocean blue theme
+│       ├── forest.ts       # Forest green theme
+│       └── midnight.ts     # Midnight purple theme
 └── prisma/                  # Prisma configuration
     ├── schema.prisma       # Database schema
     ├── seed.ts             # Database seeding
@@ -744,40 +754,123 @@ import { SendGridProvider } from "@/lib/email/providers/sendgrid";
 setEmailProvider(new SendGridProvider(process.env.SENDGRID_API_KEY));
 ```
 
-## Theme Support
+## TypeScript Theme System
 
-The application includes full dark mode support using `next-themes`:
+The application includes a modern TypeScript-based theme system with `next-themes` for maximum maintainability and type safety:
 
-### Features
+### 🎨 Features
 
-- Light/Dark/System theme options
-- Theme toggle component in all pages
-- Persistent theme preference
-- No flash on page load
-- Smooth transitions
+- **Multiple Themes**: Light, Dark, Ocean, Forest, Midnight + System theme detection
+- **Type Safety**: Complete TypeScript interfaces for all theme definitions
+- **Organized Structure**: Themes organized in folders with clear separation
+- **Dynamic Theme Toggle**: Component automatically reads from theme registry
+- **Theme Utilities**: Built-in validation, CSS generation, and management functions
+- **Persistent Preferences**: Theme choices saved across sessions
+- **No Flash on Load**: Smooth theme transitions without FOUC
+- **Tailwind v4 Ready**: Future-proof architecture for Tailwind CSS v4
 
-### Theme Toggle Locations
+### 📁 Theme Directory Structure
 
-- Admin dashboard (desktop and mobile)
-- Home page (top right)
-- All auth pages (top right)
+```
+themes/
+├── types.ts              # TypeScript interfaces and types
+├── index.ts               # Theme registry and utility functions
+├── base/                  # Core system themes
+│   ├── light.ts          # Light theme definition
+│   └── dark.ts           # Dark theme definition
+└── custom/                # Custom themes
+    ├── ocean.ts          # Ocean Blue theme
+    ├── forest.ts         # Forest Green theme
+    └── midnight.ts       # Midnight Purple theme
+```
 
-### Implementation
+### 🚀 Theme Toggle Implementation
 
-- Uses `next-themes` with class-based dark mode
-- CSS variables for colors that adapt to theme
-- `ThemeProvider` wraps the entire application
-- `ThemeToggle` component for user control
+The theme toggle dynamically loads available themes:
+
+```typescript
+// components/theme-toggle.tsx
+import { getThemesByCategory } from "@/themes";
+
+const baseThemes = getThemesByCategory("base");      // [light, dark]
+const customThemes = getThemesByCategory("custom");  // [ocean, forest, midnight]
+```
+
+### 🎯 Adding a New Theme
+
+1. **Create Theme File**: `themes/custom/yourtheme.ts`
+2. **Register in Registry**: Add to `themes/index.ts`
+3. **Generate CSS**: Use utility function to create CSS
+4. **Update Provider**: Add theme name to `app/layout.tsx`
+
+See complete documentation in `/themes/README.md`
+
+### 🎨 Available Themes
+
+- **Light** (`light`) - Clean, bright theme
+- **Dark** (`dark`) - Professional dark theme  
+- **Ocean** (`ocean`) - Blue ocean-inspired theme 🌊
+- **Forest** (`forest`) - Green nature-inspired theme 🌲
+- **Midnight** (`midnight`) - Purple night-inspired theme 🌙
+- **System** (`system`) - Automatically follows OS preference
+
+### 🔧 Theme Utilities
+
+```typescript
+import { 
+  getAllThemes, 
+  getTheme, 
+  validateTheme,
+  generateThemeCSS 
+} from "@/themes";
+
+// Get all available themes
+const themes = getAllThemes();
+
+// Get specific theme
+const oceanTheme = getTheme("ocean");
+
+// Validate theme structure
+const validation = validateTheme(newTheme);
+
+// Generate CSS from theme object
+const css = generateThemeCSS(oceanTheme);
+```
+
+## Recent Updates in This Session
+
+### ✅ Prisma Client Extensions Migration
+- **Migrated from deprecated Prisma middleware to Client Extensions API**
+- Updated ULID auto-generation system for better performance and future compatibility
+- Fixed deprecation warnings in `/lib/utils/ulid.ts` and `/lib/prisma.ts`
+
+### ✅ Prisma Configuration Modernization  
+- **Created `prisma.config.ts`** to replace deprecated package.json seed configuration
+- Added proper environment variable loading with `dotenv/config`
+- Fixed `npm run db:reset` command failures
+
+### ✅ TypeScript Theme System Implementation
+- **Completely reorganized theme system** with TypeScript objects for maintainability
+- Added 3 custom themes: Ocean (🌊), Forest (🌲), Midnight (🌙)
+- Created `/themes/` directory with organized theme definitions
+- Implemented type-safe theme registry with validation utilities
+- Enhanced ThemeToggle component with dynamic theme loading
+- Future-proofed for Tailwind CSS v4 compatibility
+
+### ✅ Git Local Exclusions
+- Added `prisma/prod.db` to local git exclude (`.git/info/exclude`)
+- Database files now excluded locally without affecting team `.gitignore`
 
 ## Future Enhancements
 
 1. **Email Service**: Implement real email sending (SendGrid, Resend, etc.)
-2. **Dark Mode Toggle**: Add theme switcher component
-3. **Two-Factor Authentication**: Add 2FA support
-4. **API Rate Limiting**: Implement rate limiting for API routes
-5. **Audit Logs**: Track admin actions
-6. **User Profiles**: Expand user profile functionality
-7. **File Uploads**: Add avatar/profile picture support
+2. **Two-Factor Authentication**: Add 2FA support  
+3. **API Rate Limiting**: Implement rate limiting for API routes
+4. **Audit Logs**: Track admin actions
+5. **User Profiles**: Expand user profile functionality
+6. **File Uploads**: Add avatar/profile picture support
+7. **Automated Theme CSS Generation**: Build-time script for theme CSS
+8. **Theme Marketplace**: Share themes between projects
 
 ## Troubleshooting
 

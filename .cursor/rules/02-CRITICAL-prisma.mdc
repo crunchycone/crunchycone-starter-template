@@ -103,11 +103,28 @@ model YourModel {
 
 ### Important Import Pattern:
 ```typescript
-// ✅ Correct - uses middleware for ULIDs
+// ✅ Correct - uses Client Extensions for ULIDs
 import { prisma } from '@/lib/prisma'
 
-// ❌ Avoid - bypasses middleware
+// ❌ Avoid - bypasses ULID extension
 import { PrismaClient } from '@prisma/client'
+```
+
+### ULID Auto-Generation:
+- All model IDs are **automatically generated** using ULID (Universally Unique Lexicographically Sortable Identifier)
+- **26-character strings** that are sortable by creation time
+- **No manual ID generation needed** - the Client Extension handles it
+- Example ULID: `01JZK5AT1CBD1SBW5T3JQ60VPR`
+
+```typescript
+// ULIDs are generated automatically on create
+const user = await prisma.user.create({
+  data: {
+    email: "user@example.com",
+    // No need to set 'id' - ULID extension generates it
+  }
+});
+// user.id = "01JZK5AT1CBD1SBW5T3JQ60VPR"
 ```
 
 ## 🚀 Useful Commands Reference

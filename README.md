@@ -23,11 +23,14 @@ A production-ready Next.js starter template with authentication, admin dashboard
   - User search and pagination
   - Role assignment/removal with protections
 
-- 🎨 **Modern UI/UX**
+- 🎨 **Modern UI/UX & TypeScript Theme System**
   - Built with shadcn/ui components
   - Tailwind CSS for responsive styling
-  - Full dark mode support with system detection
-  - Theme persistence and smooth transitions
+  - **TypeScript-based theme system** with organized theme definitions
+  - **Multiple themes**: Light, Dark, Ocean (🌊), Forest (🌲), Midnight (🌙)
+  - **System theme detection** with persistent preferences
+  - **Type-safe theme management** with validation utilities
+  - **Tailwind v4 ready** architecture for future compatibility
   - Responsive design for all screen sizes
   - Loading states, error handling, and success feedback
   - Accessible design with proper contrast ratios
@@ -41,7 +44,8 @@ A production-ready Next.js starter template with authentication, admin dashboard
 
 - 🛠️ **Developer Experience**
   - TypeScript for complete type safety
-  - Prisma ORM with SQLite (production database ready)
+  - **Prisma ORM with modern Client Extensions API** (SQLite, production database ready)
+  - **Automatic ULID generation** for all database records
   - Server Components and Server Actions
   - Comprehensive documentation and guides
   - Cursor IDE integration with smart rules
@@ -159,6 +163,11 @@ crunchycone-starter-template/
 ├── lib/                     # Utility functions
 │   ├── auth/                # Authentication utilities
 │   └── email/               # Email service
+├── themes/                  # TypeScript theme system
+│   ├── types.ts             # Theme TypeScript interfaces
+│   ├── index.ts             # Theme registry and utilities
+│   ├── base/                # Core system themes (light, dark)
+│   └── custom/              # Custom themes (ocean, forest, midnight)
 ├── prisma/                  # Database configuration
 │   ├── schema.prisma        # Database schema
 │   └── seed.ts              # Seed script
@@ -229,14 +238,24 @@ crunchycone-starter-template/
 4. **Delete Roles** → Remove custom roles (if no users assigned)
 5. **Protection** → Cannot delete system roles (user, admin)
 
-### 🎨 Theme & Personalization Flows
+### 🎨 TypeScript Theme System Flows
 
 #### Theme Switching
 
-1. **Theme Toggle** → Available on all pages (top-right)
-2. **Options Available** → Light, Dark, System
-3. **Persistence** → Theme choice saved across sessions
-4. **System Detection** → Automatically follows OS theme preference
+1. **Theme Toggle** → Available on all pages (top-right) with dynamic theme loading
+2. **Multiple Options** → Light, Dark, Ocean (🌊), Forest (🌲), Midnight (🌙), System
+3. **Type-Safe Management** → TypeScript interfaces ensure theme consistency
+4. **Persistence** → Theme choice saved across sessions
+5. **System Detection** → Automatically follows OS theme preference
+6. **Organized Structure** → Themes defined in `/themes/` with clear categorization
+
+#### Theme Development
+
+1. **Create Theme File** → Add new theme in `themes/custom/yourtheme.ts`
+2. **Type Safety** → Use TypeScript interfaces for theme structure
+3. **Register Theme** → Add to theme registry in `themes/index.ts`
+4. **Auto CSS Generation** → Use utility functions to generate CSS
+5. **Validation** → Built-in theme validation and testing utilities
 
 ### 🔧 Developer & Admin Workflows
 
@@ -316,7 +335,8 @@ The authentication system uses a multi-layered approach:
 
 All models follow consistent patterns:
 
-- **Standard Fields**: `id`, `created_at`, `updated_at`, `deleted_at`
+- **Standard Fields**: `id` (ULID), `created_at`, `updated_at`, `deleted_at`
+- **ULID Auto-Generation**: All IDs automatically generated using Prisma Client Extensions
 - **Soft Deletes**: Records marked as deleted, never physically removed
 - **Relationships**: Proper foreign keys and indexes
 - **Transactions**: Multi-table operations wrapped in database transactions

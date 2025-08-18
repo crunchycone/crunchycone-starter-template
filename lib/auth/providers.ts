@@ -30,6 +30,24 @@ export function isGoogleAuthEnabled(): boolean {
 }
 
 /**
+ * Check if GitHub OAuth is enabled based on environment variables
+ * Note: On client-side, we only check the toggle since credentials are server-only
+ */
+export function isGitHubAuthEnabled(): boolean {
+  // Client-side: only check the public toggle
+  if (typeof window !== 'undefined') {
+    return process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === "true"
+  }
+  
+  // Server-side: check toggle and credentials
+  return (
+    process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === "true" &&
+    !!process.env.GITHUB_CLIENT_ID &&
+    !!process.env.GITHUB_CLIENT_SECRET
+  )
+}
+
+/**
  * Check if Email/Password authentication is enabled based on environment variables
  * Enabled by default (only disabled if explicitly set to "false")
  */
@@ -77,6 +95,17 @@ export function getAvailableProviders(): ProviderConfig[] {
       name: 'Continue with Google',
       type: 'oauth',
       icon: 'google', // Will be handled by the UI component
+      enabled: true
+    })
+  }
+
+  // Add GitHub OAuth if enabled
+  if (isGitHubAuthEnabled()) {
+    providers.push({
+      id: 'github',
+      name: 'Continue with GitHub',
+      type: 'oauth',
+      icon: 'github', // Will be handled by the UI component
       enabled: true
     })
   }

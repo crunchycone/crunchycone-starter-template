@@ -7,6 +7,10 @@ A production-ready Next.js starter template with authentication, admin dashboard
 - 🔐 **Complete Authentication System**
   - Email/password authentication with secure bcrypt hashing
   - Magic link passwordless authentication
+  - **OAuth providers**: Google OAuth and GitHub OAuth (fully integrated)
+  - **Account linking**: Connect multiple OAuth accounts to one profile
+  - **Profile sync**: Automatic name and avatar synchronization
+  - Auth.js v4 with Prisma adapter for production-grade authentication
   - JWT-based sessions with HTTP-only cookies
   - Password reset with email verification
   - Email verification flow
@@ -69,7 +73,7 @@ A production-ready Next.js starter template with authentication, admin dashboard
 - **Database**: SQLite/Turso with Prisma ORM
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
-- **Authentication**: JWT with bcrypt
+- **Authentication**: Auth.js v4 with JWT, bcrypt, and OAuth providers
 - **Email**: Provider pattern (console/development)
 - **Theme**: next-themes with system detection
 
@@ -446,8 +450,8 @@ Create a `.env` file with these variables:
 ### Core Application
 ```env
 # Authentication
-JWT_SECRET="your-secret-key-change-in-production"  # Auto-generated during setup
-# Note: Changing JWT_SECRET will invalidate all existing sessions
+AUTH_SECRET="your-secret-key-change-in-production"  # Auto-generated during setup
+AUTH_URL="http://localhost:3000"
 
 # Email
 EMAIL_FROM="noreply@example.com"
@@ -458,6 +462,32 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 # Email Provider (optional)
 EMAIL_PROVIDER="console"  # or sendgrid, resend, aws-ses, smtp
 ```
+
+### OAuth Providers (Optional)
+
+Add OAuth providers by configuring credentials and enabling them:
+
+```env
+# Google OAuth
+NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=true
+GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="GOCSPX-your-google-client-secret"
+
+# GitHub OAuth  
+NEXT_PUBLIC_ENABLE_GITHUB_AUTH=true
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+
+# Authentication Method Toggles
+NEXT_PUBLIC_ENABLE_EMAIL_PASSWORD=true  # Default: true
+NEXT_PUBLIC_ENABLE_MAGIC_LINK=false     # Default: false
+```
+
+**Setup Guide**: See [docs/auth-providers.md](./docs/auth-providers.md) for complete OAuth setup instructions including:
+- Creating OAuth apps in Google Cloud Console and GitHub
+- Configuring callback URLs
+- Testing OAuth flows
+- Account linking and profile synchronization
 
 ### Database Configuration
 

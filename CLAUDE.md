@@ -31,7 +31,7 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 ## Authentication (Auth.js v4)
 
-**Providers**: Credentials (email/password), Email (magic links)
+**Providers**: Credentials (email/password), Email (magic links), Google OAuth, GitHub OAuth
 **Sessions**: JWT with Prisma adapter
 **Console Email**: Development magic links logged to console
 
@@ -91,13 +91,14 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 ## Profile System
 
 **Features**: User info display, OAuth linking/unlinking (with safety checks), auto profile sync
-**OAuth**: Google integration with account linking, profile enrichment, avatar sync
+**OAuth**: Google + GitHub integration with account linking, profile enrichment, avatar sync
 
-## Google OAuth
+## OAuth Providers
 
-**Setup**: Google Cloud Console + env vars (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
-**Features**: Auto UI, account linking, profile sync, role assignment
-**Details**: See `docs/auth-providers.md`
+**Google**: Google Cloud Console + env vars (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
+**GitHub**: GitHub OAuth App + env vars (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`)
+**Features**: Auto UI, account linking, profile sync, role assignment, avatar sync
+**Details**: Complete setup guide in `docs/auth-providers.md`
 
 ## Database Support
 
@@ -115,7 +116,8 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 ## Environment Variables
 
 **Required**: `AUTH_SECRET`, `AUTH_URL`, `DATABASE_URL`, `EMAIL_FROM`, `NEXT_PUBLIC_APP_URL`
-**Optional**: `TURSO_AUTH_TOKEN` (for Turso), Google OAuth vars
+**Optional**: `TURSO_AUTH_TOKEN` (for Turso), OAuth provider vars
+**OAuth**: `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`, provider toggles
 **Auto-generated**: `npm run setup-env` creates .env with AUTH_SECRET
 
 ## Development

@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import CredentialsProvider from "next-auth/providers/credentials"
 import EmailProvider from "next-auth/providers/email"
 import GoogleProvider from "next-auth/providers/google"
+import GitHubProvider from "next-auth/providers/github"
 import { prismaAuth } from "@/lib/auth/prisma-auth"
 import bcrypt from "bcryptjs"
 
@@ -113,6 +114,51 @@ This link will expire in 24 hours.
     );
   }
 
+  // Conditionally add GitHub OAuth provider
+  if (process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === "true" && process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    providers.push(
+      GitHubProvider({
+        clientId: process.env.GITHUB_CLIENT_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        authorization: {
+          params: {
+            scope: "read:user user:email"
+          }
+        },
+        profile: async (profile, tokens) => {
+          // If no email in profile, try to fetch it from GitHub API
+          if (!profile.email) {
+            try {
+              const response = await fetch('https://api.github.com/user/emails', {
+                headers: {
+                  'Authorization': `token ${tokens.access_token}`,
+                  'User-Agent': 'NextAuth'
+                }
+              })
+              const emails = await response.json()
+              
+              // Find primary email
+              const primaryEmail = emails?.find((email: any) => email.primary)
+              if (primaryEmail) {
+                profile.email = primaryEmail.email
+                console.log('GitHub: Retrieved primary email from API')
+              }
+            } catch (error) {
+              console.error('Error fetching GitHub emails:', error)
+            }
+          }
+          
+          return {
+            id: profile.id.toString(),
+            name: profile.name || profile.login,
+            email: profile.email,
+            image: profile.avatar_url,
+          }
+        }
+      })
+    );
+  }
+
   return providers;
 };
 
@@ -155,7 +201,7 @@ export const authConfig: NextAuthOptions = {
         console.log('JWT callback - user:', { id: user.id, email: user.email, name: user.name })
         
         // For OAuth users, we need to fetch roles from database
-        if (account?.provider === 'google') {
+        if (account?.provider === 'google' || account?.provider === 'github') {
           try {
             const dbUser = await prismaAuth.user.findUnique({
               where: { id: user.id },
@@ -190,8 +236,20 @@ export const authConfig: NextAuthOptions = {
     },
     async signIn({ user, account, profile }) {
       // Handle OAuth account linking and role assignment
-      if (account?.provider === 'google') {
-        console.log(`Google sign-in attempt for: ${user.email}`)
+      if (account?.provider === 'google' || account?.provider === 'github') {
+        console.log(`${account.provider} sign-in attempt for: ${user.email}`)
+        
+        // Check if email is available
+        if (!user.email) {
+          console.error(`${account.provider} user has no email address available`)
+          
+          // For GitHub users with private emails, we could use their GitHub username + provider
+          // But for this demo, we'll require email access
+          if (account.provider === 'github') {
+            console.log('GitHub user needs to make email public for this app')
+          }
+          return false
+        }
         
         try {
           // Check if user exists in our database
@@ -228,25 +286,38 @@ export const authConfig: NextAuthOptions = {
               }
             }
 
-            // Update user profile with Google data
+            // Update user profile with OAuth provider data
             if (profile) {
               const updates: { name?: string; image?: string } = {}
               
               // Update name if missing
               if (!dbUser.name && profile.name) {
                 updates.name = profile.name
-                console.log(`Updating user name from Google: ${profile.name}`)
+                console.log(`Updating user name from ${account.provider}: ${profile.name}`)
               }
               
               // Update avatar if missing OR if it has changed
-              if (profile.picture) {
+              const avatarUrl = account.provider === 'google' 
+                ? (profile as any).picture 
+                : (profile as any).avatar_url
+                
+              console.log(`${account.provider} profile data:`, { 
+                name: profile.name, 
+                avatarUrl,
+                picture: (profile as any).picture,
+                avatar_url: (profile as any).avatar_url
+              })
+              
+              if (avatarUrl) {
                 if (!dbUser.image) {
-                  updates.image = profile.picture
-                  console.log(`Setting user avatar from Google: ${profile.picture}`)
-                } else if (dbUser.image !== profile.picture) {
-                  updates.image = profile.picture
-                  console.log(`Updating changed user avatar from Google: ${profile.picture}`)
+                  updates.image = avatarUrl
+                  console.log(`Setting user avatar from ${account.provider}: ${avatarUrl}`)
+                } else if (dbUser.image !== avatarUrl) {
+                  updates.image = avatarUrl
+                  console.log(`Updating changed user avatar from ${account.provider}: ${avatarUrl}`)
                 }
+              } else {
+                console.log(`No avatar URL found for ${account.provider} user`)
               }
               
               if (Object.keys(updates).length > 0) {
@@ -258,7 +329,7 @@ export const authConfig: NextAuthOptions = {
               }
             }
           } else {
-            console.log(`New Google user: ${user.email}`)
+            console.log(`New ${account.provider} user: ${user.email}`)
             // User will be created by Auth.js, but we need to assign role after creation
             // This will be handled in the events.signIn callback
           }
@@ -275,7 +346,7 @@ export const authConfig: NextAuthOptions = {
       console.log(`User signed in: ${user.email}, isNewUser: ${isNewUser}`)
       
       // Assign default role to new OAuth users
-      if (isNewUser && account?.provider === 'google') {
+      if (isNewUser && (account?.provider === 'google' || account?.provider === 'github')) {
         try {
           const userRole = await prismaAuth.role.findUnique({
             where: { name: 'user' }
@@ -288,7 +359,7 @@ export const authConfig: NextAuthOptions = {
                 role_id: userRole.id
               }
             })
-            console.log(`Assigned user role to new Google user: ${user.email}`)
+            console.log(`Assigned user role to new ${account.provider} user: ${user.email}`)
           }
         } catch (error) {
           console.error('Error assigning role to new user:', error)

@@ -66,7 +66,7 @@ A production-ready Next.js starter template with authentication, admin dashboard
 
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
-- **Database**: SQLite with Prisma ORM
+- **Database**: SQLite/Turso with Prisma ORM
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
 - **Authentication**: JWT with bcrypt
@@ -443,10 +443,8 @@ By default, emails are logged to the console. To use a real email provider:
 
 Create a `.env` file with these variables:
 
+### Core Application
 ```env
-# Database
-DATABASE_URL="file:./db/prod.db"
-
 # Authentication
 JWT_SECRET="your-secret-key-change-in-production"  # Auto-generated during setup
 # Note: Changing JWT_SECRET will invalidate all existing sessions
@@ -459,6 +457,29 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 # Email Provider (optional)
 EMAIL_PROVIDER="console"  # or sendgrid, resend, aws-ses, smtp
+```
+
+### Database Configuration
+
+**For SQLite (Local Development):**
+```env
+DATABASE_URL="file:./db/prod.db"
+```
+
+**For Turso (Production):**
+```env
+DATABASE_URL="libsql://[your-database-url]"
+TURSO_AUTH_TOKEN="[your-auth-token]"
+```
+
+**For PostgreSQL:**
+```env
+DATABASE_URL="postgresql://user:password@host:port/database"
+```
+
+**For MySQL:**
+```env
+DATABASE_URL="mysql://user:password@host:port/database"
 ```
 
 ## Security Considerations
@@ -486,13 +507,20 @@ EMAIL_PROVIDER="console"  # or sendgrid, resend, aws-ses, smtp
 
 ### Database
 
-For production, consider migrating from SQLite to:
+For production, choose from supported database options:
 
-- PostgreSQL (recommended)
-- MySQL
-- SQL Server
+- **Turso (libSQL)** - Recommended for production (edge database, SQLite compatible)
+- **PostgreSQL** - Traditional production database
+- **MySQL** - Alternative traditional database
+- **SQLite** - Local development only
 
-Update the `DATABASE_URL` and Prisma provider accordingly.
+The application includes automatic database detection and migration:
+
+- **SQLite** (`file:`) - Standard Prisma migrations
+- **Turso** (`libsql:`) - Custom migration system with `turso-migrate.js`
+- **PostgreSQL/MySQL** - Standard Prisma migrations
+
+Update the `DATABASE_URL` (and `TURSO_AUTH_TOKEN` for Turso) accordingly. The Docker image will automatically detect and handle the appropriate database setup.
 
 ## Testing
 

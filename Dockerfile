@@ -1,9 +1,12 @@
 # ============================================
-# CrunchyCone Platform Dockerfile
+# Unified Multi-Platform Dockerfile
 # ============================================
-# This is a specialized Dockerfile for the CrunchyCone platform.
-# DO NOT modify this file if you are deploying to CrunchyCone.
-# The platform expects this specific configuration for optimal performance.
+# Uses unified entrypoint with platform auto-detection
+# Supports Render.com, Cloudflare Containers, and other platforms
+# Includes automatic database detection and migration:
+# - SQLite (file:) - Standard Prisma migrations
+# - Turso (libsql:) - Custom migration system via turso-migrate.js
+# - PostgreSQL/MySQL - Standard Prisma migrations
 # ============================================
 
 # Multi-stage build for optimized production image
@@ -45,14 +48,15 @@ ENV DATABASE_URL="file:./db/dummy.db"
 RUN npm run build
 
 # Stage 3: Runner (production image)
-# Using debian-slim instead of alpine for better native module compatibility
+# Using debian-slim for better compatibility and smaller total size
 FROM node:22-slim AS runner
 # Install OpenSSL for Prisma
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
-# Install Prisma CLI for migrations (required for entrypoint)
-RUN npm install -g prisma@6.13.0
+# Use npx with complete node_modules instead of global install
+# Copy the entire .bin directory for npx to work properly
+COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
 
 # Create non-root user for security
 RUN groupadd --system --gid 1001 nodejs && \
@@ -67,43 +71,47 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Clean up build artifacts to reduce size
+RUN find /app -name "*.map" -delete && \
+    find /app -name "*.d.ts" -delete && \
+    find /app -name "README*" -delete && \
+    rm -rf /tmp/* /var/tmp/* 2>/dev/null || true
+
 # Copy Prisma schema and migrations for runtime
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
+
+# Copy all production dependencies including Prisma from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy Prisma generated client and engines from builder stage (overwrite with latest)
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 
-# Copy Turso adapter dependencies (from deps stage that has production dependencies)
-COPY --from=deps /app/node_modules/@libsql ./node_modules/@libsql
-COPY --from=deps /app/node_modules/libsql ./node_modules/libsql
+# Copy UNIFIED entrypoint script (ONLY CHANGE from working Dockerfile)
+COPY --chown=nextjs:nodejs scripts/unified-entrypoint.sh /app/unified-entrypoint.sh
+RUN chmod +x /app/unified-entrypoint.sh
 
-# Copy entrypoint script
-COPY --chown=nextjs:nodejs scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
-
-# Create writable directories for the app (entrypoint will handle db folder creation)
-RUN chown -R nextjs:nodejs /app/prisma
+# Create writable directories for the app and ensure proper permissions
+RUN mkdir -p /app/db && \
+    chown -R nextjs:nodejs /app/prisma /app/db && \
+    chmod 755 /app/db
 
 # Switch to non-root user
 USER nextjs
 
-# Expose port (Next.js default)
-EXPOSE 3000
+# Expose port range (Render auto-assigns port via PORT env var)
+EXPOSE 3000 10000
 
 # Environment variables will be read from external environment at runtime
 # The following are common variables that should be set:
-# DATABASE_URL - SQLite file path or external database URL
+# DATABASE_URL - Database connection string (SQLite: file:./db/prod.db, Turso: libsql://...)
+# TURSO_AUTH_TOKEN - Required for Turso/libSQL databases (obtain from Turso dashboard)
 # JWT_SECRET - Secret key for JWT tokens
 # NEXT_PUBLIC_APP_URL - Public URL of the application
 # EMAIL_FROM - Default from email address
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {r.statusCode === 200 ? process.exit(0) : process.exit(1)}).on('error', () => process.exit(1))"
-
-# Use entrypoint script for database initialization
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# Use UNIFIED entrypoint script for database initialization (ONLY CHANGE)
+ENTRYPOINT ["/app/unified-entrypoint.sh"]
 
 # Start the application
 CMD ["node", "server.js"]

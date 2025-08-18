@@ -1,4 +1,4 @@
-# CrunchyCone Starter Template
+# CrunchyCone Vanilla Starter Project
 
 ## Setup (Run in Order)
 

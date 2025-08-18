@@ -98,7 +98,7 @@ async function main() {
       process.exit(success ? 0 : 1);
     }
 
-    log("\n🔄 CrunchyCone Starter Template Reset", "\x1b[1m\x1b[34m"); // Bold Blue
+    log("\n🔄 CrunchyCone Vanilla Starter Project Reset", "\x1b[1m\x1b[34m"); // Bold Blue
     log("=====================================\n");
 
     // Check if database exists for first-run detection

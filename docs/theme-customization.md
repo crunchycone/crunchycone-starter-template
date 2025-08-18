@@ -1,6 +1,6 @@
 # Theme Customization Guide
 
-This guide explains how to create and customize themes using the TypeScript-based theme system in the CrunchyCone starter template.
+This guide explains how to create and customize themes using the TypeScript-based theme system in the CrunchyCone Vanilla Starter Project.
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # OAuth Providers Setup Guide
 
-This guide explains how to enable OAuth authentication providers in the CrunchyCone starter template using Auth.js v4.
+This guide explains how to enable OAuth authentication providers in the CrunchyCone Vanilla Starter Project using Auth.js v4.
 
 ## Overview
 

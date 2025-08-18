@@ -40,7 +40,7 @@ git commit -m "Update database"  # This is FINE
 
 ### For AI Decision Making
 ```
-if (repository === "crunchycone-starter-template") {
+if (repository === "crunchycone-vanilla-starter-project") {
   ALLOW_DATABASE_COMMITS = true;
   WARN_ABOUT_DATABASE_COMMITS = false;
   SUGGEST_GITIGNORE_FOR_DB = false;

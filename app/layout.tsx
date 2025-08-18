@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CrunchyCone Starter Template",
+  title: "CrunchyCone Vanilla Starter Project",
   description: "A production-ready Next.js starter with auth and admin dashboard",
 };
 

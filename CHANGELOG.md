@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of CrunchyCone Starter Template
+- Initial release of CrunchyCone Vanilla Starter Project
 - Complete authentication system with email/password and magic links
 - JWT-based session management with HTTP-only cookies
 - Role-based access control (RBAC) with user and admin roles

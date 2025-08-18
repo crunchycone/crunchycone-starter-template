@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains detailed guides for extending the CrunchyCone starter template.
+This directory contains detailed guides for extending the CrunchyCone Vanilla Starter Project.
 
 ## Available Guides
 

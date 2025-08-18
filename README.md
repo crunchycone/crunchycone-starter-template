@@ -1,4 +1,4 @@
-# CrunchyCone Starter Template
+# CrunchyCone Vanilla Starter Project
 
 A production-ready Next.js starter template with authentication, admin dashboard, and role-based access control.
 
@@ -89,8 +89,8 @@ A production-ready Next.js starter template with authentication, admin dashboard
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/crunchycone-starter-template.git
-cd crunchycone-starter-template
+git clone https://github.com/yourusername/crunchycone-vanilla-starter-project.git
+cd crunchycone-vanilla-starter-project
 ```
 
 2. Reset the project to initial state:
@@ -115,8 +115,8 @@ If you're using [Cursor IDE](https://cursor.sh/), you can set up this project wi
 1. **Clone and Open in Cursor**:
 
 ```bash
-git clone https://github.com/yourusername/crunchycone-starter-template.git
-cd crunchycone-starter-template
+git clone https://github.com/yourusername/crunchycone-vanilla-starter-project.git
+cd crunchycone-vanilla-starter-project
 cursor .
 ```
 
@@ -153,7 +153,7 @@ When you first run the application:
 ## Project Structure
 
 ```
-crunchycone-starter-template/
+crunchycone-vanilla-starter-project/
 ├── app/                      # Next.js App Router
 │   ├── actions/             # Server Actions
 │   ├── admin/               # Admin dashboard pages

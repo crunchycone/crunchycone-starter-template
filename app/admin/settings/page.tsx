@@ -20,7 +20,7 @@ export default function AdminSettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <h3 className="font-medium">Application Name</h3>
-            <p className="text-sm text-muted-foreground">CrunchyCone Starter Template</p>
+            <p className="text-sm text-muted-foreground">CrunchyCone Vanilla Starter Project</p>
           </div>
           <Separator />
           <div className="space-y-2">

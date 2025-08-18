@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth/auth";
+import jwt from "jsonwebtoken";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +10,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Token is required" }, { status: 400 });
     }
 
-    const decoded = verifyToken(token);
+    const secret = process.env.AUTH_SECRET;
+    if (!secret) {
+      throw new Error("AUTH_SECRET not configured");
+    }
+    
+    const decoded = jwt.verify(token, secret) as { userId: string; type: string };
 
     if (!decoded || decoded.type !== "reset") {
       return NextResponse.json({ error: "Invalid or expired token" }, { status: 400 });

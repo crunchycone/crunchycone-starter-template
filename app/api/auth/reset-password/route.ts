@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyToken, hashPassword } from "@/lib/auth/auth";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,11 @@ export async function POST(request: NextRequest) {
     // Verify the token
     let decoded;
     try {
-      decoded = verifyToken(token);
+      const secret = process.env.AUTH_SECRET;
+      if (!secret) {
+        throw new Error("AUTH_SECRET not configured");
+      }
+      decoded = jwt.verify(token, secret) as { userId: string; type: string };
     } catch {
       return NextResponse.json({ error: "Invalid or expired reset token" }, { status: 400 });
     }
@@ -43,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash the new password
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Update the user's password
     await prisma.user.update({

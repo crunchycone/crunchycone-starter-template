@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/permissions";
 
 const protectedRoles = ["user", "admin"];
@@ -11,8 +11,8 @@ export async function DELETE(
 ) {
   try {
     // Check admin authentication
-    const session = await getSession();
-    if (!session || !(await isAdmin(session.userId))) {
+    const session = await auth();
+    if (!session?.user || !(await isAdmin(session.user.id))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

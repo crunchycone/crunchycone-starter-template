@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getSession } from "./auth";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export async function hasRole(userId: string, roleName: string): Promise<boolean> {
@@ -17,13 +17,13 @@ export async function hasRole(userId: string, roleName: string): Promise<boolean
 }
 
 export async function requireRole(roleName: string) {
-  const session = await getSession();
+  const session = await auth();
 
-  if (!session) {
+  if (!session?.user) {
     redirect("/auth/signin");
   }
 
-  const hasRequiredRole = await hasRole(session.userId, roleName);
+  const hasRequiredRole = await hasRole(session.user.id, roleName);
 
   if (!hasRequiredRole) {
     redirect("/");
@@ -37,15 +37,15 @@ export async function isAdmin(userId: string): Promise<boolean> {
 }
 
 export async function getCurrentUser() {
-  const session = await getSession();
+  const session = await auth();
 
-  if (!session) {
+  if (!session?.user) {
     return null;
   }
 
   const user = await prisma.user.findUnique({
     where: {
-      id: session.userId,
+      id: session.user.id,
       deleted_at: null,
     },
     include: {
@@ -62,4 +62,16 @@ export async function getCurrentUser() {
   });
 
   return user;
+}
+
+// Helper function to check if current user is admin (using session roles for performance)
+export async function isCurrentUserAdmin(): Promise<boolean> {
+  const session = await auth();
+  return session?.user?.roles?.includes("admin") || false;
+}
+
+// Helper function to check if current user has specific role (using session roles for performance)
+export async function currentUserHasRole(roleName: string): Promise<boolean> {
+  const session = await auth();
+  return session?.user?.roles?.includes(roleName) || false;
 }

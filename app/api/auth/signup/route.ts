@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, generateToken } from "@/lib/auth/auth";
-import { sendEmail, getVerificationEmailTemplate } from "@/lib/email/email";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const signUpSchema = z.object({
@@ -33,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user with default user role
     const user = await prisma.$transaction(async (tx) => {
@@ -41,6 +40,7 @@ export async function POST(request: NextRequest) {
         data: {
           email,
           password: hashedPassword,
+          emailVerified: new Date(), // Mark as verified since we'll auto-login
         },
       });
 
@@ -68,20 +68,13 @@ export async function POST(request: NextRequest) {
       return newUser;
     });
 
-    // Generate verification token
-    const verificationToken = generateToken(user.id, "verification");
-
-    // Send verification email
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const emailTemplate = getVerificationEmailTemplate(verificationToken, appUrl);
-    await sendEmail({
-      ...emailTemplate,
-      to: user.email,
-    });
-
     return NextResponse.json({
       success: true,
-      message: "Account created successfully. Please check your email to verify your account.",
+      message: "Account created successfully.",
+      user: {
+        id: user.id,
+        email: user.email,
+      },
     });
   } catch {
     console.error("Sign up error:");

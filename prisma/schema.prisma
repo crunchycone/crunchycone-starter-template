@@ -18,11 +18,18 @@ model User {
   deleted_at     DateTime?
   
   email          String    @unique
+  name           String?   // Added for Auth.js compatibility
+  image          String?   // Added for Auth.js compatibility
+  emailVerified  DateTime? // Added for Auth.js compatibility
   password       String?
   last_signed_in DateTime?
   
   profile        UserProfile?
   roles          UserRole[]
+  
+  // Auth.js relationships
+  accounts       Account[]
+  sessions       Session[]
   
   @@index([email])
   @@index([deleted_at])
@@ -74,4 +81,43 @@ model UserRole {
   @@index([user_id])
   @@index([role_id])
   @@index([deleted_at])
+}
+
+// ============================================
+// Auth.js Required Models
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default("")
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

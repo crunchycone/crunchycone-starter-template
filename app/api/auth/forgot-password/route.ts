@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateToken } from "@/lib/auth/auth";
+import jwt from "jsonwebtoken";
 import { sendEmail, getPasswordResetEmailTemplate } from "@/lib/email/email";
 import { z } from "zod";
 
@@ -36,8 +36,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Generate reset token
-    const resetToken = generateToken(user.id, "reset");
+    // Generate reset token (1 hour expiry)
+    const secret = process.env.AUTH_SECRET;
+    if (!secret) {
+      throw new Error("AUTH_SECRET not configured");
+    }
+    
+    const resetToken = jwt.sign(
+      { userId: user.id, type: "reset" },
+      secret,
+      { expiresIn: "1h" }
+    );
 
     // Send password reset email
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

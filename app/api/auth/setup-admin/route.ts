@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, createSession } from "@/lib/auth/auth";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const setupSchema = z.object({
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = validationResult.data;
 
     // Hash password
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user with admin role in a transaction
     const user = await prisma.$transaction(async (tx) => {
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
         data: {
           email,
           password: hashedPassword,
+          emailVerified: new Date(), // Mark as verified
           last_signed_in: new Date(),
         },
       });
@@ -80,12 +81,14 @@ export async function POST(request: NextRequest) {
       return newUser;
     });
 
-    // Create session
-    await createSession(user.id);
-
+    // Note: Session creation will be handled by Auth.js after signup
     return NextResponse.json({
       success: true,
       message: "Admin user created successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+      },
     });
   } catch {
     console.error("Setup admin error:");

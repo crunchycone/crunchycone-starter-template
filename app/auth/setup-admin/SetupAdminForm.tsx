@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { signIn } from "next-auth/react";
 import * as z from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -68,7 +69,19 @@ export function SetupAdminForm() {
         throw new Error(result.error || "Failed to create admin user");
       }
 
-      router.push("/");
+      // Automatically sign in the user after successful admin setup
+      const signInResult = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (signInResult?.ok) {
+        router.push("/");
+        router.refresh();
+      } else {
+        throw new Error("Failed to sign in after setup");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/permissions";
 import { z } from "zod";
 
@@ -11,8 +11,8 @@ const roleSchema = z.object({
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Check admin authentication
-    const session = await getSession();
-    if (!session || !(await isAdmin(session.userId))) {
+    const session = await auth();
+    if (!session?.user || !(await isAdmin(session.user.id))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -75,8 +75,8 @@ export async function DELETE(
 ) {
   try {
     // Check admin authentication
-    const session = await getSession();
-    if (!session || !(await isAdmin(session.userId))) {
+    const session = await auth();
+    if (!session?.user || !(await isAdmin(session.user.id))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -94,7 +94,7 @@ export async function DELETE(
     const { roleName } = validationResult.data;
 
     // Prevent users from removing their own admin role
-    if (userId === session.userId && roleName === "admin") {
+    if (userId === session.user.id && roleName === "admin") {
       return NextResponse.json({ error: "Cannot remove your own admin role" }, { status: 400 });
     }
 

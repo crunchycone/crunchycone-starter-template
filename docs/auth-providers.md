@@ -1,686 +1,305 @@
-# Authentication Provider Implementation Guide
+# Google OAuth Setup Guide
 
-This guide explains how to add different authentication providers (OAuth, social logins) to the CrunchyCone starter template.
+This guide explains how to enable Google OAuth authentication in the CrunchyCone starter template using Auth.js v4.
 
 ## Overview
 
-The current authentication system supports:
+The authentication system currently supports:
 
-- Email/Password authentication
-- Magic link authentication
+- **Email/Password**: Traditional credentials-based authentication
+- **Magic Link**: Email-based passwordless authentication (optional)
+- **Google OAuth**: Social login with Google (requires setup)
 
-This guide shows how to extend it with OAuth providers like Google, GitHub, Facebook, etc.
+The application uses Auth.js v4 with dynamic provider configuration - OAuth providers are automatically enabled based on environment variables.
 
-## Authentication Flow Architecture
+## Auth.js Architecture
 
 ```
-User → Auth Provider → Callback → Create/Update User → Create Session → Redirect
+User → Auth.js Provider → OAuth Service → Callback → Auth.js Session → Redirect
 ```
 
-## Implementing OAuth Providers
+Auth.js handles all the OAuth complexity including:
+- Token exchange and validation
+- User session creation
+- Security (CSRF, state validation)
+- Database integration via Prisma adapter
 
-### 1. Google OAuth
+## Implementing OAuth Providers with Auth.js
 
-#### Install Dependencies
+### Prerequisites
+
+Auth.js is already installed and configured. To add OAuth providers, you simply need to:
+1. Install the provider package
+2. Add environment variables  
+3. Update the Auth.js configuration
+4. Add provider buttons to the UI
+
+> **🚀 Recommended First Provider**: Google OAuth is the easiest to set up and most widely used. Start with Google before adding other providers.
+
+## Google OAuth Setup
+
+Google OAuth is already integrated into the application via Auth.js v4. You just need to configure the credentials and enable it.
+
+### Step 1: Create Google OAuth Application
+
+1. **Go to [Google Cloud Console](https://console.cloud.google.com/)**
+2. **Create or select a project**
+3. **Configure OAuth consent screen**:
+   - Go to "APIs & Services" → "OAuth consent screen"
+   - Choose "External" user type (unless you have Google Workspace)
+   - Fill in required fields: App name, User support email, Developer contact
+   - Add your domain to authorized domains if deploying to production
+4. **Create OAuth 2.0 Credentials**:
+   - Go to "APIs & Services" → "Credentials"
+   - Click "Create Credentials" → "OAuth 2.0 Client IDs"
+   - Choose "Web application"
+   - Add authorized redirect URIs:
+     - **Development**: `http://localhost:3000/api/auth/callback/google`
+     - **Production**: `https://yourdomain.com/api/auth/callback/google`
+5. **Copy Client ID and Secret** from the credentials page
+
+### Step 2: Environment Variables
+
+Add to your `.env` file:
+
+```env
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your-google-client-id-here.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+
+# Enable Google OAuth in the application
+NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=true
+```
+
+> **🔐 Security**: Keep credentials secure and never commit them to version control.
+
+### Step 3: Restart Development Server
+
+That's it! The application will automatically:
+- Detect the Google OAuth credentials in environment variables
+- Enable the Google OAuth provider in Auth.js configuration  
+- Show the "Continue with Google" button on the sign-in page
+
+Restart your development server to apply the changes:
 
 ```bash
-npm install google-auth-library
+npm run dev
 ```
 
-#### Environment Variables
+### Step 4: Test Google OAuth
 
-```env
-GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback/google
-```
+1. **Go to the sign-in page**: `http://localhost:3000/auth/signin`
+2. **Click "Continue with Google"** button
+3. **Complete OAuth flow**:
+   - You'll be redirected to Google's login page
+   - Sign in with your Google account
+   - Grant permissions to your app
+   - You'll be redirected back and automatically signed in
+4. **Verify user creation**: Check your profile at `/profile` or admin dashboard
 
-#### Create Google OAuth Routes
+> **🎉 Success**: If you can sign in with Google and see your user information, Google OAuth is working correctly!
 
-Create `app/api/auth/google/route.ts`:
+## Current Implementation Details
 
+The Google OAuth integration includes several advanced features:
+
+### Dynamic Provider Configuration
+
+The application uses environment-based provider detection. Google OAuth is enabled when:
+- `NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=true` 
+- `GOOGLE_CLIENT_ID` is set
+- `GOOGLE_CLIENT_SECRET` is set
+
+If any of these are missing, the Google button won't appear on the sign-in form.
+
+### Automatic Features
+
+The Google OAuth integration includes several automatic features:
+
+**1. Dynamic Provider Loading**
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-
-const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-
-export async function GET(request: NextRequest) {
-  const params = new URLSearchParams({
-    client_id: process.env.GOOGLE_CLIENT_ID!,
-    redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
-    response_type: "code",
-    scope: "openid email profile",
-    access_type: "offline",
-    prompt: "consent",
-  });
-
-  return NextResponse.redirect(`${GOOGLE_AUTH_URL}?${params}`);
-}
-```
-
-Create `app/api/auth/callback/google/route.ts`:
-
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { OAuth2Client } from "google-auth-library";
-import { PrismaClient } from "@prisma/client";
-import { createSession } from "@/lib/auth/auth";
-
-const prisma = new PrismaClient();
-const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
-
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const code = searchParams.get("code");
-
-    if (!code) {
-      return NextResponse.redirect(new URL("/auth/signin?error=no_code", request.url));
-    }
-
-    // Exchange code for tokens
-    const { tokens } = await client.getToken(code);
-    client.setCredentials(tokens);
-
-    // Get user info
-    const ticket = await client.verifyIdToken({
-      idToken: tokens.id_token!,
-      audience: process.env.GOOGLE_CLIENT_ID!,
-    });
-
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) {
-      return NextResponse.redirect(new URL("/auth/signin?error=no_email", request.url));
-    }
-
-    // Find or create user
-    let user = await prisma.user.findUnique({
-      where: { email: payload.email },
-    });
-
-    if (!user) {
-      // Create new user
-      user = await prisma.$transaction(async (tx) => {
-        const newUser = await tx.user.create({
-          data: {
-            email: payload.email,
-            last_signed_in: new Date(),
-          },
-        });
-
-        // Create profile
-        await tx.userProfile.create({
-          data: {
-            user_id: newUser.id,
-            first_name: payload.given_name || null,
-            last_name: payload.family_name || null,
-          },
-        });
-
-        // Assign default user role
-        const userRole = await tx.role.findUnique({
-          where: { name: "user" },
-        });
-
-        if (userRole) {
-          await tx.userRole.create({
-            data: {
-              user_id: newUser.id,
-              role_id: userRole.id,
-            },
-          });
-        }
-
-        return newUser;
-      });
-    } else {
-      // Update last sign in
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { last_signed_in: new Date() },
-      });
-    }
-
-    // Create session
-    await createSession(user.id);
-
-    return NextResponse.redirect(new URL("/", request.url));
-  } catch (error) {
-    console.error("Google OAuth error:", error);
-    return NextResponse.redirect(new URL("/auth/signin?error=oauth_error", request.url));
-  }
-}
-```
-
-### 2. GitHub OAuth
-
-#### Environment Variables
-
-```env
-GITHUB_CLIENT_ID=your-client-id
-GITHUB_CLIENT_SECRET=your-client-secret
-GITHUB_REDIRECT_URI=http://localhost:3000/api/auth/callback/github
-```
-
-#### Create GitHub OAuth Routes
-
-Create `app/api/auth/github/route.ts`:
-
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-
-const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
-
-export async function GET(request: NextRequest) {
-  const params = new URLSearchParams({
-    client_id: process.env.GITHUB_CLIENT_ID!,
-    redirect_uri: process.env.GITHUB_REDIRECT_URI!,
-    scope: "read:user user:email",
-  });
-
-  return NextResponse.redirect(`${GITHUB_AUTH_URL}?${params}`);
-}
-```
-
-Create `app/api/auth/callback/github/route.ts`:
-
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { createSession } from "@/lib/auth/auth";
-
-const prisma = new PrismaClient();
-
-interface GitHubUser {
-  id: number;
-  email: string | null;
-  name: string | null;
-  login: string;
-}
-
-interface GitHubEmail {
-  email: string;
-  primary: boolean;
-  verified: boolean;
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const code = searchParams.get("code");
-
-    if (!code) {
-      return NextResponse.redirect(new URL("/auth/signin?error=no_code", request.url));
-    }
-
-    // Exchange code for access token
-    const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code,
-      }),
-    });
-
-    const tokenData = await tokenResponse.json();
-
-    if (!tokenData.access_token) {
-      return NextResponse.redirect(new URL("/auth/signin?error=no_token", request.url));
-    }
-
-    // Get user info
-    const userResponse = await fetch("https://api.github.com/user", {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-      },
-    });
-
-    const githubUser: GitHubUser = await userResponse.json();
-
-    // Get primary email if not public
-    let email = githubUser.email;
-    if (!email) {
-      const emailResponse = await fetch("https://api.github.com/user/emails", {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-        },
-      });
-
-      const emails: GitHubEmail[] = await emailResponse.json();
-      const primaryEmail = emails.find((e) => e.primary && e.verified);
-      email = primaryEmail?.email || null;
-    }
-
-    if (!email) {
-      return NextResponse.redirect(new URL("/auth/signin?error=no_email", request.url));
-    }
-
-    // Find or create user
-    let user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      // Create new user
-      user = await prisma.$transaction(async (tx) => {
-        const newUser = await tx.user.create({
-          data: {
-            email,
-            last_signed_in: new Date(),
-          },
-        });
-
-        // Parse name
-        const nameParts = githubUser.name?.split(" ") || [];
-        const firstName = nameParts[0] || null;
-        const lastName = nameParts.slice(1).join(" ") || null;
-
-        // Create profile
-        await tx.userProfile.create({
-          data: {
-            user_id: newUser.id,
-            first_name: firstName,
-            last_name: lastName,
-          },
-        });
-
-        // Assign default user role
-        const userRole = await tx.role.findUnique({
-          where: { name: "user" },
-        });
-
-        if (userRole) {
-          await tx.userRole.create({
-            data: {
-              user_id: newUser.id,
-              role_id: userRole.id,
-            },
-          });
-        }
-
-        return newUser;
-      });
-    } else {
-      // Update last sign in
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { last_signed_in: new Date() },
-      });
-    }
-
-    // Create session
-    await createSession(user.id);
-
-    return NextResponse.redirect(new URL("/", request.url));
-  } catch (error) {
-    console.error("GitHub OAuth error:", error);
-    return NextResponse.redirect(new URL("/auth/signin?error=oauth_error", request.url));
-  }
-}
-```
-
-### 3. Generic OAuth2 Provider
-
-Create a reusable OAuth2 handler in `lib/auth/oauth.ts`:
-
-```typescript
-import { PrismaClient } from "@prisma/client";
-import { createSession } from "./auth";
-
-const prisma = new PrismaClient();
-
-export interface OAuthUserInfo {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string;
-}
-
-export async function handleOAuthCallback(userInfo: OAuthUserInfo) {
-  // Find or create user
-  let user = await prisma.user.findUnique({
-    where: { email: userInfo.email },
-  });
-
-  if (!user) {
-    // Create new user
-    user = await prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
-        data: {
-          email: userInfo.email,
-          last_signed_in: new Date(),
-        },
-      });
-
-      // Create profile
-      await tx.userProfile.create({
-        data: {
-          user_id: newUser.id,
-          first_name: userInfo.firstName || null,
-          last_name: userInfo.lastName || null,
-        },
-      });
-
-      // Assign default user role
-      const userRole = await tx.role.findUnique({
-        where: { name: "user" },
-      });
-
-      if (userRole) {
-        await tx.userRole.create({
-          data: {
-            user_id: newUser.id,
-            role_id: userRole.id,
-          },
-        });
-      }
-
-      return newUser;
-    });
-  } else {
-    // Update last sign in
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { last_signed_in: new Date() },
-    });
-  }
-
-  // Create session
-  await createSession(user.id);
-
-  return user;
-}
-```
-
-## Adding OAuth Buttons to Sign In
-
-Update `components/auth/SignInForm.tsx`:
-
-```typescript
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Github, Chrome } from "lucide-react"; // Use Chrome icon for Google
-
-// Add to your SignInForm component
-export function SignInForm() {
-  // ... existing code ...
-
+// lib/auth/providers.ts automatically detects Google auth availability
+export function isGoogleAuthEnabled(): boolean {
   return (
-    <div className="space-y-4">
-      {/* OAuth Buttons */}
-      <div className="space-y-2">
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => window.location.href = "/api/auth/google"}
-        >
-          <Chrome className="mr-2 h-4 w-4" />
-          Continue with Google
-        </Button>
-
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => window.location.href = "/api/auth/github"}
-        >
-          <Github className="mr-2 h-4 w-4" />
-          Continue with GitHub
-        </Button>
-      </div>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <Separator />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Or continue with email
-          </span>
-        </div>
-      </div>
-
-      {/* Existing tabs for email/password and magic link */}
-      <Tabs defaultValue="password" className="w-full">
-        {/* ... existing code ... */}
-      </Tabs>
-    </div>
-  );
+    process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true" &&
+    !!process.env.GOOGLE_CLIENT_ID &&
+    !!process.env.GOOGLE_CLIENT_SECRET
+  )
 }
 ```
 
-## Security Considerations
+**2. Automatic Role Assignment**
+- New Google OAuth users automatically get the "user" role
+- Existing users logging in via Google maintain their existing roles
+- Admin users signing in with Google keep admin privileges
 
-### 1. State Parameter
+**3. Profile Data Sync**
+- Name and avatar automatically populated from Google profile
+- Missing profile data fetched when linking Google to existing accounts
+- Avatar URLs stay synchronized with Google profile changes
 
-Prevent CSRF attacks by using state parameter:
+**4. Account Linking**
+- Users can link Google OAuth to existing email/password accounts
+- Automatic profile enrichment when linking accounts
+- Users can disconnect Google OAuth if they have email/password backup
 
-```typescript
-// Generate state
-const state = crypto.randomBytes(16).toString("hex");
-// Store in session/cookie
-cookies().set("oauth_state", state, { httpOnly: true, maxAge: 600 });
+## Profile Management Features
 
-// Add to OAuth URL
-params.append("state", state);
+Once Google OAuth is set up, users get access to comprehensive profile management:
 
-// Verify in callback
-const storedState = cookies().get("oauth_state")?.value;
-if (state !== storedState) {
-  throw new Error("Invalid state parameter");
-}
+### User Profile Page (`/profile`)
+
+**Features available:**
+- View user information (email, name, member since, last sign-in)
+- Display user avatar with fallback to initials
+- Show role badges (admin role highlighted)
+- Manage OAuth account connections
+
+### Account Linking & Disconnection
+
+**Linking Google to Existing Accounts:**
+1. Sign in with email/password
+2. Go to `/profile`
+3. Click "Link Google Account" in the Account Linking section
+4. Complete Google OAuth flow
+5. Profile automatically enriched with Google data (name, avatar)
+
+**Disconnecting Google OAuth:**
+1. Go to `/profile` 
+2. Find connected Google account
+3. Click the disconnect icon (⚡) next to "Connected" badge
+4. Confirm disconnection
+
+**Safety Features:**
+- Can only disconnect if user has email/password authentication
+- Server-side validation prevents account lockout
+- Clear error messages if disconnection not allowed
+
+## Environment Configuration
+
+### Complete Environment Setup
+
+Here's a complete `.env` example with Google OAuth enabled:
+
+```env
+# Database
+DATABASE_URL="file:./prisma/db/prod.db"
+
+# Auth.js
+AUTH_SECRET="your-secret-key-at-least-32-characters-long"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="123456789-abcdef.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="GOCSPX-your-google-client-secret"
+
+# Provider Controls (all optional, defaults shown)
+NEXT_PUBLIC_ENABLE_EMAIL_PASSWORD=true    # Email/password auth
+NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=true       # Google OAuth  
+NEXT_PUBLIC_ENABLE_MAGIC_LINK=false       # Magic link auth
+
+# Application
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+EMAIL_FROM="noreply@example.com"
 ```
 
-### 2. Account Linking
+### Disable/Enable Providers
 
-Handle existing accounts with different auth methods:
-
-```typescript
-// Check if email already exists with different auth method
-const existingUser = await prisma.user.findUnique({
-  where: { email: userInfo.email },
-  include: { authMethods: true },
-});
-
-if (existingUser && !existingUser.authMethods.find((m) => m.provider === provider)) {
-  // Link account or show error
-  return NextResponse.redirect("/auth/link-account");
-}
+**To disable Google OAuth:**
+```env
+NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=false
+# or remove the variable entirely
 ```
 
-### 3. Email Verification
-
-Consider email verification for OAuth users:
-
-```typescript
-// Store OAuth provider info
-await prisma.authMethod.create({
-  data: {
-    user_id: user.id,
-    provider: "google",
-    provider_user_id: googleUserId,
-    email_verified: true, // OAuth providers verify emails
-  },
-});
+**To disable email/password:**
+```env
+NEXT_PUBLIC_ENABLE_EMAIL_PASSWORD=false
 ```
 
-## Database Schema Updates
-
-Add auth methods tracking:
-
-```prisma
-model AuthMethod {
-  id              Int       @id @default(autoincrement())
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
-  deleted_at      DateTime?
-
-  user_id         Int
-  provider        String    // 'email', 'google', 'github', etc.
-  provider_user_id String?  // ID from OAuth provider
-  email_verified  Boolean   @default(false)
-
-  user            User      @relation(fields: [user_id], references: [id])
-
-  @@unique([provider, provider_user_id])
-  @@index([user_id])
-}
-
-model User {
-  // ... existing fields ...
-  authMethods     AuthMethod[]
-}
+**To enable magic link:**
+```env
+NEXT_PUBLIC_ENABLE_MAGIC_LINK=true
 ```
 
-## Advanced Features
-
-### 1. Multiple Auth Methods
-
-Allow users to link multiple auth methods:
-
-```typescript
-// In account settings
-export async function linkAuthMethod(userId: number, provider: string) {
-  // Redirect to OAuth flow with linking parameter
-  const params = new URLSearchParams({
-    linking: "true",
-    user_id: userId.toString(),
-  });
-
-  return NextResponse.redirect(`/api/auth/${provider}?${params}`);
-}
-```
-
-### 2. Social Profile Data
-
-Store additional profile data:
-
-```typescript
-model SocialProfile {
-  id              Int       @id @default(autoincrement())
-  user_id         Int
-  provider        String
-  avatar_url      String?
-  profile_url     String?
-  raw_data        Json?     // Store full profile data
-
-  user            User      @relation(fields: [user_id], references: [id])
-
-  @@unique([user_id, provider])
-}
-```
-
-### 3. Refresh Tokens
-
-Store and refresh OAuth tokens:
-
-```typescript
-model OAuthToken {
-  id              Int       @id @default(autoincrement())
-  user_id         Int
-  provider        String
-  access_token    String    @db.Text
-  refresh_token   String?   @db.Text
-  expires_at      DateTime?
-
-  user            User      @relation(fields: [user_id], references: [id])
-
-  @@unique([user_id, provider])
-}
-```
-
-## Provider-Specific Configurations
-
-### Facebook OAuth
-
-```typescript
-const FACEBOOK_AUTH_URL = "https://www.facebook.com/v12.0/dialog/oauth";
-const params = {
-  client_id: process.env.FACEBOOK_APP_ID,
-  redirect_uri: process.env.FACEBOOK_REDIRECT_URI,
-  scope: "email,public_profile",
-};
-```
-
-### Microsoft/Azure AD
-
-```typescript
-const MICROSOFT_AUTH_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
-const params = {
-  client_id: process.env.MICROSOFT_CLIENT_ID,
-  response_type: "code",
-  redirect_uri: process.env.MICROSOFT_REDIRECT_URI,
-  scope: "openid profile email",
-};
-```
-
-### Discord OAuth
-
-```typescript
-const DISCORD_AUTH_URL = "https://discord.com/api/oauth2/authorize";
-const params = {
-  client_id: process.env.DISCORD_CLIENT_ID,
-  redirect_uri: process.env.DISCORD_REDIRECT_URI,
-  response_type: "code",
-  scope: "identify email",
-};
-```
-
-## Testing OAuth Locally
-
-### 1. Use ngrok for HTTPS
-
-```bash
-npm install -g ngrok
-ngrok http 3000
-```
-
-### 2. Update OAuth Redirect URIs
-
-Use the ngrok URL for redirect URIs:
-
-```
-https://your-subdomain.ngrok.io/api/auth/callback/google
-```
-
-### 3. Test Accounts
-
-Most providers offer test accounts or sandbox environments for development.
-
-## Troubleshooting
+## Troubleshooting Google OAuth
 
 ### Common Issues
 
-1. **Redirect URI Mismatch**
-   - Ensure exact match including protocol and trailing slashes
-   - Check for localhost vs 127.0.0.1
+**1. "Continue with Google" button not appearing**
+- Check `NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=true` in `.env`
+- Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set
+- Restart development server after changing environment variables
 
-2. **Scope Errors**
-   - Verify requested scopes are enabled in OAuth app
-   - Some scopes require app verification
+**2. "Redirect URI mismatch" error**
+- Ensure Google Cloud Console redirect URI exactly matches:
+  - Dev: `http://localhost:3000/api/auth/callback/google`
+  - Prod: `https://yourdomain.com/api/auth/callback/google`
+- Check for trailing slashes (should not have them)
+- Verify protocol (http vs https)
 
-3. **Token Expiration**
-   - Implement token refresh logic
-   - Handle expired tokens gracefully
+**3. "Error 400: invalid_request"**
+- Client ID format should be: `123456789-abcdef.apps.googleusercontent.com`
+- Secret format should be: `GOCSPX-your-secret-here`
+- Check for extra spaces or quotes in environment variables
 
-4. **Email Not Provided**
-   - Some users hide email on GitHub
-   - Request additional scopes
-   - Provide alternative sign-up flow
+**4. "Sign in failed" after Google redirect**
+- Check browser console for detailed error messages
+- Verify your Google account email is accessible
+- Some users hide email on Google - they must enable email sharing
 
-## Best Practices
+**5. Profile data not syncing**
+- Ensure Google account has public name and picture
+- Check that OAuth consent screen requests profile and email scopes
+- Name and avatar sync happens on next sign-in
 
-1. **Error Handling**: Always redirect to sign-in page with error parameter
-2. **Loading States**: Show loading during OAuth redirect
-3. **Account Linking**: Provide UI for linking/unlinking auth methods
-4. **Security**: Always validate state parameter and use HTTPS
-5. **Privacy**: Only request necessary scopes
-6. **UX**: Clearly indicate which auth method was used
+### Debug Mode
+
+Enable detailed Auth.js logging:
+
+```env
+NEXTAUTH_DEBUG=true
+```
+
+### Testing Checklist
+
+✅ Google Cloud Console OAuth app configured  
+✅ Redirect URIs match exactly  
+✅ Environment variables set correctly  
+✅ Development server restarted  
+✅ OAuth consent screen configured  
+✅ Test Google account ready  
+
+## Adding Additional Providers
+
+The architecture supports adding more OAuth providers in the future. The pattern would be:
+
+1. **Environment Variables**: Add provider credentials to `.env`
+2. **Dynamic Detection**: Update `lib/auth/providers.ts` to detect new provider
+3. **Auth Configuration**: Add provider to `lib/auth/auth-config.ts` build function
+4. **UI Components**: Update sign-in form to show new provider button
+
+Popular providers that could be added:
+- **GitHub**: Developer-focused applications
+- **Facebook**: Consumer applications  
+- **Discord**: Gaming/community applications
+- **Microsoft**: Enterprise applications
+- **Apple**: iOS app integration
+
+## Summary
+
+Google OAuth is now fully integrated with:
+
+✅ **Easy Setup**: Just add credentials to environment variables  
+✅ **Dynamic Configuration**: Automatically enables when credentials present  
+✅ **Profile Management**: Full account linking and disconnection features  
+✅ **Data Sync**: Automatic profile enrichment and avatar updates  
+✅ **Security**: Safe disconnection with account lockout prevention  
+✅ **User Experience**: Seamless sign-in and profile management  
+
+**Next Steps:**
+1. Follow the setup guide to configure Google Cloud Console
+2. Add credentials to your `.env` file  
+3. Test the complete OAuth flow
+4. Explore profile management features at `/profile`
+5. Consider adding additional providers as needed
+
+The Google OAuth integration provides a solid foundation for social authentication while maintaining security and user control.

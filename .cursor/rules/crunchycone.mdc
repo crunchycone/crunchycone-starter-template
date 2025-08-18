@@ -1,21 +1,60 @@
 ---
 description: CrunchyCone platform integration and deployment
-alwaysApply: true
-priority: 2
+globs: crunchycone.toml,*crunchycone*
+alwaysApply: false
 ---
 
 # 🚀 CrunchyCone Platform Integration
 
+## ⚡ When This Applies
+
+This guide only applies when:
+- A `crunchycone.toml` file exists in the project root, OR
+- User explicitly mentions CrunchyCone functionality, deployment, or platform integration
+- User asks about `npx crunchycone-cli` commands
+
+**For projects without `crunchycone.toml`**: These steps are not needed during setup.
+
+## 🔧 Enable CrunchyCone Integration (Optional)
+
+To add CrunchyCone platform integration to an existing project:
+
+```bash
+# Initialize CrunchyCone project configuration
+npx --yes crunchycone-cli project init
+
+# Authenticate with the platform
+npx --yes crunchycone-cli auth login
+
+# Link project to platform
+npx --yes crunchycone-cli project link --setup
+```
+
+This creates a `crunchycone.toml` file and enables platform features.
+
+## 🛠️ Initial Setup (Only if crunchycone.toml exists)
+
+### During Project Setup
+If a `crunchycone.toml` file is present during project setup, add these steps AFTER database setup:
+
+1. **Check CrunchyCone authentication status**
+2. **Authenticate if needed** 
+3. **Verify project configuration**
+
+This ensures the project is ready for CrunchyCone platform deployment.
+
 ## 🔐 Authentication Setup
 
 ### Authentication Required for Platform Features
+
+**ONLY run these steps if `crunchycone.toml` exists in the project root.**
 
 After database setup is complete, we need to ensure you're authenticated with the CrunchyCone platform to enable deployment and updates.
 
 ## 📋 Authentication Check Steps
 
 ### Step 1: Check Authentication Status
-#### When database setup is complete:
+#### When database setup is complete AND crunchycone.toml exists:
 - **Check if authenticated**: Run `npx --yes crunchycone-cli auth check`
 - **Look for**: "✅ Authenticated" message
 - **If not authenticated**: Continue to Step 2

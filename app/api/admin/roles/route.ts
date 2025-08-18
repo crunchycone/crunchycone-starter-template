@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/permissions";
 import { z } from "zod";
 
@@ -18,8 +18,8 @@ const createRoleSchema = z.object({
 export async function GET(_request: NextRequest) {
   try {
     // Check admin authentication
-    const session = await getSession();
-    if (!session || !(await isAdmin(session.userId))) {
+    const session = await auth();
+    if (!session?.user || !(await isAdmin(session.user.id))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -56,8 +56,8 @@ export async function GET(_request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication
-    const session = await getSession();
-    if (!session || !(await isAdmin(session.userId))) {
+    const session = await auth();
+    if (!session?.user || !(await isAdmin(session.user.id))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

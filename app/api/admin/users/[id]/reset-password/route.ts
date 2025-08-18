@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateToken, getSession } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/permissions";
+import jwt from "jsonwebtoken";
 import { sendEmail, getPasswordResetEmailTemplate } from "@/lib/email/email";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Check admin authentication
-    const session = await getSession();
-    if (!session || !(await isAdmin(session.userId))) {
+    const session = await auth();
+    if (!session?.user || !(await isAdmin(session.user.id))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -26,8 +27,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Generate reset token
-    const resetToken = generateToken(user.id, "reset");
+    // Generate reset token (1 hour expiry)
+    const secret = process.env.AUTH_SECRET;
+    if (!secret) {
+      throw new Error("AUTH_SECRET not configured");
+    }
+    
+    const resetToken = jwt.sign(
+      { userId: user.id, type: "reset" },
+      secret,
+      { expiresIn: "1h" }
+    );
 
     // Send password reset email
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

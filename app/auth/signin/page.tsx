@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { AuthRedirectHandler } from "@/components/auth/AuthRedirectHandler";
 
 interface SignInPageProps {
   searchParams: Promise<{
@@ -53,6 +54,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             </Alert>
           )}
 
+          <AuthRedirectHandler />
           <SignInForm />
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">

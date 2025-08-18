@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth/permissions";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { LayoutDashboard, Users, Settings, LogOut, Menu, Shield, Database } from "lucide-react";
@@ -57,12 +58,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </nav>
           <div className="p-4">
             <Separator className="mb-4" />
-            <form action="/api/auth/logout" method="post">
-              <Button variant="ghost" className="w-full justify-start" type="submit">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
-            </form>
+            <SignOutButton 
+              variant="ghost" 
+              className="w-full justify-start"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </SignOutButton>
           </div>
         </div>
       </div>
@@ -112,12 +114,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </DropdownMenuItem>
                 <Separator className="my-1" />
                 <DropdownMenuItem asChild>
-                  <form action="/api/auth/logout" method="post" className="w-full">
-                    <button type="submit" className="flex w-full items-center">
+                  <div className="w-full">
+                    <SignOutButton 
+                      variant="ghost" 
+                      className="w-full justify-start"
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       Logout
-                    </button>
-                  </form>
+                    </SignOutButton>
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

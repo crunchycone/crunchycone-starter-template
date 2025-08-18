@@ -1,9 +1,9 @@
 import { checkAdminExists, isDatabaseEmpty } from "./actions/admin";
-import { signOutAction } from "./actions/auth";
 import { getCurrentUser } from "@/lib/auth/permissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { Shield, ArrowRight, CheckCircle, User } from "lucide-react";
@@ -238,6 +238,11 @@ export default async function Home({ searchParams }: HomeProps) {
                 </div>
 
                 <div className="flex flex-col gap-2">
+                  <Link href="/profile">
+                    <Button className="w-full" variant="outline">
+                      View Profile
+                    </Button>
+                  </Link>
                   {isAdmin && (
                     <Link href="/admin">
                       <Button className="w-full" variant="default">
@@ -245,11 +250,7 @@ export default async function Home({ searchParams }: HomeProps) {
                       </Button>
                     </Link>
                   )}
-                  <form action={signOutAction}>
-                    <Button type="submit" className="w-full" variant="outline">
-                      Sign Out
-                    </Button>
-                  </form>
+                  <SignOutButton />
                 </div>
               </CardContent>
             </Card>

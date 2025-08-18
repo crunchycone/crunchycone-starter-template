@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { verifyToken } from "@/lib/auth/auth";
+import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,12 @@ async function VerifyEmailContent({ searchParams }: VerifyEmailPageProps) {
 
   try {
     // Verify the token
-    const decoded = verifyToken(token);
+    const secret = process.env.AUTH_SECRET;
+    if (!secret) {
+      throw new Error("AUTH_SECRET not configured");
+    }
+    
+    const decoded = jwt.verify(token, secret) as { userId: string; type: string };
 
     if (!decoded) {
       throw new Error("Invalid or expired token");

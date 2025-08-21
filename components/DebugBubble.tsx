@@ -33,17 +33,46 @@ export function DebugBubble() {
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
   const bubbleRef = useRef<HTMLDivElement>(null);
 
-  const addError = useCallback((error: Omit<ErrorInfo, "id" | "timestamp">) => {
-    setErrors((prev) => [
-      ...prev,
-      {
+  // Send error to server for logging
+  const sendErrorToServer = useCallback(async (error: ErrorInfo) => {
+    if (process.env.NODE_ENV !== "development") return;
+
+    try {
+      await fetch("/api/debug-client", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: error.type,
+          message: error.message,
+          stack: error.stack,
+          timestamp: error.timestamp.toISOString(),
+          url: window.location.href,
+          userAgent: navigator.userAgent,
+        }),
+      });
+    } catch (err) {
+      console.warn("Failed to send error to server:", err);
+    }
+  }, []);
+
+  const addError = useCallback(
+    (error: Omit<ErrorInfo, "id" | "timestamp">) => {
+      const errorWithMeta = {
         ...error,
         id: Math.random().toString(36).substr(2, 9),
         timestamp: new Date(),
-      },
-    ]);
-    setShowErrors(true);
-  }, []);
+      };
+
+      setErrors((prev) => [...prev, errorWithMeta]);
+      setShowErrors(true);
+
+      // Send to server for logging
+      sendErrorToServer(errorWithMeta);
+    },
+    [sendErrorToServer]
+  );
 
   const clearErrors = useCallback(() => {
     setErrors([]);
@@ -392,7 +421,7 @@ export function DebugBubble() {
             }
           }}
         >
-          <span className="animate-pulse-3 pointer-events-none">🍨</span>
+          <img src="/crunchycone.svg" alt="CrunchyCone" className="h-6 w-6 pointer-events-none" />
         </div>
 
         {/* Drag indicator */}
@@ -500,7 +529,10 @@ export function DebugBubble() {
                 <div className="mt-3 border-t border-white/10 pt-3 dark:border-black/10">
                   <div className="flex justify-between">
                     <span className="text-white/70 dark:text-black/70">Powered by:</span>
-                    <span className="font-mono">CrunchyCone 🍨</span>
+                    <span className="font-mono flex items-center gap-1">
+                      CrunchyCone
+                      <img src="/crunchycone.svg" alt="CrunchyCone" className="h-3 w-3" />
+                    </span>
                   </div>
                 </div>
               </>

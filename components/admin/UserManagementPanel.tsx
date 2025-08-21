@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Search, Mail, Shield, X } from "lucide-react";
+import { MoreHorizontal, Search, Mail, Shield, X, Plus, Edit, User, XCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
@@ -35,10 +35,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type User = {
   id: string;
   email: string;
+  name: string | null;
+  image: string | null;
   created_at: string;
   last_signed_in: string | null;
   profile: {
@@ -75,22 +80,97 @@ export function UserManagementPanel({
   availableRoles,
 }: UserManagementPanelProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState(initialUsers);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [isLoading, setIsLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
+  // Form states
+  const [formData, setFormData] = useState({
+    email: "",
+    name: "",
+    image: "",
+    password: "",
+    confirmPassword: "",
+    selectedRoles: [] as string[],
+  });
+
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  // Clear action message after 5 seconds
+  useEffect(() => {
+    if (actionMessage) {
+      const timer = setTimeout(() => {
+        setActionMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionMessage]);
+
+  // Update search query when URL params change
+  useEffect(() => {
+    const currentSearch = searchParams.get("search") || "";
+    setSearchQuery(currentSearch);
+  }, [searchParams]);
+
+  // Update users list when initialUsers prop changes (due to server-side search)
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
+
+  function resetForm() {
+    setFormData({
+      email: "",
+      name: "",
+      image: "",
+      password: "",
+      confirmPassword: "",
+      selectedRoles: [],
+    });
+  }
+
+  function openCreateDialog() {
+    resetForm();
+    setActionMessage(null);
+    setIsCreateUserOpen(true);
+  }
+
+  function openEditDialog(user: User) {
+    setFormData({
+      email: user.email,
+      name: user.name || "",
+      image: user.image || "",
+      password: "",
+      confirmPassword: "",
+      selectedRoles: user.roles.map((r) => r.role.name),
+    });
+    setSelectedUser(user);
+    setActionMessage(null);
+    setIsEditUserOpen(true);
+  }
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    router.push(`/admin/users?search=${encodeURIComponent(searchQuery)}`);
+    const searchTerm = searchQuery.trim();
+    if (searchTerm) {
+      router.push(`/admin/users?search=${encodeURIComponent(searchTerm)}`);
+    } else {
+      router.push(`/admin/users`);
+    }
+  }
+
+  function clearSearch() {
+    setSearchQuery("");
+    router.push("/admin/users");
   }
 
   async function handlePasswordReset(userId: string, email: string) {
@@ -166,6 +246,140 @@ export function UserManagementPanel({
     }
   }
 
+  async function handleCreateUser(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      setActionMessage({
+        type: "error",
+        message: "Passwords do not match",
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setActionMessage({
+        type: "error",
+        message: "Password must be at least 6 characters",
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const requestData = {
+        email: formData.email,
+        name: formData.name,
+        image: formData.image,
+        password: formData.password,
+        roles: formData.selectedRoles,
+      };
+      console.log("Sending create user request:", requestData);
+
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        let errorMessage = "Failed to create user";
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      setIsCreateUserOpen(false);
+      resetForm();
+      setActionMessage({
+        type: "success",
+        message: "User created successfully",
+      });
+      // Force page refresh to show the updated user
+      setTimeout(() => {
+        router.refresh();
+      }, 100);
+    } catch (error) {
+      console.log("Create user error caught:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create user";
+      console.log("Setting error message:", errorMessage);
+      setActionMessage({
+        type: "error",
+        message: errorMessage,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleEditUser(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!selectedUser) return;
+
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      setActionMessage({
+        type: "error",
+        message: "Passwords do not match",
+      });
+      return;
+    }
+
+    if (formData.password && formData.password.length < 6) {
+      setActionMessage({
+        type: "error",
+        message: "Password must be at least 6 characters",
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          name: formData.name,
+          image: formData.image,
+          password: formData.password || undefined,
+          roles: formData.selectedRoles,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update user");
+      }
+
+      setIsEditUserOpen(false);
+      resetForm();
+      setActionMessage({
+        type: "success",
+        message: "User updated successfully",
+      });
+      // Force page refresh to show the updated user
+      setTimeout(() => {
+        router.refresh();
+      }, 100);
+    } catch (error) {
+      setActionMessage({
+        type: "error",
+        message: error instanceof Error ? error.message : "Failed to update user",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {actionMessage && (
@@ -174,24 +388,44 @@ export function UserManagementPanel({
         </Alert>
       )}
 
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <Input
-          type="text"
-          placeholder="Search users by email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
-        />
-        <Button type="submit" variant="secondary">
-          <Search className="h-4 w-4 mr-2" />
-          Search
+      <div className="flex justify-between items-center">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search users by email or name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm pr-8"
+            />
+            {searchQuery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-2 hover:bg-transparent"
+                onClick={clearSearch}
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <Button type="submit" variant="secondary">
+            <Search className="h-4 w-4 mr-2" />
+            Search
+          </Button>
+        </form>
+        <Button onClick={openCreateDialog}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add New User
         </Button>
-      </form>
+      </div>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Avatar</TableHead>
               <TableHead>User ID</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Name</TableHead>
@@ -204,13 +438,38 @@ export function UserManagementPanel({
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
+                <TableCell>
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted overflow-hidden">
+                    {user.image ? (
+                      <img
+                        src={
+                          user.image.startsWith("http")
+                            ? `/api/avatar?url=${encodeURIComponent(user.image)}`
+                            : user.image
+                        }
+                        alt={user.name || user.email}
+                        className="h-8 w-8 rounded-full object-cover"
+                        onError={(e) => {
+                          console.log("Image failed to load:", user.image);
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.style.display = "none";
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) {
+                            fallback.style.display = "flex";
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className={`flex items-center justify-center h-8 w-8 ${user.image ? "hidden" : "flex"}`}
+                    >
+                      <User className="h-4 w-4" />
+                    </div>
+                  </div>
+                </TableCell>
                 <TableCell className="font-mono text-xs">{user.id}</TableCell>
                 <TableCell className="font-medium">{user.email}</TableCell>
-                <TableCell>
-                  {user.profile?.first_name || user.profile?.last_name
-                    ? `${user.profile.first_name || ""} ${user.profile.last_name || ""}`.trim()
-                    : "-"}
-                </TableCell>
+                <TableCell>{user.name || "-"}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     {user.roles.map((r) => (
@@ -243,6 +502,10 @@ export function UserManagementPanel({
                       >
                         View Details
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openEditDialog(user)} disabled={isLoading}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handlePasswordReset(user.id, user.email)}
                         disabled={isLoading}
@@ -272,7 +535,13 @@ export function UserManagementPanel({
         <div className="flex items-center justify-center gap-2">
           <Button
             variant="outline"
-            onClick={() => router.push(`/admin/users?page=${currentPage - 1}`)}
+            onClick={() => {
+              const search = searchParams.get("search");
+              const url = search
+                ? `/admin/users?page=${currentPage - 1}&search=${encodeURIComponent(search)}`
+                : `/admin/users?page=${currentPage - 1}`;
+              router.push(url);
+            }}
             disabled={currentPage <= 1}
           >
             Previous
@@ -282,7 +551,13 @@ export function UserManagementPanel({
           </span>
           <Button
             variant="outline"
-            onClick={() => router.push(`/admin/users?page=${currentPage + 1}`)}
+            onClick={() => {
+              const search = searchParams.get("search");
+              const url = search
+                ? `/admin/users?page=${currentPage + 1}&search=${encodeURIComponent(search)}`
+                : `/admin/users?page=${currentPage + 1}`;
+              router.push(url);
+            }}
             disabled={currentPage >= totalPages}
           >
             Next
@@ -298,6 +573,27 @@ export function UserManagementPanel({
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-muted overflow-hidden">
+                  {selectedUser.image ? (
+                    <img
+                      src={
+                        selectedUser.image.startsWith("http")
+                          ? `/api/avatar?url=${encodeURIComponent(selectedUser.image)}`
+                          : selectedUser.image
+                      }
+                      alt={selectedUser.name || selectedUser.email}
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-8 w-8" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedUser.name || "Unnamed User"}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                </div>
+              </div>
               <div className="grid gap-2">
                 <div className="flex justify-between">
                   <span className="font-medium">Email:</span>
@@ -309,13 +605,11 @@ export function UserManagementPanel({
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Name:</span>
-                  <span>
-                    {selectedUser.profile?.first_name || selectedUser.profile?.last_name
-                      ? `${selectedUser.profile.first_name || ""} ${
-                          selectedUser.profile.last_name || ""
-                        }`.trim()
-                      : "Not provided"}
-                  </span>
+                  <span>{selectedUser.name || "Not provided"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Avatar:</span>
+                  <span className="text-xs break-all">{selectedUser.image || "Not provided"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Joined:</span>
@@ -416,6 +710,287 @@ export function UserManagementPanel({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create User Dialog */}
+      <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New User</DialogTitle>
+            <DialogDescription>Add a new user to the system</DialogDescription>
+          </DialogHeader>
+
+          {actionMessage && (
+            <Alert variant={actionMessage.type === "error" ? "destructive" : "default"}>
+              <AlertDescription>{actionMessage.message}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleCreateUser} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image">Avatar URL</Label>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <Input
+                    id="image"
+                    type="url"
+                    placeholder="https://example.com/avatar.jpg"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-muted overflow-hidden">
+                  {formData.image ? (
+                    <img
+                      src={
+                        formData.image.startsWith("http")
+                          ? `/api/avatar?url=${encodeURIComponent(formData.image)}`
+                          : formData.image
+                      }
+                      alt="Avatar preview"
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+                disabled={isLoading}
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                required
+                disabled={isLoading}
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Roles</Label>
+              <div className="space-y-2">
+                {availableRoles.map((role) => (
+                  <div key={role.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`role-${role.id}`}
+                      checked={formData.selectedRoles.includes(role.name)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFormData({
+                            ...formData,
+                            selectedRoles: [...formData.selectedRoles, role.name],
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            selectedRoles: formData.selectedRoles.filter((r) => r !== role.name),
+                          });
+                        }
+                      }}
+                      disabled={isLoading}
+                    />
+                    <Label htmlFor={`role-${role.id}`}>{role.name}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsCreateUserOpen(false);
+                  resetForm();
+                  setActionMessage(null);
+                }}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                Create User
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>Update user information</DialogDescription>
+          </DialogHeader>
+
+          {actionMessage && (
+            <Alert variant={actionMessage.type === "error" ? "destructive" : "default"}>
+              <AlertDescription>{actionMessage.message}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleEditUser} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email *</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Full Name</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-image">Avatar URL</Label>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <Input
+                    id="edit-image"
+                    type="url"
+                    placeholder="https://example.com/avatar.jpg"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-muted overflow-hidden">
+                  {formData.image ? (
+                    <img
+                      src={
+                        formData.image.startsWith("http")
+                          ? `/api/avatar?url=${encodeURIComponent(formData.image)}`
+                          : formData.image
+                      }
+                      alt="Avatar preview"
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-password">New Password (leave empty to keep current)</Label>
+              <Input
+                id="edit-password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                disabled={isLoading}
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-confirmPassword">Confirm New Password</Label>
+              <Input
+                id="edit-confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                disabled={isLoading}
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Roles</Label>
+              <div className="space-y-2">
+                {availableRoles.map((role) => (
+                  <div key={role.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edit-role-${role.id}`}
+                      checked={formData.selectedRoles.includes(role.name)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFormData({
+                            ...formData,
+                            selectedRoles: [...formData.selectedRoles, role.name],
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            selectedRoles: formData.selectedRoles.filter((r) => r !== role.name),
+                          });
+                        }
+                      }}
+                      disabled={
+                        isLoading || (selectedUser?.id === currentUserId && role.name === "admin")
+                      }
+                    />
+                    <Label htmlFor={`edit-role-${role.id}`}>{role.name}</Label>
+                    {selectedUser?.id === currentUserId && role.name === "admin" && (
+                      <span className="text-xs text-muted-foreground">
+                        (cannot remove own admin role)
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditUserOpen(false);
+                  resetForm();
+                  setActionMessage(null);
+                }}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                Update User
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

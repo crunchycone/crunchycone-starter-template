@@ -41,12 +41,8 @@ export async function POST(request: NextRequest) {
     if (!secret) {
       throw new Error("AUTH_SECRET not configured");
     }
-    
-    const resetToken = jwt.sign(
-      { userId: user.id, type: "reset" },
-      secret,
-      { expiresIn: "1h" }
-    );
+
+    const resetToken = jwt.sign({ userId: user.id, type: "reset" }, secret, { expiresIn: "1h" });
 
     // Send password reset email
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

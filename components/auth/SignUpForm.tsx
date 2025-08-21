@@ -40,7 +40,7 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
-  
+
   // Get available OAuth providers
   const oauthProviders = getOAuthProviders();
   const showOAuthSection = hasOAuthProviders();
@@ -142,9 +142,7 @@ export function SignUpForm() {
       {/* OAuth Providers Section */}
       {showOAuthSection && (
         <div className="space-y-4">
-          <div className="text-center text-sm text-muted-foreground">
-            Sign up with
-          </div>
+          <div className="text-center text-sm text-muted-foreground">Sign up with</div>
           <div className="grid gap-2">
             {oauthProviders.map((provider) => (
               <Button
@@ -164,9 +162,7 @@ export function SignUpForm() {
               <Separator className="w-full" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or create account
-              </span>
+              <span className="bg-background px-2 text-muted-foreground">Or create account</span>
             </div>
           </div>
         </div>
@@ -175,54 +171,54 @@ export function SignUpForm() {
       {/* Email/Password Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="you@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="you@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <PasswordInput placeholder="Create a secure password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <PasswordInput placeholder="Confirm your password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <PasswordInput placeholder="Create a secure password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
-              <FormControl>
-                <PasswordInput placeholder="Confirm your password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          {isLoading ? "Creating account..." : "Create Account"}
-        </Button>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            {isLoading ? "Creating account..." : "Create Account"}
+          </Button>
         </form>
       </Form>
     </div>

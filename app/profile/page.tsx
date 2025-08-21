@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -17,23 +16,23 @@ export default async function ProfilePage() {
 
   // Get user details with OAuth accounts
   const user = await prisma.user.findUnique({
-    where: { 
+    where: {
       id: session.user.id,
-      deleted_at: null 
+      deleted_at: null,
     },
     include: {
       profile: true,
       roles: {
         where: { deleted_at: null },
-        include: { role: true }
+        include: { role: true },
       },
       accounts: {
-        where: { 
+        where: {
           type: "oauth",
           // Only show active OAuth accounts
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   if (!user) {
@@ -43,19 +42,27 @@ export default async function ProfilePage() {
   // Get user's initials for avatar fallback
   const getInitials = (name: string | null, email: string) => {
     if (name) {
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      return name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
     }
     return email.slice(0, 2).toUpperCase();
   };
 
-  const userInitials = getInitials(user.name || `${user.profile?.first_name || ''} ${user.profile?.last_name || ''}`.trim(), user.email);
+  const userInitials = getInitials(
+    user.name || `${user.profile?.first_name || ""} ${user.profile?.last_name || ""}`.trim(),
+    user.email
+  );
   const hasOAuthAccounts = user.accounts.length > 0;
-  
+
   // Determine if user has email+password authentication
   const hasEmailPassword = user.password !== null;
-  
+
   // Can disconnect OAuth if they have email+password OR multiple OAuth providers
-  const canDisconnectOAuth = hasEmailPassword || user.accounts.length > 1;
+  const _canDisconnectOAuth = hasEmailPassword || user.accounts.length > 1;
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -64,20 +71,18 @@ export default async function ProfilePage() {
         <div className="flex items-center space-x-4">
           <Avatar className="h-20 w-20">
             <AvatarImage src={user.image || undefined} alt={user.name || user.email} />
-            <AvatarFallback className="text-2xl font-semibold">
-              {userInitials}
-            </AvatarFallback>
+            <AvatarFallback className="text-2xl font-semibold">{userInitials}</AvatarFallback>
           </Avatar>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
-              {user.name || `${user.profile?.first_name || ''} ${user.profile?.last_name || ''}`.trim() || 'User'}
+              {user.name ||
+                `${user.profile?.first_name || ""} ${user.profile?.last_name || ""}`.trim() ||
+                "User"}
             </h1>
             <p className="text-muted-foreground">{user.email}</p>
-            {user.roles.some((userRole) => userRole.role.name === 'admin') && (
+            {user.roles.some((userRole) => userRole.role.name === "admin") && (
               <div className="mt-2 flex flex-wrap gap-1">
-                <Badge variant="secondary">
-                  admin
-                </Badge>
+                <Badge variant="secondary">admin</Badge>
               </div>
             )}
           </div>
@@ -90,8 +95,8 @@ export default async function ProfilePage() {
           <UserDetails user={user} />
 
           {/* Account Linking */}
-          <AccountLinking 
-            user={user} 
+          <AccountLinking
+            user={user}
             hasOAuthAccounts={hasOAuthAccounts}
             hasEmailPassword={hasEmailPassword}
           />

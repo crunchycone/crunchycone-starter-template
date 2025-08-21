@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!secret) {
       throw new Error("AUTH_SECRET not configured");
     }
-    
+
     const decoded = jwt.verify(token, secret) as { userId: string; type: string };
 
     if (!decoded || decoded.type !== "reset") {

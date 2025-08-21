@@ -55,13 +55,13 @@ Create a new file in `themes/custom/yourtheme.ts`:
 import { Theme } from "../types";
 
 export const yourTheme: Theme = {
-  name: "your-theme",           // CSS class name
-  label: "Your Theme",          // Display name
+  name: "your-theme", // CSS class name
+  label: "Your Theme", // Display name
   description: "Amazing colors", // Description
-  category: "custom",           // Category
-  icon: "Star",                 // Lucide icon name
-  emoji: "⭐",                  // Optional emoji
-  radius: "0.5rem",            // Border radius
+  category: "custom", // Category
+  icon: "Star", // Lucide icon name
+  emoji: "⭐", // Optional emoji
+  radius: "0.5rem", // Border radius
   colors: {
     // All color variables in HSL format
     background: "210 100% 98%",
@@ -130,27 +130,29 @@ Add your theme to the provider in `app/layout.tsx`:
 ## 🎨 Color Guidelines
 
 ### HSL Format
+
 All colors use HSL format: `"hue saturation% lightness%"`
 
 Examples:
+
 - `"210 100% 50%"` = Bright blue
-- `"120 50% 30%"` = Dark green  
+- `"120 50% 30%"` = Dark green
 - `"0 80% 60%"` = Red
 
 ### Color Roles
 
-| Color | Purpose | Example |
-|-------|---------|---------|
-| `background` | Main background | Page background |
-| `foreground` | Main text | Body text |
-| `primary` | Brand/main actions | Buttons, links |
-| `secondary` | Supporting actions | Secondary buttons |
-| `muted` | Disabled/subtle | Placeholders |
-| `accent` | Highlights/focus | Focus states |
-| `destructive` | Errors/danger | Delete buttons |
-| `border` | Borders | Card borders |
-| `input` | Form inputs | Input backgrounds |
-| `ring` | Focus rings | Focus outlines |
+| Color         | Purpose            | Example           |
+| ------------- | ------------------ | ----------------- |
+| `background`  | Main background    | Page background   |
+| `foreground`  | Main text          | Body text         |
+| `primary`     | Brand/main actions | Buttons, links    |
+| `secondary`   | Supporting actions | Secondary buttons |
+| `muted`       | Disabled/subtle    | Placeholders      |
+| `accent`      | Highlights/focus   | Focus states      |
+| `destructive` | Errors/danger      | Delete buttons    |
+| `border`      | Borders            | Card borders      |
+| `input`       | Form inputs        | Input backgrounds |
+| `ring`        | Focus rings        | Focus outlines    |
 
 ## 🧪 Theme Validation
 
@@ -189,12 +191,12 @@ const allCSS = generateAllThemesCSS({
 ### Theme Management
 
 ```typescript
-import { 
-  getAllThemes, 
-  getTheme, 
+import {
+  getAllThemes,
+  getTheme,
   getThemesByCategory,
   getThemeNames,
-  getNextThemesConfig 
+  getNextThemesConfig,
 } from "@/themes";
 
 // Get theme names for next-themes
@@ -218,6 +220,7 @@ import { ThemePreview } from "@/components/theme-preview";
 ## 🔮 Future Features
 
 ### Automatic CSS Generation
+
 Run build-time script to generate CSS:
 
 ```bash
@@ -225,6 +228,7 @@ node scripts/generate-themes.js
 ```
 
 ### Theme Builder
+
 Create themes visually:
 
 ```typescript
@@ -232,11 +236,12 @@ import { createCustomTheme } from "@/themes";
 
 const newTheme = createCustomTheme({
   basePalette: ["#0066CC", "#00AA44"],
-  options: { darkMode: true }
+  options: { darkMode: true },
 });
 ```
 
 ### Theme Marketplace
+
 Share themes between projects:
 
 ```typescript
@@ -249,21 +254,25 @@ const importedTheme = importTheme(themeJSON);
 ## 📱 Best Practices
 
 ### 1. Consistent Naming
+
 - Use kebab-case for theme names
 - Choose descriptive, memorable names
 - Group related themes with prefixes
 
 ### 2. Color Accessibility
+
 - Ensure WCAG AA contrast (4.5:1 minimum)
 - Test with color blindness simulators
 - Provide sufficient visual hierarchy
 
 ### 3. Maintainability
+
 - Document color choices in comments
 - Use semantic color names
 - Test themes across all components
 
 ### 4. Performance
+
 - Keep theme objects lightweight
 - Use CSS variables for runtime switching
 - Minimize generated CSS size
@@ -280,16 +289,19 @@ This theme system is designed for Tailwind v4:
 ## 🆘 Troubleshooting
 
 ### Theme Not Applying
+
 1. Check theme is registered in `themes/index.ts`
 2. Verify CSS is added to `globals.css`
 3. Confirm theme name in ThemeProvider
 
 ### TypeScript Errors
+
 1. Run `npm run build` to check types
 2. Ensure all color properties are defined
 3. Verify imports match exports
 
 ### Color Issues
+
 1. Use HSL format: `"210 50% 30%"`
 2. Check contrast ratios
 3. Test in both light and dark contexts

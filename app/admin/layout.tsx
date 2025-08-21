@@ -58,10 +58,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </nav>
           <div className="p-4">
             <Separator className="mb-4" />
-            <SignOutButton 
-              variant="ghost" 
-              className="w-full justify-start"
-            >
+            <SignOutButton variant="ghost" className="w-full justify-start">
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </SignOutButton>
@@ -115,10 +112,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 <Separator className="my-1" />
                 <DropdownMenuItem asChild>
                   <div className="w-full">
-                    <SignOutButton 
-                      variant="ghost" 
-                      className="w-full justify-start"
-                    >
+                    <SignOutButton variant="ghost" className="w-full justify-start">
                       <LogOut className="mr-2 h-4 w-4" />
                       Logout
                     </SignOutButton>

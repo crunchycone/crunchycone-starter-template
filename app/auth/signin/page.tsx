@@ -9,6 +9,7 @@ interface SignInPageProps {
   searchParams: Promise<{
     message?: string;
     error?: string;
+    callbackUrl?: string;
   }>;
 }
 
@@ -16,6 +17,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams;
   const message = params.message;
   const error = params.error;
+  const _callbackUrl = params.callbackUrl;
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">

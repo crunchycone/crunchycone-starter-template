@@ -26,7 +26,7 @@ export async function signOutAction() {
  */
 export async function disconnectOAuthAccountAction(provider: string) {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     throw new Error("Not authenticated");
   }
@@ -34,15 +34,15 @@ export async function disconnectOAuthAccountAction(provider: string) {
   try {
     // Get user with accounts and check if they have a password
     const user = await prisma.user.findUnique({
-      where: { 
+      where: {
         id: session.user.id,
-        deleted_at: null 
+        deleted_at: null,
       },
       include: {
         accounts: {
-          where: { provider }
-        }
-      }
+          where: { provider },
+        },
+      },
     });
 
     if (!user) {
@@ -51,7 +51,9 @@ export async function disconnectOAuthAccountAction(provider: string) {
 
     // Check if user has a password (email/password auth)
     if (!user.password) {
-      throw new Error("Cannot disconnect OAuth account without email/password authentication set up");
+      throw new Error(
+        "Cannot disconnect OAuth account without email/password authentication set up"
+      );
     }
 
     // Check if the account exists
@@ -63,21 +65,21 @@ export async function disconnectOAuthAccountAction(provider: string) {
     await prisma.account.deleteMany({
       where: {
         userId: user.id,
-        provider: provider
-      }
+        provider: provider,
+      },
     });
 
     // Revalidate the profile page to show updated state
     revalidatePath("/profile");
-    
+
     return { success: true, message: `${provider} account disconnected successfully` };
   } catch (error) {
     console.error("Error disconnecting OAuth account:", error);
-    
+
     if (error instanceof Error) {
       throw new Error(error.message);
     }
-    
+
     throw new Error(`Failed to disconnect ${provider} account`);
   }
 }

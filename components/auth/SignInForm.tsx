@@ -22,7 +22,12 @@ import { Separator } from "@/components/ui/separator";
 import { Mail, Lock, Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { getOAuthProviders, hasOAuthProviders, hasMagicLinkProvider, isEmailPasswordEnabled } from "@/lib/auth/providers";
+import {
+  getOAuthProviders,
+  hasOAuthProviders,
+  hasMagicLinkProvider,
+  isEmailPasswordEnabled,
+} from "@/lib/auth/providers";
 
 const emailPasswordSchema = z.object({
   email: z.string().email({ error: "Invalid email address" }),
@@ -43,7 +48,7 @@ export function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
-  
+
   // Get available providers
   const oauthProviders = getOAuthProviders();
   const showOAuthSection = hasOAuthProviders();
@@ -52,23 +57,25 @@ export function SignInForm() {
 
   // Handle URL error parameters
   useEffect(() => {
-    const urlError = searchParams?.get('error');
+    const urlError = searchParams?.get("error");
     if (urlError) {
       switch (urlError) {
-        case 'OAuthAccountNotLinked':
-          setError('This email is already registered. Please sign in with your email and password first, then you can link your OAuth account in settings.');
+        case "OAuthAccountNotLinked":
+          setError(
+            "This email is already registered. Please sign in with your email and password first, then you can link your OAuth account in settings."
+          );
           break;
-        case 'OAuthSignin':
-          setError('Error occurred during OAuth sign-in. Please try again.');
+        case "OAuthSignin":
+          setError("Error occurred during OAuth sign-in. Please try again.");
           break;
-        case 'OAuthCallback':
-          setError('Error occurred during authentication callback. Please try again.');
+        case "OAuthCallback":
+          setError("Error occurred during authentication callback. Please try again.");
           break;
-        case 'CredentialsSignin':
-          setError('Invalid email or password.');
+        case "CredentialsSignin":
+          setError("Invalid email or password.");
           break;
         default:
-          setError('An authentication error occurred. Please try again.');
+          setError("An authentication error occurred. Please try again.");
       }
     }
   }, [searchParams]);
@@ -100,11 +107,14 @@ export function SignInForm() {
       });
 
       if (result?.error) {
-        throw new Error(result.error === "CredentialsSignin" ? "Invalid email or password" : result.error);
+        throw new Error(
+          result.error === "CredentialsSignin" ? "Invalid email or password" : result.error
+        );
       }
 
       if (result?.ok) {
-        router.push("/");
+        const callbackUrl = searchParams.get("callbackUrl") || "/";
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch (err) {
@@ -143,14 +153,14 @@ export function SignInForm() {
 
       // For OAuth, we actually want to redirect to the provider
       // The redirect: false doesn't work properly for OAuth
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
       await signIn(providerId, {
-        callbackUrl: "/"
+        callbackUrl: callbackUrl,
       });
-      
+
       // Note: This code won't run because signIn redirects to OAuth provider
-      // The loading state will be cleared when the component unmounts or 
+      // The loading state will be cleared when the component unmounts or
       // when the user returns from OAuth (handled by AuthRedirectHandler)
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       setIsOAuthLoading(false);
@@ -187,13 +197,11 @@ export function SignInForm() {
           </div>
         </div>
       )}
-      
+
       {/* OAuth Providers Section */}
       {showOAuthSection && (
         <div className="space-y-4">
-          <div className="text-center text-sm text-muted-foreground">
-            Sign in with
-          </div>
+          <div className="text-center text-sm text-muted-foreground">Sign in with</div>
           <div className="grid gap-2">
             {oauthProviders.map((provider) => (
               <Button
@@ -205,21 +213,21 @@ export function SignInForm() {
               >
                 {isOAuthLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : provider.id === 'google' ? (
-                  <Image 
-                    src="/icons/google-icon.svg" 
-                    alt="Google" 
-                    width={16} 
-                    height={16} 
-                    className="mr-2" 
+                ) : provider.id === "google" ? (
+                  <Image
+                    src="/icons/google-icon.svg"
+                    alt="Google"
+                    width={16}
+                    height={16}
+                    className="mr-2"
                   />
-                ) : provider.id === 'github' ? (
-                  <Image 
-                    src="/icons/github-icon.svg" 
-                    alt="GitHub" 
-                    width={16} 
-                    height={16} 
-                    className="mr-2" 
+                ) : provider.id === "github" ? (
+                  <Image
+                    src="/icons/github-icon.svg"
+                    alt="GitHub"
+                    width={16}
+                    height={16}
+                    className="mr-2"
                   />
                 ) : provider.icon ? (
                   <span className="mr-2">{provider.icon}</span>
@@ -235,9 +243,7 @@ export function SignInForm() {
                 <Separator className="w-full" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
           )}
@@ -247,57 +253,57 @@ export function SignInForm() {
       {/* Email/Password Form */}
       {showEmailPasswordForm && (
         <div className="space-y-4">
-        <Form {...emailPasswordForm}>
-          <form
-            onSubmit={emailPasswordForm.handleSubmit(onEmailPasswordSubmit)}
-            className="space-y-4"
-          >
-            <FormField
-              control={emailPasswordForm.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="you@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+          <Form {...emailPasswordForm}>
+            <form
+              onSubmit={emailPasswordForm.handleSubmit(onEmailPasswordSubmit)}
+              className="space-y-4"
+            >
+              <FormField
+                control={emailPasswordForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="you@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={emailPasswordForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput placeholder="Enter your password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-            />
-            <FormField
-              control={emailPasswordForm.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <PasswordInput placeholder="Enter your password" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              <Lock className="mr-2 h-4 w-4" />
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                <Lock className="mr-2 h-4 w-4" />
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
 
-            <div className="text-center">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-          </form>
-        </Form>
+              <div className="text-center">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
+            </form>
+          </Form>
         </div>
       )}
 
@@ -311,9 +317,7 @@ export function SignInForm() {
                 <Separator className="w-full" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or use magic link
-                </span>
+                <span className="bg-background px-2 text-muted-foreground">Or use magic link</span>
               </div>
             </div>
           )}

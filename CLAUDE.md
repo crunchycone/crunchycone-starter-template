@@ -37,7 +37,8 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 **Key Functions**: `getCurrentUser()`, `hasRole()`, `isAdmin()`, `checkAdminExists()`
 
-**Auth Flows**: 
+**Auth Flows**:
+
 - Setup: Check admin exists → redirect to setup if none
 - Sign-up: Register → auto sign-in
 - Sign-in: Email/password or magic link
@@ -46,6 +47,7 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 **Sessions**: JWT in HTTP-only cookies, `auth()` for server, `useSession()` for client
 
 **Usage**:
+
 - Client: `useSession()`, `signIn()`, `signOut()`
 - Server: `const session = await auth()`
 - API: Check session, return 401 if unauthorized
@@ -55,20 +57,17 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 **Server Actions**: Form submissions, DB mutations, admin ops, revalidation
 **API Routes**: External integrations, OAuth callbacks, file uploads, webhooks
 
-**Server Action Pattern**: 
+**Server Action Pattern**:
+
 1. Auth check (`await auth()`)
 2. Validate data
 3. DB operation
-4. `revalidatePath()` 
+4. `revalidatePath()`
 5. Redirect/return
 
 **Real-time Updates**: Use `revalidatePath()` after mutations for immediate UI updates
 
-
 **Don't Mix**: Use Server Actions directly in forms, not fetch() calls
-
-
-
 
 ## Admin Dashboard
 
@@ -79,8 +78,16 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 ## Components
 
-**shadcn/ui**: Button, Card, Form, Input, Dialog, Table, Toast, etc.
+**shadcn/ui**: Button, Card, Form, Input, Dialog, Table, Toast, Checkbox, etc.
 **Custom**: SignInForm (tabs), SignUpForm, UserManagementPanel, RoleManagementPanel
+
+**UI Component Rules**:
+
+1. **Always check existing** `components/ui/` first - Never create custom UI when shadcn/ui exists
+2. **Install from registry** when needed: `npx shadcn@latest add [component]`
+3. **Combine existing components** before creating custom ones
+4. **Follow shadcn patterns** - Use Tailwind, CVA variants, maintain accessibility
+5. **Never use** Material-UI, Ant Design, or other UI libraries
 
 ## Pages
 
@@ -170,3 +177,17 @@ See `docs/` folder: email providers, auth providers, theme customization
 ## Contributing
 
 Follow patterns, add types, handle errors, update docs, test thoroughly, maintain security
+
+# important-instruction-reminders
+
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (\*.md) or README files. Only create documentation files if explicitly requested by the User.
+
+## shadcn/ui Quick Rules
+
+- **Check existing first** - `components/ui/` before creating custom
+- **Install when missing** - `npx shadcn@latest add [component]`
+- **Combine before custom** - Build with existing primitives
+- **Follow patterns** - Tailwind, variants, accessibility

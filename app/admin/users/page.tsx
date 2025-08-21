@@ -21,15 +21,26 @@ async function getRoles() {
 async function getUsers(page: number = 1, search?: string) {
   const skip = (page - 1) * ITEMS_PER_PAGE;
 
-  const where = {
-    deleted_at: null,
-    ...(search && {
-      email: {
-        contains: search,
-        mode: "insensitive" as const,
-      },
-    }),
-  };
+  // For SQLite, we need to handle case-insensitive search manually
+  const where = search
+    ? {
+        deleted_at: null,
+        OR: [
+          {
+            email: {
+              contains: search.toLowerCase(),
+            },
+          },
+          {
+            name: {
+              contains: search.toLowerCase(),
+            },
+          },
+        ],
+      }
+    : {
+        deleted_at: null,
+      };
 
   const [users, count] = await Promise.all([
     prisma.user.findMany({

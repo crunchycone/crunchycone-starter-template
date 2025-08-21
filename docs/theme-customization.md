@@ -7,7 +7,7 @@ This guide explains how to create and customize themes using the TypeScript-base
 The application uses a modern TypeScript theme system featuring:
 
 - **Type Safety**: Complete TypeScript interfaces for theme definitions
-- **Organization**: Themes structured in `base/` and `custom/` folders  
+- **Organization**: Themes structured in `base/` and `custom/` folders
 - **Dynamic Loading**: Theme toggle automatically reads from registry
 - **Validation**: Built-in theme validation and utility functions
 - **Future-Proof**: Ready for Tailwind CSS v4
@@ -35,14 +35,14 @@ Each theme is a TypeScript object implementing the `Theme` interface:
 
 ```typescript
 export interface Theme {
-  name: string;           // CSS class name (e.g., "ocean")
-  label: string;          // Display name (e.g., "Ocean Blue")
-  description: string;    // Theme description
+  name: string; // CSS class name (e.g., "ocean")
+  label: string; // Display name (e.g., "Ocean Blue")
+  description: string; // Theme description
   category: "base" | "custom";
-  colors: ThemeColors;    // Complete color palette
-  radius: string;         // Border radius
-  icon?: string;          // Optional Lucide icon name
-  emoji?: string;         // Optional emoji
+  colors: ThemeColors; // Complete color palette
+  radius: string; // Border radius
+  icon?: string; // Optional Lucide icon name
+  emoji?: string; // Optional emoji
 }
 ```
 
@@ -53,33 +53,33 @@ All colors use HSL format: `"hue saturation% lightness%"`
 ```typescript
 export interface ThemeColors {
   // Base colors
-  background: string;           // Main page background
-  foreground: string;           // Primary text color
-  
+  background: string; // Main page background
+  foreground: string; // Primary text color
+
   // Component colors
-  card: string;                 // Card backgrounds
-  cardForeground: string;       // Card text
-  popover: string;              // Popover backgrounds
-  popoverForeground: string;    // Popover text
-  
+  card: string; // Card backgrounds
+  cardForeground: string; // Card text
+  popover: string; // Popover backgrounds
+  popoverForeground: string; // Popover text
+
   // Action colors
-  primary: string;              // Brand/main buttons
-  primaryForeground: string;    // Primary button text
-  secondary: string;            // Secondary buttons
-  secondaryForeground: string;  // Secondary button text
-  
+  primary: string; // Brand/main buttons
+  primaryForeground: string; // Primary button text
+  secondary: string; // Secondary buttons
+  secondaryForeground: string; // Secondary button text
+
   // State colors
-  muted: string;                // Disabled/subtle elements
-  mutedForeground: string;      // Muted text
-  accent: string;               // Highlights/focus
-  accentForeground: string;     // Accent text
-  destructive: string;          // Error/delete actions
-  destructiveForeground: string;// Destructive text
-  
+  muted: string; // Disabled/subtle elements
+  mutedForeground: string; // Muted text
+  accent: string; // Highlights/focus
+  accentForeground: string; // Accent text
+  destructive: string; // Error/delete actions
+  destructiveForeground: string; // Destructive text
+
   // Interactive elements
-  border: string;               // Borders
-  input: string;                // Input backgrounds
-  ring: string;                 // Focus rings
+  border: string; // Borders
+  input: string; // Input backgrounds
+  ring: string; // Focus rings
 }
 ```
 
@@ -183,12 +183,7 @@ Add your theme to `app/layout.tsx`:
 ### Access Theme Data
 
 ```typescript
-import { 
-  getAllThemes, 
-  getTheme, 
-  getThemesByCategory,
-  getThemeNames 
-} from "@/themes";
+import { getAllThemes, getTheme, getThemesByCategory, getThemeNames } from "@/themes";
 
 // Get all themes
 const allThemes = getAllThemes();
@@ -340,8 +335,8 @@ const validation = validateTheme(theme);
 
 if (!validation.isValid) {
   // Handle validation errors
-  validation.errors.forEach(error => console.error(error));
-  validation.warnings.forEach(warning => console.warn(warning));
+  validation.errors.forEach((error) => console.error(error));
+  validation.warnings.forEach((warning) => console.warn(warning));
 }
 ```
 
@@ -349,9 +344,9 @@ if (!validation.isValid) {
 
 ```typescript
 const css = generateThemeCSS(theme, {
-  includeComments: true,    // Add helpful comments
-  minify: false,            // Pretty-print CSS
-  variablePrefix: "--",     // CSS variable prefix
+  includeComments: true, // Add helpful comments
+  minify: false, // Pretty-print CSS
+  variablePrefix: "--", // CSS variable prefix
 });
 ```
 
@@ -370,22 +365,26 @@ const customThemes = getThemesByCategory("custom");
 ## Best Practices
 
 ### 1. Naming Conventions
+
 - Use kebab-case for theme names (`ocean-blue`, not `OceanBlue`)
 - Choose descriptive, memorable names
 - Avoid overly generic names (`blue`, `green`)
 
 ### 2. Color Selection
+
 - Start with a primary color you love
 - Generate harmonious palettes (use tools like Coolors.co)
 - Ensure sufficient contrast for accessibility
 - Test with colorblind simulation tools
 
 ### 3. Organization
+
 - Group related themes (e.g., `neon-blue`, `neon-purple`)
 - Document inspiration/source in description
 - Use consistent radius values within theme families
 
 ### 4. Testing
+
 - Test all UI components with your theme
 - Check both light and dark contexts
 - Verify accessibility with screen readers
@@ -396,6 +395,7 @@ const customThemes = getThemesByCategory("custom");
 If updating from the old CSS-based system:
 
 ### Old Way (CSS Variables)
+
 ```css
 .theme-ocean {
   --background: 210 100% 98%;
@@ -405,6 +405,7 @@ If updating from the old CSS-based system:
 ```
 
 ### New Way (TypeScript Objects)
+
 ```typescript
 export const oceanTheme: Theme = {
   name: "ocean",
@@ -418,6 +419,7 @@ export const oceanTheme: Theme = {
 ```
 
 ### Benefits of New System
+
 - ✅ **Type Safety**: Catch errors at compile time
 - ✅ **Better DX**: IntelliSense and autocomplete
 - ✅ **Validation**: Built-in theme validation
@@ -427,22 +429,26 @@ export const oceanTheme: Theme = {
 ## Troubleshooting
 
 ### Theme Not Appearing
+
 1. Check theme is registered in `themes/index.ts`
 2. Verify CSS is added to `app/globals.css`
 3. Confirm theme name in ThemeProvider themes array
 4. Check browser dev tools for CSS variable application
 
 ### TypeScript Errors
+
 1. Ensure all required `ThemeColors` properties are defined
 2. Use correct HSL format: `"210 50% 30%"`
 3. Run `npm run build` to check for type errors
 
 ### Color Issues
+
 1. Verify HSL format (no `hsl()` wrapper)
 2. Check contrast ratios meet accessibility standards
 3. Test theme across all components
 
 ### Performance Issues
+
 1. Limit number of custom themes
 2. Minify generated CSS in production
 3. Consider lazy loading for large theme collections

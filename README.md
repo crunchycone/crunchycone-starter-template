@@ -448,6 +448,7 @@ By default, emails are logged to the console. To use a real email provider:
 Create a `.env` file with these variables:
 
 ### Core Application
+
 ```env
 # Authentication
 AUTH_SECRET="your-secret-key-change-in-production"  # Auto-generated during setup
@@ -473,7 +474,7 @@ NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=true
 GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="GOCSPX-your-google-client-secret"
 
-# GitHub OAuth  
+# GitHub OAuth
 NEXT_PUBLIC_ENABLE_GITHUB_AUTH=true
 GITHUB_CLIENT_ID="your-github-client-id"
 GITHUB_CLIENT_SECRET="your-github-client-secret"
@@ -484,6 +485,7 @@ NEXT_PUBLIC_ENABLE_MAGIC_LINK=false     # Default: false
 ```
 
 **Setup Guide**: See [docs/auth-providers.md](./docs/auth-providers.md) for complete OAuth setup instructions including:
+
 - Creating OAuth apps in Google Cloud Console and GitHub
 - Configuring callback URLs
 - Testing OAuth flows
@@ -492,22 +494,26 @@ NEXT_PUBLIC_ENABLE_MAGIC_LINK=false     # Default: false
 ### Database Configuration
 
 **For SQLite (Local Development):**
+
 ```env
 DATABASE_URL="file:./db/prod.db"
 ```
 
 **For Turso (Production):**
+
 ```env
 DATABASE_URL="libsql://[your-database-url]"
 TURSO_AUTH_TOKEN="[your-auth-token]"
 ```
 
 **For PostgreSQL:**
+
 ```env
 DATABASE_URL="postgresql://user:password@host:port/database"
 ```
 
 **For MySQL:**
+
 ```env
 DATABASE_URL="mysql://user:password@host:port/database"
 ```

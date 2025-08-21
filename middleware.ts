@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname } = request.nextUrl;
 
   // Skip middleware for static files and API routes (except auth)
   if (
@@ -11,20 +11,19 @@ export async function middleware(request: NextRequest) {
     pathname.includes(".") ||
     (pathname.startsWith("/api") && !pathname.startsWith("/api/auth"))
   ) {
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
-  // For now, let pages handle their own auth checks
-  // Auth.js middleware doesn't work well with Edge Runtime
-  // We'll add proper session checks in each page component
+  // Add the current pathname to headers so server components can access it
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", request.nextUrl.pathname + request.nextUrl.search);
 
   // Add security headers
-  const response = NextResponse.next()
-  response.headers.set("X-Frame-Options", "DENY")
-  response.headers.set("X-Content-Type-Options", "nosniff")
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
-  return response
+  return response;
 }
 
 // Configure which routes the middleware should run on

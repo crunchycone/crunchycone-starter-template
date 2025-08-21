@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 export async function hasRole(userId: string, roleName: string): Promise<boolean> {
   const userRole = await prisma.userRole.findFirst({
@@ -20,7 +21,16 @@ export async function requireRole(roleName: string) {
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/auth/signin");
+    // Get the current URL to redirect back to after authentication
+    const headersList = await headers();
+    const currentPath = headersList.get("x-pathname");
+
+    if (currentPath && currentPath !== "/auth/signin") {
+      const signInUrl = `/auth/signin?callbackUrl=${encodeURIComponent(currentPath)}`;
+      redirect(signInUrl);
+    } else {
+      redirect("/auth/signin");
+    }
   }
 
   const hasRequiredRole = await hasRole(session.user.id, roleName);

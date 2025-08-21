@@ -54,18 +54,19 @@ export const getAllThemes = (): Theme[] => {
  */
 export const getNextThemesConfig = (): string[] => {
   // Include system theme and all custom themes
-  return ["light", "dark", "system", ...getThemeNames().filter(name => !["light", "dark"].includes(name))];
+  return [
+    "light",
+    "dark",
+    "system",
+    ...getThemeNames().filter((name) => !["light", "dark"].includes(name)),
+  ];
 };
 
 /**
  * Generate CSS from a theme object
  */
 export const generateThemeCSS = (theme: Theme, options: CSSGenerationOptions = {}): string => {
-  const {
-    includeComments = true,
-    minify = false,
-    variablePrefix = "--",
-  } = options;
+  const { includeComments = true, minify = false, variablePrefix = "--" } = options;
 
   const cssLines: string[] = [];
 
@@ -99,7 +100,7 @@ export const generateThemeCSS = (theme: Theme, options: CSSGenerationOptions = {
  */
 export const generateAllThemesCSS = (options: CSSGenerationOptions = {}): string => {
   const { includeComments = true } = options;
-  
+
   const cssBlocks: string[] = [];
 
   if (includeComments) {
@@ -109,8 +110,10 @@ export const generateAllThemesCSS = (options: CSSGenerationOptions = {}): string
   }
 
   // Generate CSS for each theme (skip light and dark as they're handled separately)
-  const customThemes = Object.values(themes).filter(theme => !["light", "dark"].includes(theme.name));
-  
+  const customThemes = Object.values(themes).filter(
+    (theme) => !["light", "dark"].includes(theme.name)
+  );
+
   customThemes.forEach((theme) => {
     cssBlocks.push(generateThemeCSS(theme, options));
     if (!options.minify) {
@@ -159,7 +162,7 @@ export const validateTheme = (theme: Theme): ThemeValidationResult => {
  */
 export const validateAllThemes = (): Record<string, ThemeValidationResult> => {
   const results: Record<string, ThemeValidationResult> = {};
-  
+
   Object.entries(themes).forEach(([name, theme]) => {
     results[name] = validateTheme(theme);
   });

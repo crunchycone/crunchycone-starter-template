@@ -4,16 +4,16 @@
  * Run with: node scripts/generate-themes.js
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // Import the theme generator (using require for Node.js)
-const { generateAllThemesCSS } = require('../themes/index.ts');
+const { generateAllThemesCSS } = require("../themes/index.ts");
 
 const generateThemeCSS = () => {
   try {
-    console.log('🎨 Generating theme CSS from TypeScript objects...');
-    
+    console.log("🎨 Generating theme CSS from TypeScript objects...");
+
     // Generate CSS from theme objects
     const css = generateAllThemesCSS({
       includeComments: true,
@@ -21,16 +21,16 @@ const generateThemeCSS = () => {
     });
 
     // Write to a temporary CSS file
-    const outputPath = path.join(__dirname, '../app/generated-themes.css');
-    fs.writeFileSync(outputPath, css, 'utf8');
+    const outputPath = path.join(__dirname, "../app/generated-themes.css");
+    fs.writeFileSync(outputPath, css, "utf8");
 
-    console.log('✅ Theme CSS generated successfully!');
+    console.log("✅ Theme CSS generated successfully!");
     console.log(`📝 Output: ${outputPath}`);
     console.log(`📏 Size: ${css.length} characters`);
-    
+
     return css;
   } catch (error) {
-    console.error('❌ Error generating theme CSS:', error.message);
+    console.error("❌ Error generating theme CSS:", error.message);
     process.exit(1);
   }
 };

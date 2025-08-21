@@ -9,22 +9,17 @@ interface SignOutButtonProps {
   children?: React.ReactNode;
 }
 
-export function SignOutButton({ 
-  className = "w-full", 
+export function SignOutButton({
+  className = "w-full",
   variant = "outline",
-  children = "Sign Out"
+  children = "Sign Out",
 }: SignOutButtonProps) {
   const handleSignOut = () => {
     signOut({ callbackUrl: "/auth/signin" });
   };
 
   return (
-    <Button
-      type="button"
-      className={className}
-      variant={variant}
-      onClick={handleSignOut}
-    >
+    <Button type="button" className={className} variant={variant} onClick={handleSignOut}>
       {children}
     </Button>
   );

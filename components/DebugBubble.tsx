@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { X, AlertCircle, CheckCircle, Move } from "lucide-react";
+import Image from "next/image";
 
 interface ErrorInfo {
   id: string;
@@ -421,7 +422,13 @@ export function DebugBubble() {
             }
           }}
         >
-          <img src="/crunchycone.svg" alt="CrunchyCone" className="h-6 w-6 pointer-events-none" />
+          <Image
+            src="/crunchycone.svg"
+            alt="CrunchyCone"
+            width={24}
+            height={24}
+            className="pointer-events-none"
+          />
         </div>
 
         {/* Drag indicator */}
@@ -531,7 +538,7 @@ export function DebugBubble() {
                     <span className="text-white/70 dark:text-black/70">Powered by:</span>
                     <span className="font-mono flex items-center gap-1">
                       CrunchyCone
-                      <img src="/crunchycone.svg" alt="CrunchyCone" className="h-3 w-3" />
+                      <Image src="/crunchycone.svg" alt="CrunchyCone" width={12} height={12} />
                     </span>
                   </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -440,14 +441,16 @@ export function UserManagementPanel({
                 <TableCell>
                   <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted overflow-hidden">
                     {user.image ? (
-                      <img
+                      <Image
                         src={
                           user.image.startsWith("http")
                             ? `/api/avatar?url=${encodeURIComponent(user.image)}`
                             : user.image
                         }
                         alt={user.name || user.email}
-                        className="h-8 w-8 rounded-full object-cover"
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover"
                         onError={(e) => {
                           console.log("Image failed to load:", user.image);
                           const target = e.currentTarget as HTMLImageElement;
@@ -575,14 +578,16 @@ export function UserManagementPanel({
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center justify-center h-16 w-16 rounded-full bg-muted overflow-hidden">
                   {selectedUser.image ? (
-                    <img
+                    <Image
                       src={
                         selectedUser.image.startsWith("http")
                           ? `/api/avatar?url=${encodeURIComponent(selectedUser.image)}`
                           : selectedUser.image
                       }
                       alt={selectedUser.name || selectedUser.email}
-                      className="h-16 w-16 rounded-full object-cover"
+                      width={64}
+                      height={64}
+                      className="rounded-full object-cover"
                     />
                   ) : (
                     <User className="h-8 w-8" />
@@ -762,14 +767,16 @@ export function UserManagementPanel({
                 </div>
                 <div className="flex items-center justify-center h-10 w-10 rounded-full bg-muted overflow-hidden">
                   {formData.image ? (
-                    <img
+                    <Image
                       src={
                         formData.image.startsWith("http")
                           ? `/api/avatar?url=${encodeURIComponent(formData.image)}`
                           : formData.image
                       }
                       alt="Avatar preview"
-                      className="h-10 w-10 rounded-full object-cover"
+                      width={40}
+                      height={40}
+                      className="rounded-full object-cover"
                     />
                   ) : (
                     <User className="h-5 w-5" />
@@ -900,14 +907,16 @@ export function UserManagementPanel({
                 </div>
                 <div className="flex items-center justify-center h-10 w-10 rounded-full bg-muted overflow-hidden">
                   {formData.image ? (
-                    <img
+                    <Image
                       src={
                         formData.image.startsWith("http")
                           ? `/api/avatar?url=${encodeURIComponent(formData.image)}`
                           : formData.image
                       }
                       alt="Avatar preview"
-                      className="h-10 w-10 rounded-full object-cover"
+                      width={40}
+                      height={40}
+                      className="rounded-full object-cover"
                     />
                   ) : (
                     <User className="h-5 w-5" />

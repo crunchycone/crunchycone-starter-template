@@ -1,0 +1,127 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { hasRole } from "@/lib/auth/permissions";
+import { v4 as uuidv4 } from "uuid";
+
+// Try importing crunchycone-lib
+let initializeStorageProvider: unknown;
+let getStorageProvider: unknown;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const storageModule = require("crunchycone-lib/services/storage");
+  initializeStorageProvider = storageModule.initializeStorageProvider;
+  getStorageProvider = storageModule.getStorageProvider;
+} catch (importError) {
+  console.error("[Storage] Failed to import crunchycone-lib:", importError);
+}
+
+interface UploadResult {
+  success: boolean;
+  fileName: string;
+  filePath: string;
+  size: number;
+  contentType: string;
+  visibility: "public" | "private";
+  url?: string;
+}
+
+export async function POST(_request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session || !(await hasRole(session.user.id, "admin"))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if crunchycone-lib is available
+    if (!initializeStorageProvider || !getStorageProvider) {
+      return NextResponse.json(
+        {
+          error: "Storage provider not available",
+        },
+        { status: 500 }
+      );
+    }
+
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    const visibility = (formData.get("visibility") as string) || "private";
+    const folder = (formData.get("folder") as string) || "";
+
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      // 50MB limit
+      return NextResponse.json({ error: "File too large (max 50MB)" }, { status: 400 });
+    }
+
+    // Initialize storage provider if not already done
+    try {
+      initializeStorageProvider();
+    } catch {
+      // Provider might already be initialized
+    }
+
+    const provider = getStorageProvider();
+
+    // Generate unique filename to prevent conflicts
+    const fileExtension = file.name.split(".").pop() || "";
+    const uniqueId = uuidv4().slice(0, 8);
+    const baseFileName = file.name.replace(/\.[^/.]+$/, "");
+    const fileName = `${baseFileName}-${uniqueId}${fileExtension ? `.${fileExtension}` : ""}`;
+
+    // Handle folder structure
+    const filePath = folder ? `${folder}/${fileName}` : fileName;
+
+    try {
+      // Upload file using the storage provider
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const uploadResult = await provider.uploadFile({
+        external_id: `admin-upload-${uniqueId}`,
+        key: filePath,
+        filename: file.name,
+        buffer: buffer,
+        contentType: file.type,
+        size: file.size,
+        public: visibility === "public",
+        metadata: {
+          originalName: file.name,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: session.user.id,
+        },
+      });
+
+      const result: UploadResult = {
+        success: true,
+        fileName,
+        filePath: uploadResult.key,
+        size: uploadResult.size,
+        contentType: uploadResult.contentType,
+        visibility: uploadResult.visibility as "public" | "private",
+      };
+
+      // Add URL for public files
+      if (uploadResult.publicUrl) {
+        result.url = uploadResult.publicUrl;
+      }
+
+      return NextResponse.json(result);
+    } catch {
+      // Error handled silently
+      return NextResponse.json(
+        {
+          error: "Upload failed",
+        },
+        { status: 500 }
+      );
+    }
+  } catch {
+    // Error handled silently
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  }
+}

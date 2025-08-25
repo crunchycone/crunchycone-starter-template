@@ -172,3 +172,6 @@ yarn.lock.backup
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Local uploads folder - mostly for dev
+uploads/*

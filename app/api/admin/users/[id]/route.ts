@@ -52,7 +52,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Update user in transaction
     const updatedUser = await prisma.$transaction(async (tx) => {
       // Prepare user update data
-      const userUpdateData: any = {
+      const userUpdateData: {
+        email: string;
+        name: string | null;
+        image: string | null;
+        password?: string;
+      } = {
         email,
         name: name || null,
         image: image || null,

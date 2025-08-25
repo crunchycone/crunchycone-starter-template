@@ -23,7 +23,11 @@ interface AccountLinkingProps {
   hasEmailPassword: boolean;
 }
 
-export function AccountLinking({ user, hasOAuthAccounts, hasEmailPassword }: AccountLinkingProps) {
+export function AccountLinking({
+  user,
+  hasOAuthAccounts: _hasOAuthAccounts,
+  hasEmailPassword,
+}: AccountLinkingProps) {
   const [isLinking, setIsLinking] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState<string | null>(null);
   const [linkingError, setLinkingError] = useState<string | null>(null);

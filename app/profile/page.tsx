@@ -61,9 +61,6 @@ export default async function ProfilePage() {
   // Determine if user has email+password authentication
   const hasEmailPassword = user.password !== null;
 
-  // Can disconnect OAuth if they have email+password OR multiple OAuth providers
-  const _canDisconnectOAuth = hasEmailPassword || user.accounts.length > 1;
-
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-4xl space-y-6">

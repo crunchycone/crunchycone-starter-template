@@ -79,7 +79,7 @@ async function runMigrations() {
         .filter((f) => /^\d{14}_/.test(f)) // Only folders starting with timestamp
         .sort(); // Sort chronologically
     }
-  } catch (error) {
+  } catch {
     console.log("⚠️  No migrations directory found");
   }
 

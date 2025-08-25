@@ -148,7 +148,9 @@ This link will expire in 24 hours.
               const emails = await response.json();
 
               // Find primary email
-              const primaryEmail = emails?.find((email: any) => email.primary);
+              const primaryEmail = emails?.find(
+                (email: { primary?: boolean; email?: string }) => email.primary
+              );
               if (primaryEmail) {
                 profile.email = primaryEmail.email;
                 console.log("GitHub: Retrieved primary email from API");
@@ -227,7 +229,7 @@ export const authConfig: NextAuthOptions = {
             token.roles = [];
           }
         } else {
-          token.roles = (user as any).roles || [];
+          token.roles = (user as { roles?: string[] }).roles || [];
         }
 
         token.id = user.id;
@@ -311,14 +313,14 @@ export const authConfig: NextAuthOptions = {
               // Update avatar if missing OR if it has changed
               const avatarUrl =
                 account.provider === "google"
-                  ? (profile as any).picture
-                  : (profile as any).avatar_url;
+                  ? (profile as { picture?: string }).picture
+                  : (profile as { avatar_url?: string }).avatar_url;
 
               console.log(`${account.provider} profile data:`, {
                 name: profile.name,
                 avatarUrl,
-                picture: (profile as any).picture,
-                avatar_url: (profile as any).avatar_url,
+                picture: (profile as { picture?: string }).picture,
+                avatar_url: (profile as { avatar_url?: string }).avatar_url,
               });
 
               if (avatarUrl) {
@@ -357,7 +359,7 @@ export const authConfig: NextAuthOptions = {
     },
   },
   events: {
-    async signIn({ user, account, profile, isNewUser }) {
+    async signIn({ user, account, profile: _profile, isNewUser }) {
       console.log(`User signed in: ${user.email}, isNewUser: ${isNewUser}`);
 
       // Assign default role to new OAuth users

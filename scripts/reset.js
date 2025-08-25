@@ -112,8 +112,6 @@ async function main() {
     console.log("  • Clean Next.js build cache");
     console.log("  • Reset to first-time user experience");
 
-    const skipConfirmation = hasYesFlag() || isFirstRun;
-
     if (isFirstRun) {
       logInfo("First-time setup detected, skipping confirmation.");
     } else if (hasYesFlag()) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ import {
 } from "@/app/actions/email-settings";
 
 export function EmailConfigForm() {
+  const { data: session } = useSession();
   const [settings, setSettings] = useState<EmailSettings>({
     provider: "console",
     fromAddress: "noreply@example.com",
@@ -52,6 +54,8 @@ export function EmailConfigForm() {
   const [providerAvailability, setProviderAvailability] = useState<
     Record<string, { available: boolean; checking: boolean }>
   >({});
+  const [showTestDialog, setShowTestDialog] = useState(false);
+  const [testEmailTo, setTestEmailTo] = useState("");
 
   const checkProviderAvailability = async (provider: EmailProvider) => {
     setProviderAvailability((prev) => ({
@@ -172,12 +176,12 @@ export function EmailConfigForm() {
     }
   };
 
-  const handleTestConfiguration = async () => {
+  const handleTestConfiguration = async (customTo?: string) => {
     setIsTesting(true);
     setMessage(null);
 
     try {
-      const result = await testEmailConfiguration(settings);
+      const result = await testEmailConfiguration(settings, customTo);
       if (result.success) {
         setMessage({ type: "success", text: result.message });
       } else {
@@ -187,6 +191,23 @@ export function EmailConfigForm() {
       setMessage({ type: "error", text: "Failed to test email configuration" });
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const handleTestButtonClick = () => {
+    if (settings.provider === "smtp") {
+      // Pre-fill with current user's email
+      setTestEmailTo(session?.user?.email || "");
+      setShowTestDialog(true);
+    } else {
+      handleTestConfiguration();
+    }
+  };
+
+  const handleTestDialogSubmit = () => {
+    if (testEmailTo.trim()) {
+      setShowTestDialog(false);
+      handleTestConfiguration(testEmailTo.trim());
     }
   };
 
@@ -719,17 +740,7 @@ export function EmailConfigForm() {
                   )}
                   <AlertDescription>
                     {crunchyConeAuthStatus.authenticated ? (
-                      <>
-                        Successfully authenticated with CrunchyCone
-                        {crunchyConeAuthStatus.user && (
-                          <span className="block text-xs text-muted-foreground mt-1">
-                            Logged in as:{" "}
-                            {crunchyConeAuthStatus.user.email ||
-                              crunchyConeAuthStatus.user.name ||
-                              "Unknown user"}
-                          </span>
-                        )}
-                      </>
+                      "Successfully authenticated with CrunchyCone"
                     ) : (
                       <>
                         You need to be signed into your CrunchyCone account.
@@ -801,27 +812,6 @@ export function EmailConfigForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {message && (
-            <Alert
-              variant={message.type === "error" ? "destructive" : "default"}
-              className={
-                message.type === "success"
-                  ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
-                  : ""
-              }
-            >
-              {message.type === "success" ? (
-                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-              ) : (
-                <AlertTriangle className="h-4 w-4" />
-              )}
-              <AlertDescription
-                className={message.type === "success" ? "text-green-800 dark:text-green-200" : ""}
-              >
-                {message.text}
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* Basic Settings */}
           <div className="space-y-4">
@@ -934,11 +924,33 @@ export function EmailConfigForm() {
             {renderProviderSettings()}
           </div>
 
+          {message && (
+            <Alert
+              variant={message.type === "error" ? "destructive" : "default"}
+              className={
+                message.type === "success"
+                  ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+                  : ""
+              }
+            >
+              {message.type === "success" ? (
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              ) : (
+                <AlertTriangle className="h-4 w-4" />
+              )}
+              <AlertDescription
+                className={message.type === "success" ? "text-green-800 dark:text-green-200" : ""}
+              >
+                {message.text}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex justify-between">
             <Button
               type="button"
               variant="outline"
-              onClick={handleTestConfiguration}
+              onClick={handleTestButtonClick}
               disabled={
                 isTesting ||
                 isLoading ||
@@ -973,6 +985,66 @@ export function EmailConfigForm() {
           </div>
         </form>
       </CardContent>
+
+      {/* SMTP Test Email Dialog */}
+      <Dialog open={showTestDialog} onOpenChange={setShowTestDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Test SMTP Configuration</DialogTitle>
+            <DialogDescription>
+              Enter the email address where you want to send the test email.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="testEmailTo" className="text-sm">
+                Send test email to:
+              </Label>
+              <Input
+                id="testEmailTo"
+                type="email"
+                placeholder="Enter email address"
+                value={testEmailTo}
+                onChange={(e) => setTestEmailTo(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleTestDialogSubmit();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowTestDialog(false)}
+                disabled={isTesting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleTestDialogSubmit}
+                disabled={isTesting || !testEmailTo.trim()}
+              >
+                {isTesting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <TestTube2 className="mr-2 h-4 w-4" />
+                    Send Test Email
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

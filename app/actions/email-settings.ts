@@ -74,13 +74,34 @@ class TestEmailProvider implements TemplateEmailProvider {
 
     // Try to send actual email using crunchycone-lib
     try {
-      // For now, let's set environment variables temporarily for the SMTP provider
+      // Store original env vars
+      const originalEnvVars: Record<string, string | undefined> = {};
+      
       if (this.settings.provider === "smtp") {
-        process.env.SMTP_HOST = this.settings.smtpHost;
-        process.env.SMTP_PORT = this.settings.smtpPort;
-        process.env.SMTP_USER = this.settings.smtpUser;
-        process.env.SMTP_PASS = this.settings.smtpPassword;
-        process.env.EMAIL_FROM = this.settings.fromAddress;
+        // Store original values
+        originalEnvVars.CRUNCHYCONE_SMTP_HOST = process.env.CRUNCHYCONE_SMTP_HOST;
+        originalEnvVars.CRUNCHYCONE_SMTP_PORT = process.env.CRUNCHYCONE_SMTP_PORT;
+        originalEnvVars.CRUNCHYCONE_SMTP_USER = process.env.CRUNCHYCONE_SMTP_USER;
+        originalEnvVars.CRUNCHYCONE_SMTP_PASS = process.env.CRUNCHYCONE_SMTP_PASS;
+        originalEnvVars.CRUNCHYCONE_SMTP_FROM = process.env.CRUNCHYCONE_SMTP_FROM;
+        originalEnvVars.CRUNCHYCONE_SMTP_SECURE = process.env.CRUNCHYCONE_SMTP_SECURE;
+
+        // Set test values
+        process.env.CRUNCHYCONE_SMTP_HOST = this.settings.smtpHost;
+        process.env.CRUNCHYCONE_SMTP_PORT = this.settings.smtpPort;
+        process.env.CRUNCHYCONE_SMTP_USER = this.settings.smtpUser;
+        process.env.CRUNCHYCONE_SMTP_PASS = this.settings.smtpPassword;
+        process.env.CRUNCHYCONE_SMTP_FROM = this.settings.fromAddress;
+        process.env.CRUNCHYCONE_SMTP_SECURE = this.settings.smtpSecure?.toString() || "false";
+        
+        // Clear the module cache for email factory to force re-reading env vars
+        try {
+          const factoryId = require.resolve("crunchycone-lib");
+          delete require.cache[factoryId];
+        } catch (error) {
+          // If we can't clear the cache, continue anyway
+          console.warn("Could not clear crunchycone-lib cache:", error);
+        }
       }
 
       const emailService = createEmailService(this.settings.provider as never);
@@ -98,11 +119,18 @@ class TestEmailProvider implements TemplateEmailProvider {
         subject: options.subject,
         htmlBody: options.html,
         textBody: options.text || options.html,
-        providerSettings: {
-          provider: this.settings.provider,
-          ...providerConfig,
-        },
       });
+
+      // Restore original env vars
+      if (this.settings.provider === "smtp") {
+        for (const [key, value] of Object.entries(originalEnvVars)) {
+          if (value === undefined) {
+            delete (process.env as any)[key];
+          } else {
+            (process.env as any)[key] = value;
+          }
+        }
+      }
 
       if (!result.success) {
         throw new Error(result.error || "Failed to send email");
@@ -492,7 +520,7 @@ export async function getCurrentEmailSettings(): Promise<EmailSettings> {
   };
 }
 
-export async function testEmailConfiguration(settings: EmailSettings) {
+export async function testEmailConfiguration(settings: EmailSettings, customTo?: string) {
   await requireRole("admin");
 
   try {
@@ -559,12 +587,14 @@ export async function testEmailConfiguration(settings: EmailSettings) {
     // Send actual test email using the current configuration
     try {
       const session = await auth();
-      if (!session?.user?.email) {
+      if (!session?.user?.email && !customTo) {
         return {
           success: false,
           message: "No authenticated user found to send test email to",
         };
       }
+
+      const toEmail = customTo || session.user.email;
 
       // For console provider, just validate and show what would be sent
       if (settings.provider === "console") {
@@ -573,7 +603,7 @@ export async function testEmailConfiguration(settings: EmailSettings) {
         console.log(
           `From: ${settings.fromAddress} ${settings.fromDisplayName ? `(${settings.fromDisplayName})` : ""}`
         );
-        console.log(`To: ${session.user.email}`);
+        console.log(`To: ${toEmail}`);
         console.log(`Subject: Email Configuration Test - ${settings.provider.toUpperCase()}`);
         console.log("--- Email would be logged here in production ---");
         console.log("=====================================");
@@ -586,7 +616,7 @@ export async function testEmailConfiguration(settings: EmailSettings) {
 
       // Create test email content using template pattern
       const testEmailContent = {
-        to: session.user.email,
+        to: toEmail,
         subject: `Email Configuration Test - ${settings.provider.toUpperCase()}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -595,7 +625,7 @@ export async function testEmailConfiguration(settings: EmailSettings) {
             <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
               <p><strong>Provider:</strong> ${settings.provider}</p>
               <p><strong>From:</strong> ${settings.fromAddress}</p>
-              <p><strong>To:</strong> ${session.user.email}</p>
+              <p><strong>To:</strong> ${toEmail}</p>
             </div>
             <p>This is a test email sent from your application to verify the email configuration.</p>
             <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
@@ -609,7 +639,7 @@ Congratulations! Your ${settings.provider} email configuration is working correc
 
 Provider: ${settings.provider}
 From: ${settings.fromAddress}  
-To: ${session.user.email}
+To: ${toEmail}
 
 This is a test email sent from your application to verify the email configuration.
 
@@ -630,7 +660,7 @@ Sent at: ${new Date().toISOString()}
 
         return {
           success: true,
-          message: `Test email sent successfully to ${session.user.email} using ${settings.provider}`,
+          message: `Test email sent successfully to ${toEmail} using ${settings.provider}`,
         };
       } finally {
         // Restore original provider

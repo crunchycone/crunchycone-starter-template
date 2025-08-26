@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
-const readline = require("readline");
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
+import readline from "readline";
+import crypto from "crypto";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -53,7 +58,6 @@ async function generateJwtOnly() {
 
     const envPath = path.join(process.cwd(), ".env");
     const envExamplePath = path.join(process.cwd(), ".env.example");
-    const crypto = require("crypto");
 
     // Step 1: Create .env if it doesn't exist
     if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
@@ -138,7 +142,6 @@ async function main() {
     // Step 2: Copy .env.example to .env if .env doesn't exist
     const envPath = path.join(process.cwd(), ".env");
     const envExamplePath = path.join(process.cwd(), ".env.example");
-    const crypto = require("crypto");
 
     let envFileCreated = false;
 

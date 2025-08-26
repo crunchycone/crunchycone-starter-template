@@ -51,6 +51,61 @@ function hasJwtOnlyFlag() {
   return process.argv.includes("--jwt-only") || process.argv.includes("--jwt");
 }
 
+async function readCrunchyConeToml() {
+  try {
+    const tomlPath = path.join(process.cwd(), "crunchycone.toml");
+    
+    if (!fs.existsSync(tomlPath)) {
+      return null;
+    }
+    
+    const tomlContent = fs.readFileSync(tomlPath, "utf8");
+    
+    // Simple TOML parsing for environment value
+    // Look for [environment] section or environment = "value"
+    const envMatch = tomlContent.match(/environment\s*=\s*"([^"]+)"/);
+    
+    if (envMatch) {
+      const environment = envMatch[1];
+      logInfo(`Found crunchycone.toml with environment: ${environment}`);
+      return { environment };
+    }
+    
+    logInfo("Found crunchycone.toml but no environment setting");
+    return {};
+  } catch (error) {
+    logWarning(`Failed to read crunchycone.toml: ${error.message}`);
+    return null;
+  }
+}
+
+async function checkCrunchyConeAuth() {
+  try {
+    logInfo("Checking CrunchyCone authentication...");
+    
+    const result = execSync("npx --yes crunchycone-cli auth check -j", {
+      stdio: "pipe",
+      encoding: "utf8",
+      cwd: process.cwd(),
+    });
+    
+    const response = JSON.parse(result.trim());
+    
+    if (response.success && response.data && response.data.authenticated) {
+      const user = response.data.user;
+      const email = user ? user.email : 'authenticated';
+      logSuccess(`CrunchyCone authenticated: ${email}`);
+      return response.data;
+    } else {
+      logWarning("CrunchyCone not authenticated");
+      return null;
+    }
+  } catch (error) {
+    logWarning("CrunchyCone CLI not available or authentication failed");
+    return null;
+  }
+}
+
 async function generateJwtOnly() {
   try {
     log("\n🔐 JWT Secret Generation", "\x1b[1m\x1b[34m"); // Bold Blue
@@ -85,12 +140,95 @@ async function generateJwtOnly() {
     } else {
       logInfo("JWT_SECRET already configured");
     }
+    
+    // Check CrunchyCone authentication and configure email provider if authenticated
+    const authData = await checkCrunchyConeAuth();
+    if (authData && authData.authenticated) {
+      await setupCrunchyConeEmailProvider(envPath);
+    }
 
     log("\n✅ JWT generation completed!", "\x1b[1m\x1b[32m");
     return true;
   } catch (error) {
     logError(`JWT generation failed: ${error.message}`);
     return false;
+  }
+}
+
+async function setupCrunchyConeEmailProvider(envPath) {
+  try {
+    let envContent = fs.readFileSync(envPath, "utf8");
+    
+    // Read crunchycone.toml to check environment
+    const tomlConfig = await readCrunchyConeToml();
+    
+    // Check if settings are already configured
+    const isProviderAlreadyConfigured = envContent.includes('CRUNCHYCONE_EMAIL_PROVIDER="crunchycone"');
+    const isEmailFromAlreadySet = envContent.includes('CRUNCHYCONE_EMAIL_FROM="noreply@crunchycone.dev"');
+    const isApiUrlCorrect = tomlConfig && tomlConfig.environment === "dev" 
+      ? envContent.includes('CRUNCHYCONE_API_URL="https://api.crunchycone.dev"')
+      : true; // Don't require API URL if not dev environment
+    
+    if (isProviderAlreadyConfigured && isEmailFromAlreadySet && isApiUrlCorrect) {
+      logInfo("CrunchyCone email provider already configured");
+      return;
+    }
+    
+    // Update or add CRUNCHYCONE_EMAIL_PROVIDER
+    if (envContent.includes('CRUNCHYCONE_EMAIL_PROVIDER=')) {
+      envContent = envContent.replace(
+        /CRUNCHYCONE_EMAIL_PROVIDER="[^"]*"/,
+        'CRUNCHYCONE_EMAIL_PROVIDER="crunchycone"'
+      );
+    } else {
+      // Add the variable at the end
+      envContent += '\n# CrunchyCone Email Provider\nCRUNCHYCONE_EMAIL_PROVIDER="crunchycone"\n';
+    }
+    
+    // Update or add CRUNCHYCONE_EMAIL_FROM
+    if (envContent.includes('CRUNCHYCONE_EMAIL_FROM=')) {
+      envContent = envContent.replace(
+        /CRUNCHYCONE_EMAIL_FROM="[^"]*"/,
+        'CRUNCHYCONE_EMAIL_FROM="noreply@crunchycone.dev"'
+      );
+    } else {
+      // Add the variable right after CRUNCHYCONE_EMAIL_PROVIDER line
+      envContent = envContent.replace(
+        /CRUNCHYCONE_EMAIL_PROVIDER="crunchycone"/,
+        'CRUNCHYCONE_EMAIL_PROVIDER="crunchycone"\nCRUNCHYCONE_EMAIL_FROM="noreply@crunchycone.dev"'
+      );
+    }
+    
+    // Update or add CRUNCHYCONE_API_URL if environment is "dev"
+    if (tomlConfig && tomlConfig.environment === "dev") {
+      if (envContent.includes('CRUNCHYCONE_API_URL=')) {
+        envContent = envContent.replace(
+          /CRUNCHYCONE_API_URL="[^"]*"/,
+          'CRUNCHYCONE_API_URL="https://api.crunchycone.dev"'
+        );
+        if (!isApiUrlCorrect) {
+          logSuccess("Set CRUNCHYCONE_API_URL to 'https://api.crunchycone.dev' (dev environment)");
+        }
+      } else {
+        // Add the API URL after CRUNCHYCONE_EMAIL_FROM
+        envContent = envContent.replace(
+          /CRUNCHYCONE_EMAIL_FROM="noreply@crunchycone\.dev"/,
+          'CRUNCHYCONE_EMAIL_FROM="noreply@crunchycone.dev"\nCRUNCHYCONE_API_URL="https://api.crunchycone.dev"'
+        );
+        logSuccess("Set CRUNCHYCONE_API_URL to 'https://api.crunchycone.dev' (dev environment)");
+      }
+    }
+    
+    fs.writeFileSync(envPath, envContent);
+    
+    if (!isProviderAlreadyConfigured) {
+      logSuccess("Set CRUNCHYCONE_EMAIL_PROVIDER to 'crunchycone'");
+    }
+    if (!isEmailFromAlreadySet) {
+      logSuccess("Set CRUNCHYCONE_EMAIL_FROM to 'noreply@crunchycone.dev'");
+    }
+  } catch (error) {
+    logWarning(`Failed to set CrunchyCone email provider: ${error.message}`);
   }
 }
 
@@ -179,6 +317,12 @@ async function main() {
         }
       } else if (!envFileCreated) {
         logInfo("JWT_SECRET already configured (use --new-secret to regenerate)");
+      }
+      
+      // Check CrunchyCone authentication and configure email provider if authenticated
+      const authData = await checkCrunchyConeAuth();
+      if (authData && authData.authenticated) {
+        await setupCrunchyConeEmailProvider(envPath);
       }
     }
 

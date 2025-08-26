@@ -1,4 +1,4 @@
-import { sendTemplatedEmail, type EmailTemplateOptions } from "crunchycone-lib/email/templates";
+import { sendTemplatedEmail, type EmailTemplateOptions } from "crunchycone-lib";
 
 interface EmailOptions {
   appName: string;
@@ -23,13 +23,7 @@ export async function sendMagicLinkEmail(email: string, signInUrl: string): Prom
     const emailOptions: EmailTemplateOptions = {
       template: "magic-link",
       to: email,
-      from: {
-        email: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
-        name:
-          process.env.CRUNCHYCONE_EMAIL_DISPLAY ||
-          process.env.NEXT_PUBLIC_APP_NAME ||
-          "CrunchyCone Platform",
-      } as { email: string; name: string },
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
       language: "en",
       data: {
         signInUrl,
@@ -51,13 +45,7 @@ export async function sendVerificationEmail(email: string, verificationUrl: stri
     const emailOptions: EmailTemplateOptions = {
       template: "email-verification",
       to: email,
-      from: {
-        email: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
-        name:
-          process.env.CRUNCHYCONE_EMAIL_DISPLAY ||
-          process.env.NEXT_PUBLIC_APP_NAME ||
-          "CrunchyCone Platform",
-      } as { email: string; name: string },
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
       language: "en",
       data: {
         verificationUrl,
@@ -79,13 +67,7 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string): P
     const emailOptions: EmailTemplateOptions = {
       template: "password-reset",
       to: email,
-      from: {
-        email: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
-        name:
-          process.env.CRUNCHYCONE_EMAIL_DISPLAY ||
-          process.env.NEXT_PUBLIC_APP_NAME ||
-          "CrunchyCone Platform",
-      } as { email: string; name: string },
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
       language: "en",
       data: {
         resetUrl,
@@ -108,13 +90,7 @@ export async function sendAdminPasswordResetEmail(email: string, resetUrl: strin
     const emailOptions: EmailTemplateOptions = {
       template: "admin-password-reset",
       to: email,
-      from: {
-        email: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
-        name:
-          process.env.CRUNCHYCONE_EMAIL_DISPLAY ||
-          process.env.NEXT_PUBLIC_APP_NAME ||
-          "CrunchyCone Platform",
-      } as { email: string; name: string },
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
       language: "en",
       data: {
         resetUrl,
@@ -141,13 +117,7 @@ export async function sendWelcomeEmail(
     const emailOptions: EmailTemplateOptions = {
       template: "welcome",
       to: email,
-      from: {
-        email: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
-        name:
-          process.env.CRUNCHYCONE_EMAIL_DISPLAY ||
-          process.env.NEXT_PUBLIC_APP_NAME ||
-          "CrunchyCone Platform",
-      } as { email: string; name: string },
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
       language: "en",
       data: {
         userName,

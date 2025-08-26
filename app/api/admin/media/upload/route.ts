@@ -2,19 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { hasRole } from "@/lib/auth/permissions";
 import { v4 as uuidv4 } from "uuid";
-
-// Try importing crunchycone-lib
-let initializeStorageProvider: unknown;
-let getStorageProvider: unknown;
-
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const storageModule = require("crunchycone-lib/services/storage");
-  initializeStorageProvider = storageModule.initializeStorageProvider;
-  getStorageProvider = storageModule.getStorageProvider;
-} catch (importError) {
-  console.error("[Storage] Failed to import crunchycone-lib:", importError);
-}
+import { initializeStorageProvider, getStorageProvider } from "crunchycone-lib/services/storage";
 
 interface UploadResult {
   success: boolean;
@@ -26,22 +14,12 @@ interface UploadResult {
   url?: string;
 }
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
     if (!session || !(await hasRole(session.user.id, "admin"))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if crunchycone-lib is available
-    if (!initializeStorageProvider || !getStorageProvider) {
-      return NextResponse.json(
-        {
-          error: "Storage provider not available",
-        },
-        { status: 500 }
-      );
     }
 
     const formData = await request.formData();

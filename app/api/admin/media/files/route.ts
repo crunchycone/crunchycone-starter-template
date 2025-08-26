@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { hasRole } from "@/lib/auth/permissions";
-
-// Try importing crunchycone-lib
-let initializeStorageProvider: unknown;
-let getStorageProvider: unknown;
-
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const storageModule = require("crunchycone-lib/services/storage");
-  initializeStorageProvider = storageModule.initializeStorageProvider;
-  getStorageProvider = storageModule.getStorageProvider;
-} catch (importError) {
-  console.error("[Storage] Failed to import crunchycone-lib:", importError);
-}
+import { initializeStorageProvider, getStorageProvider } from "crunchycone-lib/services/storage";
 
 interface FileInfo {
   name: string;
@@ -31,16 +19,6 @@ export async function GET(_request: NextRequest) {
 
     if (!session || !(await hasRole(session.user.id, "admin"))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if crunchycone-lib is available
-    if (!initializeStorageProvider || !getStorageProvider) {
-      return NextResponse.json(
-        {
-          error: "Storage provider not available",
-        },
-        { status: 500 }
-      );
     }
 
     // Initialize storage provider if not already done
@@ -92,7 +70,7 @@ export async function GET(_request: NextRequest) {
       files.sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime());
 
       return NextResponse.json({ files });
-    } catch {
+    } catch (error) {
       // Error handled silently
       console.error("[Media Files] Error details:", {
         message: error instanceof Error ? error.message : "Unknown error",

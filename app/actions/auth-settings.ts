@@ -68,24 +68,24 @@ async function updateEnvFile(settings: AuthSettings) {
   }
 }
 
-export async function updateAuthSettings(formData: FormData) {
+export async function updateAuthSettings(settings: AuthSettings) {
   await requireRole("admin");
 
-  const settings: AuthSettings = {
-    enableEmailPassword: formData.get("enableEmailPassword") === "true",
-    enableMagicLink: formData.get("enableMagicLink") === "true",
-    enableGoogleAuth: formData.get("enableGoogleAuth") === "true",
-    enableGithubAuth: formData.get("enableGithubAuth") === "true",
-    googleClientId: (formData.get("googleClientId") as string) || undefined,
-    googleClientSecret: (formData.get("googleClientSecret") as string) || undefined,
-    githubClientId: (formData.get("githubClientId") as string) || undefined,
-    githubClientSecret: (formData.get("githubClientSecret") as string) || undefined,
-  };
-
-  await updateEnvFile(settings);
-
-  revalidatePath("/admin/settings");
-  redirect("/admin/settings?updated=true");
+  try {
+    await updateEnvFile(settings);
+    revalidatePath("/admin/settings");
+    
+    return {
+      success: true,
+      message: "Authentication settings updated successfully"
+    };
+  } catch (error) {
+    console.error("Failed to update authentication settings:", error);
+    return {
+      success: false,
+      message: "Failed to update authentication settings"
+    };
+  }
 }
 
 async function readEnvFile(): Promise<Record<string, string>> {

@@ -3,19 +3,15 @@ import { lookup } from "mime-types";
 import { auth } from "@/lib/auth";
 import { hasRole } from "@/lib/auth/permissions";
 
-// Try importing crunchycone-lib
-let initializeStorageProvider: unknown;
-let getStorageProvider: unknown;
+// Import crunchycone-lib types and functions
+import {
+  StorageProvider,
+  FileStreamResult,
+  FileStreamOptions,
+  initializeStorageProvider,
+  getStorageProvider,
+} from "crunchycone-lib/services/storage";
 
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const storageModule = require("crunchycone-lib/services/storage");
-  initializeStorageProvider = storageModule.initializeStorageProvider;
-  getStorageProvider = storageModule.getStorageProvider;
-  console.log("[Storage] Successfully imported crunchycone-lib storage module");
-} catch (importError) {
-  console.error("[Storage] Failed to import crunchycone-lib:", importError);
-}
 
 /**
  * GET /storage/files/[...path]
@@ -47,7 +43,7 @@ export async function GET(
     try {
       initializeStorageProvider();
       console.log(`[Storage] Provider initialized successfully`);
-    } catch {
+    } catch (error) {
       console.log(`[Storage] Provider already initialized or error:`, error);
     }
 
@@ -127,20 +123,19 @@ export async function GET(
  * Stream file from LocalStorage using crunchycone-lib
  */
 async function streamLocalStorageFile(
-  provider: unknown,
+  provider: StorageProvider,
   filePath: string,
   request: NextRequest
 ): Promise<NextResponse> {
   // Check if provider supports the new streaming interface
-  const hasStreamSupport =
-    "getFileStream" in provider && typeof provider.getFileStream === "function";
+  const hasStreamSupport = provider && "getFileStream" in provider && typeof provider.getFileStream === "function";
   console.log(`[Storage] Stream support available: ${hasStreamSupport}`);
 
   if (hasStreamSupport) {
     try {
       // Parse range header for partial content requests
       const range = request.headers.get("range");
-      let streamOptions: unknown = {};
+      let streamOptions: FileStreamOptions = {};
 
       if (range) {
         console.log(`[Storage] Range request: ${range}`);
@@ -151,7 +146,7 @@ async function streamLocalStorageFile(
       }
 
       // Get file stream from crunchycone-lib
-      const streamResult = await provider.getFileStream(filePath, streamOptions);
+      const streamResult = await provider.getFileStream!(filePath, streamOptions);
       console.log(`[Storage] Stream result:`, {
         contentType: streamResult.contentType,
         contentLength: streamResult.contentLength,
@@ -319,9 +314,7 @@ export async function HEAD(
       // Use streaming interface to get metadata without content
       const hasStreamSupport = "getFileStream" in provider;
       if (hasStreamSupport) {
-        const streamResult = await (
-          provider as { getFileStream: (path: string, options?: unknown) => Promise<unknown> }
-        ).getFileStream(filePath, {
+        const streamResult = await provider.getFileStream!(filePath, {
           includeMetadata: true,
         });
 

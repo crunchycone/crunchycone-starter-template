@@ -71,15 +71,26 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 ## Admin Dashboard
 
-**Pages**: Dashboard, Users, Roles, Database Viewer, Settings
-**Features**: Search, pagination, role management, password reset
+**Pages**: Dashboard, Users, Roles, Database Viewer, Media Manager, Settings
+**Features**: Search, pagination, role management, password reset, media management, storage configuration
 **Protection**: All routes/APIs require admin role, self-protection (can't remove own admin)
 **API**: User/role management endpoints at `/api/admin/*`
+**Settings**: Email configuration, storage provider configuration with help dialogs
+
+## Media Manager
+
+**Features**: File upload, visibility controls, search, pagination, file details
+**Storage**: Powered by crunchycone-lib storage providers (LocalStorage, AWS S3, DigitalOcean Spaces, Azure Blob, Google Cloud Storage, CrunchyCone)
+**File Operations**: Upload, view, download, delete, visibility toggle (public/private)
+**UI**: Dialog-based upload, dropdown menus for actions, file type icons, flash effects
+**Pagination**: Server-side pagination with 20 files per page, only shown when needed
+**Search**: Server-side text search across file names and paths
+**API**: File management endpoints at `/api/admin/media/*` and `/api/storage/*`
 
 ## Components
 
 **shadcn/ui**: Button, Card, Form, Input, Dialog, Table, Toast, Checkbox, etc.
-**Custom**: SignInForm (tabs), SignUpForm, UserManagementPanel, RoleManagementPanel
+**Custom**: SignInForm (tabs), SignUpForm, UserManagementPanel, RoleManagementPanel, MediaUploader
 
 **UI Component Rules**:
 
@@ -93,7 +104,7 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 **Public**: Home, sign-in, sign-up, setup-admin
 **User**: Profile
-**Admin**: Dashboard, users, roles, database, settings
+**Admin**: Dashboard, users, roles, database, media, settings
 
 ## Profile System
 
@@ -123,8 +134,9 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 ## Environment Variables
 
 **Required**: `AUTH_SECRET`, `AUTH_URL`, `DATABASE_URL`, `EMAIL_FROM`, `NEXT_PUBLIC_APP_URL`
-**Optional**: `TURSO_AUTH_TOKEN` (for Turso), OAuth provider vars
+**Optional**: `TURSO_AUTH_TOKEN` (for Turso), OAuth provider vars, storage provider vars
 **OAuth**: `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`, provider toggles
+**Storage**: `CRUNCHYCONE_STORAGE_PROVIDER`, provider-specific keys (AWS, Azure, GCP, DigitalOcean)
 **Auto-generated**: `npm run setup-env` creates .env with AUTH_SECRET
 
 ## Development
@@ -138,6 +150,15 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 **Templates**: Verification, password reset, magic link
 **Production**: SendGrid, Resend, AWS SES, SMTP (see `docs/email-providers.md`)
 **Pattern**: Swappable provider interface
+**Integration**: Full crunchycone-lib email service integration with availability checking
+
+## CrunchyCone-lib Integration
+
+**Storage**: Complete file management with LocalStorage, AWS S3, Azure Blob, Google Cloud Storage, DigitalOcean Spaces, CrunchyCone support
+**Email**: Multi-provider email service (Console, SMTP, SendGrid, Resend, AWS SES, CrunchyCone)
+**Features**: Provider availability checking, authentication status, dynamic configuration, connection testing
+**APIs**: Server-side integration with proper error handling and logging
+**Configuration**: Admin settings UI with provider-specific help dialogs and setup instructions
 
 ## Theme System
 
@@ -148,15 +169,36 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 ## Recent Updates
 
+- **Storage Configuration**: Added Google Cloud Storage support, comprehensive admin settings UI with help dialogs
+- **MJML Warnings**: Configured webpack to suppress crunchycone-lib MJML dependency warnings
+- **Media Manager**: Complete file management with crunchycone-lib integration, pagination, search
+- **CrunchyCone-lib**: Full email and storage provider integration with availability checking
 - **Auth.js v4**: Complete migration from custom JWT, Prisma adapter, console email provider
 - **Prisma**: Client Extensions API, modernized config, ULID auto-generation
 - **Themes**: TypeScript system with 5 themes, type-safe registry
 - **Git**: Local database exclusions
 
+## Storage Configuration
+
+**Providers**: LocalStorage, AWS S3, DigitalOcean Spaces, Azure Blob Storage, Google Cloud Storage, CrunchyCone
+**Features**: Connection testing, provider-specific help dialogs, environment variable management
+**CrunchyCone**: CLI authentication checking, project configuration validation
+**UI**: Admin settings interface with clickable setup links and comprehensive instructions
+**API**: `/app/actions/storage-settings.ts` for configuration management
+
+**Environment Variables by Provider**:
+- **LocalStorage**: `CRUNCHYCONE_LOCALSTORAGE_PATH`, `CRUNCHYCONE_LOCALSTORAGE_BASE_URL`
+- **AWS S3**: `CRUNCHYCONE_AWS_ACCESS_KEY_ID`, `CRUNCHYCONE_AWS_SECRET_ACCESS_KEY`, `CRUNCHYCONE_AWS_REGION`, `CRUNCHYCONE_AWS_BUCKET`, `CRUNCHYCONE_AWS_CLOUDFRONT_DOMAIN`
+- **DigitalOcean**: `CRUNCHYCONE_DO_ACCESS_KEY_ID`, `CRUNCHYCONE_DO_SECRET_ACCESS_KEY`, `CRUNCHYCONE_DO_REGION`, `CRUNCHYCONE_DO_BUCKET`, `CRUNCHYCONE_DO_CDN_ENDPOINT`
+- **Azure**: `CRUNCHYCONE_AZURE_ACCOUNT_NAME`, `CRUNCHYCONE_AZURE_ACCOUNT_KEY`, `CRUNCHYCONE_AZURE_CONTAINER_NAME`, `CRUNCHYCONE_AZURE_SAS_TOKEN`, `CRUNCHYCONE_AZURE_CONNECTION_STRING`, `CRUNCHYCONE_AZURE_CDN_URL`
+- **Google Cloud**: `CRUNCHYCONE_GCP_PROJECT_ID`, `CRUNCHYCONE_GCP_KEY_FILE`, `CRUNCHYCONE_GCS_BUCKET`, `CRUNCHYCONE_GCP_CDN_URL`
+- **CrunchyCone**: Uses CLI auth + `crunchycone.toml` project config
+
 ## Troubleshooting
 
 **Common Issues**: No admin loop (`npm run db:seed`), DB locked (restart), type errors (`npx prisma generate`)
 **Debug**: `rm -f db/prod.db && npm run db:reset`, `npm run build`
+**MJML Warnings**: Automatically suppressed via webpack configuration in `next.config.ts`
 
 ## Docker Deployment
 

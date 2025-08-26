@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ThemeToggle } from "@/components/theme-toggle";
-import Link from "next/link";
-import { LayoutDashboard, Users, Settings, LogOut, Menu, Shield, Database } from "lucide-react";
+import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
+import { LogOut, Menu } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,38 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <h2 className="text-lg font-semibold">Admin Dashboard</h2>
             <ThemeToggle />
           </div>
-          <nav className="flex-1 space-y-1 px-2 pb-4">
-            <Link href="/admin">
-              <Button variant="ghost" className="w-full justify-start">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                Dashboard
-              </Button>
-            </Link>
-            <Link href="/admin/users">
-              <Button variant="ghost" className="w-full justify-start">
-                <Users className="mr-2 h-4 w-4" />
-                Users
-              </Button>
-            </Link>
-            <Link href="/admin/roles">
-              <Button variant="ghost" className="w-full justify-start">
-                <Shield className="mr-2 h-4 w-4" />
-                Roles
-              </Button>
-            </Link>
-            <Link href="/admin/database">
-              <Button variant="ghost" className="w-full justify-start">
-                <Database className="mr-2 h-4 w-4" />
-                Database Viewer
-              </Button>
-            </Link>
-            <Link href="/admin/settings">
-              <Button variant="ghost" className="w-full justify-start">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Button>
-            </Link>
-          </nav>
+          <AdminNav />
           <div className="p-4">
             <Separator className="mb-4" />
             <SignOutButton variant="ghost" className="w-full justify-start">
@@ -79,36 +49,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/admin">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/users">
-                    <Users className="mr-2 h-4 w-4" />
-                    Users
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/roles">
-                    <Shield className="mr-2 h-4 w-4" />
-                    Roles
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/database">
-                    <Database className="mr-2 h-4 w-4" />
-                    Database Viewer
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
+                <AdminMobileNav />
                 <Separator className="my-1" />
                 <DropdownMenuItem asChild>
                   <div className="w-full">

@@ -22,7 +22,7 @@ A production-ready Next.js starter template with authentication, admin dashboard
   - Role-based access control (RBAC)
   - Default roles: user and admin (system protected)
   - Custom role creation and management
-  - Admin dashboard for comprehensive user management
+  - **Comprehensive admin dashboard** with user, role, media, and settings management
   - First-time admin setup flow
   - User search and pagination
   - Role assignment/removal with protections
@@ -40,11 +40,20 @@ A production-ready Next.js starter template with authentication, admin dashboard
   - Accessible design with proper contrast ratios
 
 - 📧 **Email System**
-  - Provider pattern for easy email service integration
+  - **CrunchyCone-lib integration** with multiple provider support
   - Console email provider for development
   - Ready-to-use templates for verification, reset, and magic links
-  - Support for SendGrid, Resend, AWS SES, SMTP
-  - HTML and text email formats
+  - Support for SendGrid, Resend, AWS SES, SMTP, Mailgun, CrunchyCone
+  - **Admin configuration UI** with provider availability checking
+  - HTML and text email formats with MJML support
+
+- 📁 **File Management & Storage**
+  - **Media Manager** with complete file management interface
+  - **Multiple storage providers**: LocalStorage, AWS S3, DigitalOcean Spaces, Azure Blob, Google Cloud Storage, CrunchyCone
+  - **File operations**: Upload, view, download, delete, visibility controls (public/private)
+  - **Advanced features**: Server-side pagination, search, file details dialog
+  - **Admin storage configuration** with connection testing and setup help
+  - **CrunchyCone-lib powered** with seamless provider switching
 
 - 🛠️ **Developer Experience**
   - TypeScript for complete type safety
@@ -74,7 +83,8 @@ A production-ready Next.js starter template with authentication, admin dashboard
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
 - **Authentication**: Auth.js v4 with JWT, bcrypt, and OAuth providers
-- **Email**: Provider pattern (console/development)
+- **Email**: CrunchyCone-lib multi-provider email service
+- **Storage**: CrunchyCone-lib with 6 storage providers
 - **Theme**: next-themes with system detection
 
 ## Quick Start
@@ -89,8 +99,8 @@ A production-ready Next.js starter template with authentication, admin dashboard
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/crunchycone-vanilla-starter-project.git
-cd crunchycone-vanilla-starter-project
+git clone https://github.com/crunchycone/crunchycone-starter-template.git
+cd crunchycone-starter-template
 ```
 
 2. Reset the project to initial state:
@@ -110,7 +120,7 @@ npm run dev
 
 ### 🎯 Quick Setup with Cursor IDE
 
-If you're using [Cursor IDE](https://cursor.sh/), you can set up this project with a single command:
+If you're using [Cursor IDE](https://cursor.com/), you can set up this project with a single command:
 
 1. **Clone and Open in Cursor**:
 
@@ -261,6 +271,26 @@ crunchycone-vanilla-starter-project/
 4. **Auto CSS Generation** → Use utility functions to generate CSS
 5. **Validation** → Built-in theme validation and testing utilities
 
+### 📁 Media Manager & Storage Flows
+
+#### File Upload & Management
+
+1. **Access Media Manager** → `/admin/media` (admin only)
+2. **Upload Files** → Dialog-based upload with drag & drop
+3. **File Operations** → View, download, delete, toggle visibility (public/private)
+4. **Search & Pagination** → Server-side search and paginated results (20 per page)
+5. **File Details** → Comprehensive file information dialog
+6. **Flash Effects** → Visual feedback for newly uploaded files
+
+#### Storage Configuration
+
+1. **Access Settings** → `/admin/settings` → Storage Configuration section
+2. **Choose Provider** → LocalStorage, AWS S3, DigitalOcean Spaces, Azure Blob, Google Cloud Storage, CrunchyCone
+3. **Configure Credentials** → Provider-specific settings with help dialogs
+4. **Test Connection** → Verify settings work correctly (cloud providers only)
+5. **Save Configuration** → Apply settings and switch providers seamlessly
+6. **CrunchyCone Setup** → CLI authentication and project validation
+
 ### 🔧 Developer & Admin Workflows
 
 #### Project Reset Flow
@@ -279,7 +309,18 @@ crunchycone-vanilla-starter-project/
 3. **Seeding** → `npm run db:seed` for default data
 4. **Studio Access** → `npm run db:studio` for GUI management
 
-### 📧 Email Verification Flows
+### 📧 Email System Flows
+
+#### Email Provider Configuration
+
+1. **Access Settings** → `/admin/settings` → Email Configuration section
+2. **Choose Provider** → Console, SMTP, SendGrid, Resend, AWS SES, Mailgun, CrunchyCone
+3. **Configure Settings** → Provider-specific credentials with help dialogs
+4. **Test Configuration** → Send test email to verify setup
+5. **CrunchyCone Integration** → CLI authentication checking and project validation
+6. **Save Settings** → Apply configuration and switch providers
+
+#### Email Verification Flows
 
 #### Email Verification
 
@@ -533,22 +574,45 @@ DATABASE_URL="mysql://user:password@host:port/database"
 ### Pre-deployment Checklist
 
 1. [ ] Change `JWT_SECRET` to a secure random value
-2. [ ] Configure a production email provider
-3. [ ] Set up proper `NEXT_PUBLIC_APP_URL`
-4. [ ] Enable HTTPS
-5. [ ] Configure database backups
-6. [ ] Set up monitoring and logging
-7. [ ] Review and update CORS settings
-8. [ ] Test all authentication flows
+2. [ ] Configure a production email provider (via admin settings)
+3. [ ] Configure a production storage provider (via admin settings)
+4. [ ] Set up proper `NEXT_PUBLIC_APP_URL`
+5. [ ] Enable HTTPS
+6. [ ] Configure database backups
+7. [ ] Set up monitoring and logging
+8. [ ] Review and update CORS settings
+9. [ ] Test all authentication flows
+10. [ ] Test file upload and storage functionality
+11. [ ] Verify email delivery in production
+
+or - just use the CrunchyCone Platform (coming soon!)
 
 ### Database
 
-For production, choose from supported database options:
+For production, choose from supported options:
 
+**Database:**
 - **Turso (libSQL)** - Recommended for production (edge database, SQLite compatible)
 - **PostgreSQL** - Traditional production database
 - **MySQL** - Alternative traditional database
 - **SQLite** - Local development only
+
+**Storage:**
+- **LocalStorage** - File system storage (development/single server)
+- **AWS S3** - Amazon cloud storage with optional CloudFront CDN
+- **DigitalOcean Spaces** - DigitalOcean object storage with CDN
+- **Azure Blob Storage** - Microsoft cloud storage with CDN
+- **Google Cloud Storage** - Google cloud storage with CDN
+- **CrunchyCone** - Integrated cloud storage (requires CLI setup)
+
+**Email:**
+- **Console** - Development only (logged to console)
+- **SMTP** - Generic SMTP (Gmail, Outlook, Yahoo, custom)
+- **SendGrid** - Transactional email service
+- **Resend** - Modern email API
+- **AWS SES** - Amazon email service
+- **Mailgun** - Email delivery service
+- **CrunchyCone** - Integrated email service
 
 The application includes automatic database detection and migration:
 
@@ -606,3 +670,7 @@ For issues, questions, or contributions:
 - UI components from [shadcn/ui](https://ui.shadcn.com/)
 - Database ORM by [Prisma](https://www.prisma.io/)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
+
+---
+
+Built with ❤️ and lots of 🍨 by the CrunchyCone team

@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { AuthConfigForm } from "@/components/admin/AuthConfigForm";
 import { EmailConfigForm } from "@/components/admin/EmailConfigForm";
+import { StorageConfigForm } from "@/components/admin/StorageConfigForm";
 
 // Force dynamic rendering for Docker builds
 export const dynamic = "force-dynamic";
@@ -19,6 +20,9 @@ export default function AdminSettingsPage() {
 
       {/* Email Configuration Form */}
       <EmailConfigForm />
+
+      {/* Storage Configuration Form */}
+      <StorageConfigForm />
     </div>
   );
 }

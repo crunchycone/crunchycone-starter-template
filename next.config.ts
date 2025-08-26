@@ -49,6 +49,17 @@ const nextConfig: NextConfig = {
         'nodemailer': 'commonjs nodemailer',
       });
     }
+
+    // Suppress MJML webpack warnings about critical dependencies
+    const originalWarnings = config.ignoreWarnings || [];
+    config.ignoreWarnings = [
+      ...originalWarnings,
+      {
+        module: /mjml-core/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+
     return config;
   },
 };

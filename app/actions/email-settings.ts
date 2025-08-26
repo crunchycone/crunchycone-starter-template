@@ -650,12 +650,8 @@ export async function checkEmailProviderAvailability(provider: EmailProvider): P
         }
         break;
       case 'aws-ses':
-        try {
-          await import('@aws-sdk/client-ses');
-          available = true;
-        } catch (error) {
-          available = false;
-        }
+        // AWS SES requires @aws-sdk/client-ses package
+        available = false;
         break;
       default:
         // For other providers (console, smtp, mailgun, crunchycone), assume they're available

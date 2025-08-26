@@ -13,13 +13,19 @@ interface FileInfo {
   url?: string;
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
     if (!session || !(await hasRole(session.user.id, "admin"))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const offset = parseInt(searchParams.get("offset") || "0");
+    const search = searchParams.get("search");
 
     // Initialize storage provider if not already done
     try {
@@ -30,12 +36,39 @@ export async function GET(_request: NextRequest) {
 
     const provider = getStorageProvider();
 
-    // List all files using the storage provider
+    // Use search or list files based on query parameters
     try {
-      const listResult = await provider.listFiles();
+      let listResult;
+      
+      if (search) {
+        // Use search functionality
+        listResult = await provider.searchFiles({
+          query: search,
+          searchFields: ['filename', 'key'],
+          limit,
+          offset,
+          sortBy: 'lastModified',
+          sortOrder: 'desc',
+          includeUrls: true,
+        });
+      } else {
+        // Use list functionality with pagination
+        listResult = await provider.listFiles({
+          limit,
+          offset,
+          sortBy: 'lastModified',
+          sortOrder: 'desc',
+          includeUrls: true,
+        });
+      }
+
       console.log("[Media Files] List result:", {
         filesCount: listResult.files.length,
+        totalCount: listResult.totalCount,
         hasMore: listResult.hasMore,
+        offset,
+        limit,
+        search,
       });
 
       const files: FileInfo[] = [];
@@ -66,10 +99,13 @@ export async function GET(_request: NextRequest) {
         files.push(fileInfo);
       }
 
-      // Sort files by last modified (newest first)
-      files.sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime());
-
-      return NextResponse.json({ files });
+      return NextResponse.json({ 
+        files,
+        totalCount: listResult.totalCount || files.length,
+        hasMore: listResult.hasMore || false,
+        currentPage: Math.floor(offset / limit) + 1,
+        pageSize: limit,
+      });
     } catch (error) {
       // Error handled silently
       console.error("[Media Files] Error details:", {

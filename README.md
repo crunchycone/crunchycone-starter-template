@@ -622,6 +622,27 @@ The application includes automatic database detection and migration:
 
 Update the `DATABASE_URL` (and `TURSO_AUTH_TOKEN` for Turso) accordingly. The Docker image will automatically detect and handle the appropriate database setup.
 
+## Container Deployment
+
+This project includes a production-ready multi-stage Dockerfile with automatic platform detection and database migration support. Deploy to any container platform:
+
+**Supported Platforms:**
+- **[Render.com](https://render.com)** - Simple container deployments with automatic builds
+- **[Fly.io](https://fly.io)** - Global edge deployment with automatic scaling
+- **[Cloudflare Containers](https://developers.cloudflare.com/containers/)** - Edge-first serverless platform
+- **[Google Cloud Run](https://cloud.google.com/run)** - Fully managed containerized applications
+- **[DigitalOcean App Platform](https://www.digitalocean.com/products/app-platform)** - Simple container hosting
+- **[AWS App Runner](https://aws.amazon.com/apprunner)** - Container-based web applications
+- **[Railway](https://railway.app)** - Developer-first deployment platform
+
+**Docker Features:**
+- ✅ Multi-stage build for optimized production images
+- ✅ Automatic platform detection and database auto-migration
+- ✅ Security hardening with non-root user and health checks
+- ✅ Next.js standalone output for minimal container size
+
+**Setup Guide:** See [docs/container-deployment.md](./docs/container-deployment.md) for complete deployment instructions including platform-specific configuration, environment variables, and step-by-step setup guides.
+
 ## Testing
 
 ```bash
@@ -639,6 +660,7 @@ npm run build
 
 Detailed guides are available in the `docs/` folder:
 
+- [Container Deployment Guide](./docs/container-deployment.md)
 - [Email Providers Guide](./docs/email-providers.md)
 - [Authentication Providers Guide](./docs/auth-providers.md)
 - [Theme Customization Guide](./docs/theme-customization.md)

@@ -4,11 +4,15 @@
  * Run with: node scripts/generate-themes.js
  */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-// Import the theme generator (using require for Node.js)
-const { generateAllThemesCSS } = require("../themes/index.ts");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Import the theme generator
+import { generateAllThemesCSS } from "../themes/index.js";
 
 const generateThemeCSS = () => {
   try {
@@ -36,8 +40,8 @@ const generateThemeCSS = () => {
 };
 
 // Run if called directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   generateThemeCSS();
 }
 
-module.exports = { generateThemeCSS };
+export { generateThemeCSS };

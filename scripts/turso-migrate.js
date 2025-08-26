@@ -10,9 +10,14 @@
  * 4. Tracks migration history
  */
 
-const { createClient } = require("@libsql/client");
-const fs = require("fs");
-const path = require("path");
+import { createClient } from "@libsql/client";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { execSync } from "child_process";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function runMigrations() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -168,7 +173,6 @@ async function runMigrations() {
     console.log("📝 No migrations found, generating initial schema...");
 
     // Generate SQL from Prisma schema
-    const { execSync } = require("child_process");
 
     try {
       const sql = execSync(

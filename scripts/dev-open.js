@@ -5,8 +5,8 @@
  * Finds an available port and opens the correct URL
  */
 
-const { spawn } = require("child_process");
-const net = require("net");
+import { spawn } from "child_process";
+import net from "net";
 
 // Get port from command line or environment
 const requestedPort = process.argv[2] || process.env.PORT || "3000";

@@ -6,27 +6,33 @@ import { redirect } from "next/navigation";
 
 export async function checkAdminExists(): Promise<boolean> {
   try {
-    // Check if admin role exists
-    const adminRole = await prisma.role.findUnique({
-      where: { name: "admin" },
-    });
+    // Use a transaction to ensure consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // Check if admin role exists
+      const adminRole = await tx.role.findUnique({
+        where: { name: "admin" },
+      });
 
-    if (!adminRole) return false;
+      if (!adminRole) return false;
 
-    // Check if any users have the admin role
-    const adminUserCount = await prisma.userRole.count({
-      where: {
-        role_id: adminRole.id,
-        deleted_at: null,
-        user: {
+      // Check if any users have the admin role
+      const adminUserCount = await tx.userRole.count({
+        where: {
+          role_id: adminRole.id,
           deleted_at: null,
+          user: {
+            deleted_at: null,
+          },
         },
-      },
+      });
+
+      return adminUserCount > 0;
     });
 
-    return adminUserCount > 0;
-  } catch {
-    console.error("Error checking admin existence:");
+    return result;
+  } catch (error) {
+    console.error("Error checking admin existence:", error);
+    // Return false on error to prevent unauthorized access
     return false;
   }
 }

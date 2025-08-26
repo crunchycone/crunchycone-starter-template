@@ -1,4 +1,4 @@
-{{ appName }}
+{% include 'text-header' %}
 
 Sign In to Your Account
 
@@ -10,6 +10,4 @@ This link will expire in 24 hours for security.
 
 If you didn't request this sign-in link, you can safely ignore this email. Someone may have entered your email address by mistake.
 
-Questions? Contact us at {{ supportEmail }}
-
-© {{ "now" | date: "%Y" }} {{ appName }}. All rights reserved.
+{% include 'text-footer' %}

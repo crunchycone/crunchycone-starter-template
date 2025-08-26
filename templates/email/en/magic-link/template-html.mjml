@@ -18,45 +18,22 @@
     </mj-style>
   </mj-head>
   <mj-body background-color="#f5f5f5">
-    <!-- Header -->
-    <mj-section background-color="#000000" padding="20px 0">
-      <mj-column>
-        <mj-text align="center" color="#ffffff" font-size="24px" font-weight="bold">
-          {{ appName }}
-        </mj-text>
-      </mj-column>
-    </mj-section>
+    {% include 'header' %}
 
     <!-- Main Content -->
     <mj-section background-color="#ffffff" padding="40px 30px">
       <mj-column>
-        <mj-text
-          font-size="28px"
-          font-weight="bold"
-          color="#000000"
-          align="center"
-          padding-bottom="20px"
-        >
-          Sign In to Your Account
-        </mj-text>
+        {% assign text = "Sign In to Your Account" %}
+        {% include 'heading' %}
 
         <mj-text font-size="16px" color="#333333" line-height="24px" padding-bottom="30px">
           Click the button below to sign in to your {{ appName }} account. This link will expire in
           24 hours for security.
         </mj-text>
 
-        <mj-button
-          href="{{ signInUrl }}"
-          background-color="#000000"
-          color="#ffffff"
-          font-size="16px"
-          font-weight="bold"
-          border-radius="6px"
-          padding="15px 30px"
-          align="center"
-        >
-          Sign In Now
-        </mj-button>
+        {% assign url = signInUrl %}
+        {% assign text = "Sign In Now" %}
+        {% include 'cta-button' %}
 
         <mj-text font-size="14px" color="#666666" line-height="20px" padding-top="30px">
           If you're having trouble clicking the button, copy and paste this link into your browser:
@@ -68,7 +45,7 @@
           }}</a>
         </mj-text>
 
-        <mj-divider border-color="#eeeeee" border-width="1px" padding="30px 0" />
+        {% include 'divider' %}
 
         <mj-text font-size="14px" color="#666666" line-height="20px">
           If you didn't request this sign-in link, you can safely ignore this email. Someone may
@@ -77,23 +54,6 @@
       </mj-column>
     </mj-section>
 
-    <!-- Footer -->
-    <mj-section background-color="#f5f5f5" padding="30px">
-      <mj-column>
-        <mj-text align="center" font-size="14px" color="#666666" line-height="20px">
-          Questions? Contact us at
-          <a href="mailto:{{ supportEmail }}" style="color: #0066cc">{{ supportEmail }}</a>
-        </mj-text>
-        <mj-text
-          align="center"
-          font-size="12px"
-          color="#999999"
-          line-height="18px"
-          padding-top="10px"
-        >
-          © {{ "now" | date: "%Y" }} {{ appName }}. All rights reserved.
-        </mj-text>
-      </mj-column>
-    </mj-section>
+    {% include 'footer' %}
   </mj-body>
 </mjml>

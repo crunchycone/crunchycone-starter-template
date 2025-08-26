@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, AlertCircle, CheckCircle, Move } from "lucide-react";
+import { X, AlertCircle, CheckCircle, Move, Copy } from "lucide-react";
 import Image from "next/image";
 
 interface ErrorInfo {
@@ -26,6 +26,7 @@ export function DebugBubble() {
   const [errors, setErrors] = useState<ErrorInfo[]>([]);
   const [showErrors, setShowErrors] = useState(false);
   const [buildStatus, setBuildStatus] = useState<"building" | "success" | "error">("success");
+  const [copiedErrorId, setCopiedErrorId] = useState<string | null>(null);
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
@@ -78,6 +79,42 @@ export function DebugBubble() {
   const clearErrors = useCallback(() => {
     setErrors([]);
     setShowErrors(false);
+  }, []);
+
+  const copyError = useCallback(async (error: ErrorInfo) => {
+    try {
+      const errorDetails = [
+        `Error Type: ${error.type.toUpperCase()}`,
+        `Message: ${error.message}`,
+        `Timestamp: ${error.timestamp.toISOString()}`,
+        error.stack ? `Stack Trace:\n${error.stack}` : '',
+        `URL: ${window.location.href}`,
+        `User Agent: ${navigator.userAgent}`,
+      ].filter(Boolean).join('\n\n');
+
+      await navigator.clipboard.writeText(errorDetails);
+      setCopiedErrorId(error.id);
+      
+      // Clear the copied state after 2 seconds
+      setTimeout(() => {
+        setCopiedErrorId(null);
+      }, 2000);
+    } catch (err) {
+      console.warn('Failed to copy error details:', err);
+      // Fallback for browsers that don't support clipboard API
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = `Error: ${error.message}\nStack: ${error.stack || 'No stack trace'}`;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        setCopiedErrorId(error.id);
+        setTimeout(() => setCopiedErrorId(null), 2000);
+      } catch (fallbackErr) {
+        console.warn('Fallback copy also failed:', fallbackErr);
+      }
+    }
   }, []);
 
   // Calculate which corner is closest
@@ -573,8 +610,22 @@ export function DebugBubble() {
                           <div className="flex items-start gap-2">
                             <AlertCircle className="h-3 w-3 text-red-500 mt-0.5 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-red-500 text-[11px] uppercase">
-                                {error.type}
+                              <div className="flex items-center justify-between">
+                                <div className="font-semibold text-red-500 text-[11px] uppercase">
+                                  {error.type}
+                                </div>
+                                <button
+                                  onClick={() => copyError(error)}
+                                  className="p-1 rounded hover:bg-white/10 dark:hover:bg-black/10 transition-colors"
+                                  title="Copy error details"
+                                  disabled={copiedErrorId === error.id}
+                                >
+                                  {copiedErrorId === error.id ? (
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-3 w-3 text-white/60 dark:text-black/60" />
+                                  )}
+                                </button>
                               </div>
                               <div className="mt-1 text-white dark:text-black break-words">
                                 {error.message}

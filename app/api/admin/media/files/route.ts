@@ -39,16 +39,16 @@ export async function GET(request: NextRequest) {
     // Use search or list files based on query parameters
     try {
       let listResult;
-      
+
       if (search) {
         // Use search functionality
         listResult = await provider.searchFiles({
           query: search,
-          searchFields: ['filename', 'key'],
+          searchFields: ["filename", "key"],
           limit,
           offset,
-          sortBy: 'lastModified',
-          sortOrder: 'desc',
+          sortBy: "lastModified",
+          sortOrder: "desc",
           includeUrls: true,
         });
       } else {
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
         listResult = await provider.listFiles({
           limit,
           offset,
-          sortBy: 'lastModified',
-          sortOrder: 'desc',
+          sortBy: "lastModified",
+          sortOrder: "desc",
           includeUrls: true,
         });
       }
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         files.push(fileInfo);
       }
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         files,
         totalCount: listResult.totalCount || files.length,
         hasMore: listResult.hasMore || false,

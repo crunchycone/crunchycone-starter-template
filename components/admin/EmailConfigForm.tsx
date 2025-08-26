@@ -5,49 +5,87 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { CheckCircle, AlertTriangle, Loader2, Mail, TestTube2, HelpCircle } from "lucide-react";
-import { updateEmailSettings, getCurrentEmailSettings, testEmailConfiguration, checkCrunchyConeAuth, checkEmailProviderAvailability, type EmailSettings, type EmailProvider } from "@/app/actions/email-settings";
+import {
+  updateEmailSettings,
+  getCurrentEmailSettings,
+  testEmailConfiguration,
+  checkCrunchyConeAuth,
+  checkEmailProviderAvailability,
+  type EmailSettings,
+  type EmailProvider,
+} from "@/app/actions/email-settings";
 
 export function EmailConfigForm() {
   const [settings, setSettings] = useState<EmailSettings>({
     provider: "console",
     fromAddress: "noreply@example.com",
     fromDisplayName: "",
+    smtpSecure: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isTesting, setIsTesting] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
-  const [crunchyConeAuthStatus, setCrunchyConeAuthStatus] = useState<{ authenticated: boolean; user?: any } | null>(null);
+  const [crunchyConeAuthStatus, setCrunchyConeAuthStatus] = useState<{
+    authenticated: boolean;
+    user?: { email?: string; name?: string } | null;
+  } | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [smtpProvider, setSmtpProvider] = useState<string>("google");
-  const [providerAvailability, setProviderAvailability] = useState<Record<string, { available: boolean; checking: boolean }>>({});
+  const [providerAvailability, setProviderAvailability] = useState<
+    Record<string, { available: boolean; checking: boolean }>
+  >({});
 
   const checkProviderAvailability = async (provider: EmailProvider) => {
-    setProviderAvailability(prev => ({ ...prev, [provider]: { available: false, checking: true } }));
-    
+    setProviderAvailability((prev) => ({
+      ...prev,
+      [provider]: { available: false, checking: true },
+    }));
+
     try {
       const result = await checkEmailProviderAvailability(provider);
-      setProviderAvailability(prev => ({ ...prev, [provider]: { available: result.available, checking: false } }));
+      setProviderAvailability((prev) => ({
+        ...prev,
+        [provider]: { available: result.available, checking: false },
+      }));
       return result.available;
     } catch (error) {
       console.error(`Failed to check availability for ${provider}:`, error);
-      setProviderAvailability(prev => ({ ...prev, [provider]: { available: false, checking: false } }));
+      setProviderAvailability((prev) => ({
+        ...prev,
+        [provider]: { available: false, checking: false },
+      }));
       return false;
     }
   };
 
-  const getProviderRequirements = (provider: EmailProvider): { name: string; package: string } | null => {
+  const getProviderRequirements = (
+    provider: EmailProvider
+  ): { name: string; package: string } | null => {
     switch (provider) {
-      case 'sendgrid':
-        return { name: 'SendGrid', package: '@sendgrid/mail' };
-      case 'resend':
-        return { name: 'Resend', package: 'resend' };
-      case 'aws-ses':
-        return { name: 'AWS SES', package: '@aws-sdk/client-ses' };
+      case "sendgrid":
+        return { name: "SendGrid", package: "@sendgrid/mail" };
+      case "resend":
+        return { name: "Resend", package: "resend" };
+      case "aws-ses":
+        return { name: "AWS SES", package: "@aws-sdk/client-ses" };
       default:
         return null;
     }
@@ -60,7 +98,7 @@ export function EmailConfigForm() {
       if (result.success) {
         setCrunchyConeAuthStatus({
           authenticated: result.authenticated,
-          user: result.user
+          user: result.user,
         });
       } else {
         setCrunchyConeAuthStatus({ authenticated: false });
@@ -83,9 +121,9 @@ export function EmailConfigForm() {
         if (currentSettings.provider === "crunchycone") {
           setTimeout(checkCrunchyConeAuthentication, 100);
         }
-        
+
         // Check provider availability for providers that need specific dependencies
-        const providersToCheck = ['sendgrid', 'resend', 'aws-ses'];
+        const providersToCheck = ["sendgrid", "resend", "aws-ses"];
         if (providersToCheck.includes(currentSettings.provider)) {
           setTimeout(() => checkProviderAvailability(currentSettings.provider), 100);
         }
@@ -102,14 +140,14 @@ export function EmailConfigForm() {
 
   const handleProviderChange = async (provider: EmailProvider) => {
     setSettings({ ...settings, provider });
-    
+
     // Check CrunchyCone auth when provider is selected
     if (provider === "crunchycone") {
       checkCrunchyConeAuthentication();
     }
-    
+
     // Check provider availability for providers that need specific dependencies
-    const providersToCheck = ['sendgrid', 'resend', 'aws-ses'];
+    const providersToCheck = ["sendgrid", "resend", "aws-ses"];
     if (providersToCheck.includes(provider)) {
       await checkProviderAvailability(provider);
     }
@@ -127,7 +165,7 @@ export function EmailConfigForm() {
       } else {
         setMessage({ type: "error", text: result.message });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Failed to update email settings" });
     } finally {
       setIsLoading(false);
@@ -145,7 +183,7 @@ export function EmailConfigForm() {
       } else {
         setMessage({ type: "error", text: result.message });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Failed to test email configuration" });
     } finally {
       setIsTesting(false);
@@ -161,41 +199,86 @@ export function EmailConfigForm() {
           return {
             title: "How to Get SendGrid API Key",
             steps: [
-              { title: "Sign up or Log in", content: "Visit https://sendgrid.com and sign up for a free account or log in to your existing account." },
-              { title: "Go to API Keys", content: "Navigate to Settings → API Keys in the left sidebar." },
+              {
+                title: "Sign up or Log in",
+                content:
+                  "Visit https://sendgrid.com and sign up for a free account or log in to your existing account.",
+              },
+              {
+                title: "Go to API Keys",
+                content: "Navigate to Settings → API Keys in the left sidebar.",
+              },
               { title: "Create API Key", content: "Click 'Create API Key' button." },
-              { title: "Choose Permissions", content: "Select 'Restricted Access' and enable 'Mail Send' permissions." },
-              { title: "Name Your Key", content: "Give your API key a descriptive name (e.g., 'MyApp Email')." },
-              { title: "Generate & Copy", content: "Click 'Create & View' and copy the generated API key immediately (you won't see it again)." }
+              {
+                title: "Choose Permissions",
+                content: "Select 'Restricted Access' and enable 'Mail Send' permissions.",
+              },
+              {
+                title: "Name Your Key",
+                content: "Give your API key a descriptive name (e.g., 'MyApp Email').",
+              },
+              {
+                title: "Generate & Copy",
+                content:
+                  "Click 'Create & View' and copy the generated API key immediately (you won't see it again).",
+              },
             ],
-            link: "https://sendgrid.com"
+            link: "https://sendgrid.com",
           };
         case "resend":
           return {
             title: "How to Get Resend API Key",
             steps: [
-              { title: "Sign up or Log in", content: "Visit https://resend.com and create an account or sign in." },
-              { title: "Go to API Keys", content: "Navigate to the API Keys section in your dashboard." },
+              {
+                title: "Sign up or Log in",
+                content: "Visit https://resend.com and create an account or sign in.",
+              },
+              {
+                title: "Go to API Keys",
+                content: "Navigate to the API Keys section in your dashboard.",
+              },
               { title: "Create API Key", content: "Click 'Create API Key' button." },
-              { title: "Set Permissions", content: "Choose the appropriate permissions (usually 'Send emails')." },
+              {
+                title: "Set Permissions",
+                content: "Choose the appropriate permissions (usually 'Send emails').",
+              },
               { title: "Name Your Key", content: "Give your API key a descriptive name." },
-              { title: "Generate & Copy", content: "Click 'Add' and copy the generated API key." }
+              { title: "Generate & Copy", content: "Click 'Add' and copy the generated API key." },
             ],
-            link: "https://resend.com"
+            link: "https://resend.com",
           };
         case "aws-ses":
           return {
             title: "How to Get AWS SES Credentials",
             steps: [
-              { title: "Sign up for AWS", content: "Visit https://aws.amazon.com and create an account or sign in." },
-              { title: "Go to IAM Console", content: "Navigate to IAM (Identity and Access Management) service." },
+              {
+                title: "Sign up for AWS",
+                content: "Visit https://aws.amazon.com and create an account or sign in.",
+              },
+              {
+                title: "Go to IAM Console",
+                content: "Navigate to IAM (Identity and Access Management) service.",
+              },
               { title: "Create User", content: "Create a new IAM user with programmatic access." },
-              { title: "Attach SES Policy", content: "Attach the 'AmazonSESFullAccess' policy or create a custom policy with SES permissions." },
-              { title: "Get Credentials", content: "Copy the Access Key ID and Secret Access Key." },
-              { title: "Choose Region", content: "Select your preferred AWS region (e.g., us-east-1, eu-west-1)." },
-              { title: "Verify Domain/Email", content: "In SES console, verify your sending domain or email address." }
+              {
+                title: "Attach SES Policy",
+                content:
+                  "Attach the 'AmazonSESFullAccess' policy or create a custom policy with SES permissions.",
+              },
+              {
+                title: "Get Credentials",
+                content: "Copy the Access Key ID and Secret Access Key.",
+              },
+              {
+                title: "Choose Region",
+                content: "Select your preferred AWS region (e.g., us-east-1, eu-west-1).",
+              },
+              {
+                title: "Verify Domain/Email",
+                content: "In SES console, verify your sending domain or email address.",
+              },
             ],
-            link: "https://aws.amazon.com"
+            link: "https://aws.amazon.com",
           };
         case "smtp":
           const getSmtpInstructions = () => {
@@ -204,53 +287,120 @@ export function EmailConfigForm() {
                 return {
                   title: "How to Configure Gmail SMTP",
                   steps: [
-                    { title: "Enable 2-Step Verification", content: "Go to your Google Account settings and enable 2-Step Verification if not already enabled." },
-                    { title: "Generate App Password", content: "Go to Security → 2-Step Verification → App passwords. Select 'Mail' and generate a new app password." },
-                    { title: "Use These Settings", content: "SMTP Server: smtp.gmail.com, Port: 587, Security: STARTTLS" },
-                    { title: "Enter Credentials", content: "Username: your full Gmail address, Password: the generated app password (not your regular password)" }
+                    {
+                      title: "Enable 2-Step Verification",
+                      content:
+                        "Go to your Google Account settings and enable 2-Step Verification if not already enabled.",
+                    },
+                    {
+                      title: "Generate App Password",
+                      content:
+                        "Go to Security → 2-Step Verification → App passwords. Select 'Mail' and generate a new app password.",
+                    },
+                    {
+                      title: "Use These Settings",
+                      content:
+                        "SMTP Server: smtp.gmail.com, Port: 587, Security: STARTTLS (not SSL/TLS)",
+                    },
+                    {
+                      title: "Enter Credentials",
+                      content:
+                        "Username: your full Gmail address, Password: the generated app password (not your regular password)",
+                    },
                   ],
-                  link: "https://myaccount.google.com/security"
+                  link: "https://myaccount.google.com/security",
                 };
               case "outlook":
                 return {
                   title: "How to Configure Outlook SMTP",
                   steps: [
-                    { title: "Enable SMTP AUTH", content: "In your Microsoft 365 admin center, ensure SMTP AUTH is enabled for your account." },
-                    { title: "Use These Settings", content: "SMTP Server: smtp-mail.outlook.com, Port: 587, Security: STARTTLS" },
-                    { title: "Authentication", content: "Use your full Outlook/Hotmail email address and password." },
-                    { title: "App Password (if 2FA)", content: "If you have 2-factor authentication enabled, generate an app password in your Microsoft account security settings." }
+                    {
+                      title: "Enable SMTP AUTH",
+                      content:
+                        "In your Microsoft 365 admin center, ensure SMTP AUTH is enabled for your account.",
+                    },
+                    {
+                      title: "Use These Settings",
+                      content:
+                        "SMTP Server: smtp-mail.outlook.com, Port: 587, Security: STARTTLS (not SSL/TLS)",
+                    },
+                    {
+                      title: "Authentication",
+                      content: "Use your full Outlook/Hotmail email address and password.",
+                    },
+                    {
+                      title: "App Password (if 2FA)",
+                      content:
+                        "If you have 2-factor authentication enabled, generate an app password in your Microsoft account security settings.",
+                    },
                   ],
-                  link: "https://account.microsoft.com/security"
+                  link: "https://account.microsoft.com/security",
                 };
               case "yahoo":
                 return {
                   title: "How to Configure Yahoo SMTP",
                   steps: [
-                    { title: "Enable Less Secure Apps", content: "Go to Yahoo Account Security and enable 'Allow apps that use less secure sign in'." },
-                    { title: "Generate App Password", content: "Create an app password specifically for your application in Account Security → App passwords." },
-                    { title: "Use These Settings", content: "SMTP Server: smtp.mail.yahoo.com, Port: 587 or 465, Security: STARTTLS or SSL" },
-                    { title: "Enter Credentials", content: "Username: your full Yahoo email address, Password: the generated app password" }
+                    {
+                      title: "Enable Less Secure Apps",
+                      content:
+                        "Go to Yahoo Account Security and enable 'Allow apps that use less secure sign in'.",
+                    },
+                    {
+                      title: "Generate App Password",
+                      content:
+                        "Create an app password specifically for your application in Account Security → App passwords.",
+                    },
+                    {
+                      title: "Use These Settings",
+                      content:
+                        "SMTP Server: smtp.mail.yahoo.com, Port: 587 (STARTTLS) or 465 (SSL/TLS)",
+                    },
+                    {
+                      title: "Enter Credentials",
+                      content:
+                        "Username: your full Yahoo email address, Password: the generated app password",
+                    },
                   ],
-                  link: "https://login.yahoo.com/account/security"
+                  link: "https://login.yahoo.com/account/security",
                 };
               case "custom":
                 return {
                   title: "How to Configure Custom SMTP",
                   steps: [
-                    { title: "Contact Your Provider", content: "Get SMTP server details from your email hosting provider or IT administrator." },
-                    { title: "Gather Required Info", content: "You'll need: SMTP server hostname, port number, security type (TLS/SSL), username, and password." },
-                    { title: "Common Ports", content: "Port 587 (STARTTLS), Port 465 (SSL/TLS), Port 25 (usually blocked by ISPs)" },
-                    { title: "Test Connection", content: "Use the test configuration button to verify your settings work correctly." }
+                    {
+                      title: "Contact Your Provider",
+                      content:
+                        "Get SMTP server details from your email hosting provider or IT administrator.",
+                    },
+                    {
+                      title: "Gather Required Info",
+                      content:
+                        "You'll need: SMTP server hostname, port number, security type (TLS/SSL), username, and password.",
+                    },
+                    {
+                      title: "Common Ports",
+                      content:
+                        "Port 587 (STARTTLS - recommended), Port 465 (SSL/TLS), Port 25 (usually blocked by ISPs)",
+                    },
+                    {
+                      title: "Test Connection",
+                      content:
+                        "Use the test configuration button to verify your settings work correctly.",
+                    },
                   ],
-                  link: null
+                  link: null,
                 };
               default:
                 return {
                   title: "How to Configure SMTP",
                   steps: [
-                    { title: "Choose Provider", content: "Select your email provider from the dropdown above for specific instructions." }
+                    {
+                      title: "Choose Provider",
+                      content:
+                        "Select your email provider from the dropdown above for specific instructions.",
+                    },
                   ],
-                  link: null
+                  link: null,
                 };
             }
           };
@@ -259,13 +409,25 @@ export function EmailConfigForm() {
           return {
             title: "How to Get Mailgun API Key",
             steps: [
-              { title: "Sign up or Log in", content: "Visit https://mailgun.com and create an account or sign in." },
-              { title: "Go to API Keys", content: "Navigate to Settings → API Keys in your dashboard." },
-              { title: "Copy Private Key", content: "Copy your Private API key (starts with 'key-')." },
-              { title: "Get Domain", content: "Go to Sending → Domains and copy your domain name." },
-              { title: "Verify Domain", content: "Follow Mailgun's domain verification process." }
+              {
+                title: "Sign up or Log in",
+                content: "Visit https://mailgun.com and create an account or sign in.",
+              },
+              {
+                title: "Go to API Keys",
+                content: "Navigate to Settings → API Keys in your dashboard.",
+              },
+              {
+                title: "Copy Private Key",
+                content: "Copy your Private API key (starts with 'key-').",
+              },
+              {
+                title: "Get Domain",
+                content: "Go to Sending → Domains and copy your domain name.",
+              },
+              { title: "Verify Domain", content: "Follow Mailgun's domain verification process." },
             ],
-            link: "https://mailgun.com"
+            link: "https://mailgun.com",
           };
         default:
           return null;
@@ -294,7 +456,9 @@ export function EmailConfigForm() {
               <div className="space-y-3 p-4 bg-muted rounded-lg">
                 <h4 className="font-semibold text-base">Select Your Email Provider</h4>
                 <div className="grid gap-2">
-                  <Label className="text-sm">Choose your SMTP provider for specific instructions:</Label>
+                  <Label className="text-sm">
+                    Choose your SMTP provider for specific instructions:
+                  </Label>
                   <Select value={smtpProvider} onValueChange={setSmtpProvider}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select SMTP provider" />
@@ -309,11 +473,13 @@ export function EmailConfigForm() {
                 </div>
               </div>
             )}
-            
+
             <div className="space-y-3">
               {instructions.steps.map((step, index) => (
                 <div key={index} className="space-y-2">
-                  <h5 className="font-semibold">{index + 1}. {step.title}</h5>
+                  <h5 className="font-semibold">
+                    {index + 1}. {step.title}
+                  </h5>
                   <p>{step.content}</p>
                 </div>
               ))}
@@ -322,7 +488,16 @@ export function EmailConfigForm() {
               <div className="p-4 bg-muted rounded-lg">
                 <p className="font-semibold">Get started:</p>
                 <p>
-                  Visit <a href={instructions.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{instructions.link}</a> to begin the setup process.
+                  Visit{" "}
+                  <a
+                    href={instructions.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {instructions.link}
+                  </a>{" "}
+                  to begin the setup process.
                 </p>
               </div>
             )}
@@ -459,6 +634,29 @@ export function EmailConfigForm() {
                 onChange={(e) => setSettings({ ...settings, smtpPassword: e.target.value })}
               />
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="smtpSecure" className="text-sm">
+                SMTP Secure Connection
+              </Label>
+              <Select
+                value={settings.smtpSecure ? "true" : "false"}
+                onValueChange={(value) =>
+                  setSettings({ ...settings, smtpSecure: value === "true" })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select security type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="false">STARTTLS (Port 587)</SelectItem>
+                  <SelectItem value="true">SSL/TLS (Port 465)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Choose STARTTLS for port 587 or SSL/TLS for port 465. Most modern SMTP servers use
+                STARTTLS.
+              </p>
+            </div>
           </div>
         );
 
@@ -500,7 +698,7 @@ export function EmailConfigForm() {
               <div className="flex items-center gap-2">
                 <Label className="text-sm">Authentication Status</Label>
                 {isCheckingAuth && <Loader2 className="h-4 w-4 animate-spin" />}
-                {!isCheckingAuth && !(crunchyConeAuthStatus?.authenticated) && (
+                {!isCheckingAuth && !crunchyConeAuthStatus?.authenticated && (
                   <Button
                     type="button"
                     variant="outline"
@@ -511,7 +709,7 @@ export function EmailConfigForm() {
                   </Button>
                 )}
               </div>
-              
+
               {crunchyConeAuthStatus !== null && (
                 <Alert variant={crunchyConeAuthStatus.authenticated ? "default" : "destructive"}>
                   {crunchyConeAuthStatus.authenticated ? (
@@ -525,7 +723,10 @@ export function EmailConfigForm() {
                         Successfully authenticated with CrunchyCone
                         {crunchyConeAuthStatus.user && (
                           <span className="block text-xs text-muted-foreground mt-1">
-                            Logged in as: {crunchyConeAuthStatus.user.email || crunchyConeAuthStatus.user.name || "Unknown user"}
+                            Logged in as:{" "}
+                            {crunchyConeAuthStatus.user.email ||
+                              crunchyConeAuthStatus.user.name ||
+                              "Unknown user"}
                           </span>
                         )}
                       </>
@@ -533,7 +734,10 @@ export function EmailConfigForm() {
                       <>
                         You need to be signed into your CrunchyCone account.
                         <span className="block text-xs mt-1">
-                          Run: <code className="bg-muted px-1 rounded">npx crunchycone-cli auth login</code>
+                          Run:{" "}
+                          <code className="bg-muted px-1 rounded">
+                            npx crunchycone-cli auth login
+                          </code>
                         </span>
                       </>
                     )}
@@ -598,16 +802,22 @@ export function EmailConfigForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {message && (
-            <Alert 
-              variant={message.type === "error" ? "destructive" : "default"} 
-              className={message.type === "success" ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200" : ""}
+            <Alert
+              variant={message.type === "error" ? "destructive" : "default"}
+              className={
+                message.type === "success"
+                  ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+                  : ""
+              }
             >
               {message.type === "success" ? (
                 <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
               ) : (
                 <AlertTriangle className="h-4 w-4" />
               )}
-              <AlertDescription className={message.type === "success" ? "text-green-800 dark:text-green-200" : ""}>
+              <AlertDescription
+                className={message.type === "success" ? "text-green-800 dark:text-green-200" : ""}
+              >
                 {message.text}
               </AlertDescription>
             </Alert>
@@ -636,7 +846,9 @@ export function EmailConfigForm() {
             </div>
 
             {/* Provider Availability Check */}
-            {(settings.provider === 'sendgrid' || settings.provider === 'resend' || settings.provider === 'aws-ses') && (
+            {(settings.provider === "sendgrid" ||
+              settings.provider === "resend" ||
+              settings.provider === "aws-ses") && (
               <div className="space-y-2">
                 {providerAvailability[settings.provider]?.checking && (
                   <Alert>
@@ -646,28 +858,42 @@ export function EmailConfigForm() {
                     </AlertDescription>
                   </Alert>
                 )}
-                {providerAvailability[settings.provider] && !providerAvailability[settings.provider].checking && !providerAvailability[settings.provider].available && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>{getProviderRequirements(settings.provider)?.name} is not available.</strong>
-                      <br />
-                      The required dependency <code className="bg-muted px-1 rounded">{getProviderRequirements(settings.provider)?.package}</code> is not installed.
-                      <br />
-                      <span className="text-xs mt-1 block">
-                        Run: <code className="bg-muted px-1 rounded">npm install {getProviderRequirements(settings.provider)?.package}</code>
-                      </span>
-                    </AlertDescription>
-                  </Alert>
-                )}
-                {providerAvailability[settings.provider] && !providerAvailability[settings.provider].checking && providerAvailability[settings.provider].available && (
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      {getProviderRequirements(settings.provider)?.name} is available and ready to use.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                {providerAvailability[settings.provider] &&
+                  !providerAvailability[settings.provider].checking &&
+                  !providerAvailability[settings.provider].available && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>
+                          {getProviderRequirements(settings.provider)?.name} is not available.
+                        </strong>
+                        <br />
+                        The required dependency{" "}
+                        <code className="bg-muted px-1 rounded">
+                          {getProviderRequirements(settings.provider)?.package}
+                        </code>{" "}
+                        is not installed.
+                        <br />
+                        <span className="text-xs mt-1 block">
+                          Run:{" "}
+                          <code className="bg-muted px-1 rounded">
+                            npm install {getProviderRequirements(settings.provider)?.package}
+                          </code>
+                        </span>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                {providerAvailability[settings.provider] &&
+                  !providerAvailability[settings.provider].checking &&
+                  providerAvailability[settings.provider].available && (
+                    <Alert>
+                      <CheckCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {getProviderRequirements(settings.provider)?.name} is available and ready to
+                        use.
+                      </AlertDescription>
+                    </Alert>
+                  )}
               </div>
             )}
 
@@ -714,10 +940,11 @@ export function EmailConfigForm() {
               variant="outline"
               onClick={handleTestConfiguration}
               disabled={
-                isTesting || 
-                isLoading || 
+                isTesting ||
+                isLoading ||
                 (settings.provider === "crunchycone" && !crunchyConeAuthStatus?.authenticated) ||
-                (providerAvailability[settings.provider] && !providerAvailability[settings.provider].available)
+                (providerAvailability[settings.provider] &&
+                  !providerAvailability[settings.provider].available)
               }
             >
               {isTesting ? (

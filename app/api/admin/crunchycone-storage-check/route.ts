@@ -9,7 +9,7 @@ const execAsync = promisify(exec);
 
 interface CrunchyConeProject {
   project_id: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export async function POST(_request: NextRequest) {
@@ -20,7 +20,7 @@ export async function POST(_request: NextRequest) {
     const result = {
       authenticated: false,
       hasProject: false,
-      authDetails: null as any,
+      authDetails: null as Record<string, unknown> | null,
       projectDetails: null as CrunchyConeProject | null,
       error: null as string | null,
     };
@@ -44,13 +44,14 @@ export async function POST(_request: NextRequest) {
           const authResult = JSON.parse(output);
           result.authenticated = authResult.success === true;
           result.authDetails = authResult;
-        } catch (parseError) {
+        } catch {
           result.error = "Invalid JSON response from auth CLI";
           result.authDetails = { success: false, message: output };
         }
       } catch (error: unknown) {
-        const output = (error as any).stdout?.trim() || (error as any).stderr?.trim() || "";
-        
+        const execError = error as { stdout?: string; stderr?: string };
+        const output = execError.stdout?.trim() || execError.stderr?.trim() || "";
+
         try {
           const authResult = JSON.parse(output);
           result.authenticated = authResult.success === true;
@@ -65,10 +66,10 @@ export async function POST(_request: NextRequest) {
     // Check for crunchycone.toml project configuration
     try {
       const tomlPath = path.join(process.cwd(), "crunchycone.toml");
-      
+
       if (fs.existsSync(tomlPath)) {
         const tomlContent = fs.readFileSync(tomlPath, "utf-8");
-        
+
         // Parse TOML for project_id (simple parsing)
         const projectIdMatch = tomlContent.match(/^project_id\s*=\s*['"](.*?)['"]$/m);
         if (projectIdMatch) {
@@ -85,7 +86,7 @@ export async function POST(_request: NextRequest) {
         result.hasProject = false;
         result.projectDetails = null;
       }
-    } catch (error) {
+    } catch {
       result.hasProject = false;
       result.projectDetails = null;
       if (!result.error) {

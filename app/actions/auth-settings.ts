@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth/permissions";
 import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
@@ -74,16 +73,16 @@ export async function updateAuthSettings(settings: AuthSettings) {
   try {
     await updateEnvFile(settings);
     revalidatePath("/admin/settings");
-    
+
     return {
       success: true,
-      message: "Authentication settings updated successfully"
+      message: "Authentication settings updated successfully",
     };
   } catch (error) {
     console.error("Failed to update authentication settings:", error);
     return {
       success: false,
-      message: "Failed to update authentication settings"
+      message: "Failed to update authentication settings",
     };
   }
 }

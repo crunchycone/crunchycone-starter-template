@@ -54,13 +54,10 @@ export function AdminNav() {
       {navigationItems.map((item) => {
         const Icon = item.icon;
         const active = isActive(item.href, item.exact);
-        
+
         return (
           <Link key={item.href} href={item.href}>
-            <Button 
-              variant={active ? "secondary" : "ghost"} 
-              className="w-full justify-start"
-            >
+            <Button variant={active ? "secondary" : "ghost"} className="w-full justify-start">
               <Icon className="mr-2 h-4 w-4" />
               {item.label}
             </Button>

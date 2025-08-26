@@ -27,7 +27,7 @@ export function AuthRedirectHandler() {
           .then((res) => res.json())
           .then((data) => {
             console.log("AuthRedirectHandler: Admin check result", data);
-            
+
             if (data.adminExists) {
               console.log("AuthRedirectHandler: Admin exists, redirecting to home");
               router.replace("/");

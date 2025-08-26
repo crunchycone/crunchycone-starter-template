@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ p
       console.log(`[Visibility] Setting ${filePath} to ${visibility}`);
       const result = await provider.setFileVisibility(filePath, visibility);
       console.log(`[Visibility] Result:`, result);
-      
+
       // Check the actual visibility after the change
       const actualVisibility = await provider.getFileVisibility(filePath);
       console.log(`[Visibility] Actual visibility after change:`, actualVisibility);

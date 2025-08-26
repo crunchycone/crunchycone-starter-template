@@ -50,7 +50,8 @@ export async function POST(_request: NextRequest) {
       }
     } catch (error: unknown) {
       // Handle command execution errors
-      const output = (error as any).stdout?.trim() || (error as any).stderr?.trim() || "";
+      const execError = error as { stdout?: string; stderr?: string };
+      const output = execError.stdout?.trim() || execError.stderr?.trim() || "";
 
       // Try to parse JSON from error output
       try {

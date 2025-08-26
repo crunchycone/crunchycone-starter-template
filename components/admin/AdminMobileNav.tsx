@@ -55,10 +55,10 @@ export function AdminMobileNav() {
       {navigationItems.map((item) => {
         const Icon = item.icon;
         const active = isActive(item.href, item.exact);
-        
+
         return (
           <DropdownMenuItem key={item.href} asChild>
-            <Link 
+            <Link
               href={item.href}
               className={cn(active && "bg-secondary text-secondary-foreground")}
             >

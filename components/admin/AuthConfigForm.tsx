@@ -8,9 +8,20 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { CheckCircle, AlertTriangle, Loader2, Fingerprint, HelpCircle } from "lucide-react";
-import { updateAuthSettings, getCurrentAuthSettings, type AuthSettings } from "@/app/actions/auth-settings";
+import {
+  updateAuthSettings,
+  getCurrentAuthSettings,
+  type AuthSettings,
+} from "@/app/actions/auth-settings";
 
 export function AuthConfigForm() {
   const [settings, setSettings] = useState<AuthSettings>({
@@ -54,7 +65,7 @@ export function AuthConfigForm() {
       } else {
         setMessage({ type: "error", text: result.message });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Failed to update authentication settings" });
     } finally {
       setIsLoading(false);
@@ -106,7 +117,7 @@ export function AuthConfigForm() {
           {/* Authentication Methods */}
           <div className="space-y-4">
             <h3 className="font-medium text-sm">Authentication Methods</h3>
-            
+
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -141,7 +152,7 @@ export function AuthConfigForm() {
           {/* OAuth Providers */}
           <div className="space-y-4">
             <h3 className="font-medium text-sm">OAuth Providers</h3>
-            
+
             {/* Google OAuth */}
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
@@ -165,19 +176,24 @@ export function AuthConfigForm() {
                     <DialogHeader>
                       <DialogTitle>How to Create a Google OAuth App</DialogTitle>
                       <DialogDescription>
-                        Follow these steps to set up Google OAuth authentication for your application.
+                        Follow these steps to set up Google OAuth authentication for your
+                        application.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-6 text-sm">
                       {/* Callback URL Section */}
                       <div className="space-y-3 p-4 bg-muted rounded-lg">
-                        <h4 className="font-semibold text-base">Callback URL for Google Cloud Console</h4>
+                        <h4 className="font-semibold text-base">
+                          Callback URL for Google Cloud Console
+                        </h4>
                         <div className="grid gap-2">
-                          <Label className="text-sm">Copy this URL to your Google OAuth app configuration:</Label>
+                          <Label className="text-sm">
+                            Copy this URL to your Google OAuth app configuration:
+                          </Label>
                           <div className="flex gap-2">
                             <Input
                               readOnly
-                              value={`${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback/google`}
+                              value={`${typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`}
                               className="font-mono text-xs bg-background"
                             />
                             <Button
@@ -185,7 +201,7 @@ export function AuthConfigForm() {
                               variant="outline"
                               size="sm"
                               onClick={async () => {
-                                const url = `${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback/google`;
+                                const url = `${typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`;
                                 await navigator.clipboard.writeText(url);
                                 setIsCopied(true);
                                 setTimeout(() => setIsCopied(false), 2000);
@@ -199,7 +215,9 @@ export function AuthConfigForm() {
 
                       {/* Credentials Input Section */}
                       <div className="space-y-3 p-4 bg-muted rounded-lg">
-                        <h4 className="font-semibold text-base">Enter Your Google OAuth Credentials</h4>
+                        <h4 className="font-semibold text-base">
+                          Enter Your Google OAuth Credentials
+                        </h4>
                         <div className="space-y-3">
                           <div className="grid gap-2">
                             <Label htmlFor="dialogGoogleClientId" className="text-sm">
@@ -235,42 +253,74 @@ export function AuthConfigForm() {
                       {/* Instructions */}
                       <div className="space-y-4">
                         <h4 className="font-semibold text-base">Step-by-Step Instructions</h4>
-                        
+
                         <div className="space-y-3">
                           <div className="space-y-2">
                             <h5 className="font-semibold">1. Go to Google Cloud Console</h5>
-                            <p>Visit <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://console.cloud.google.com/</a> and sign in with your Google account.</p>
+                            <p>
+                              Visit{" "}
+                              <a
+                                href="https://console.cloud.google.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                https://console.cloud.google.com/
+                              </a>{" "}
+                              and sign in with your Google account.
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">2. Create or Select a Project</h5>
-                            <p>Create a new project or select an existing one from the project dropdown at the top of the page.</p>
+                            <p>
+                              Create a new project or select an existing one from the project
+                              dropdown at the top of the page.
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">3. Enable Google+ API</h5>
-                            <p>Go to "APIs & Services" → "Library" and search for "Google+ API" or "Google Identity". Enable the API for your project.</p>
+                            <p>
+                              Go to &quot;APIs &amp; Services&quot; → &quot;Library&quot; and search
+                              for &quot;Google+ API&quot; or &quot;Google Identity&quot;. Enable the
+                              API for your project.
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">4. Configure OAuth Consent Screen</h5>
-                            <p>Go to "APIs & Services" → "OAuth consent screen". Choose "External" user type and fill in the required application information.</p>
+                            <p>
+                              Go to &quot;APIs &amp; Services&quot; → &quot;OAuth consent
+                              screen&quot;. Choose &quot;External&quot; user type and fill in the
+                              required application information.
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">5. Create OAuth 2.0 Credentials</h5>
-                            <p>Go to "APIs & Services" → "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs".</p>
-                            <p>Select "Web application" as the application type.</p>
+                            <p>
+                              Go to &quot;APIs &amp; Services&quot; → &quot;Credentials&quot; →
+                              &quot;Create Credentials&quot; → &quot;OAuth 2.0 Client IDs&quot;.
+                            </p>
+                            <p>Select &quot;Web application&quot; as the application type.</p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">6. Configure Redirect URIs</h5>
-                            <p>In the "Authorized redirect URIs" section, add the callback URL shown above (use the Copy button to copy it).</p>
+                            <p>
+                              In the &quot;Authorized redirect URIs&quot; section, add the callback
+                              URL shown above (use the Copy button to copy it).
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">7. Copy Credentials</h5>
-                            <p>After creating the OAuth client, copy the <strong>Client ID</strong> and <strong>Client Secret</strong> and paste them into the fields above in this dialog. They will automatically populate the main form.</p>
+                            <p>
+                              After creating the OAuth client, copy the <strong>Client ID</strong>{" "}
+                              and <strong>Client Secret</strong> and paste them into the fields
+                              above in this dialog. They will automatically populate the main form.
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -289,7 +339,7 @@ export function AuthConfigForm() {
                       id="googleCallbackUrl"
                       type="text"
                       readOnly
-                      value={`${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback/google`}
+                      value={`${typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`}
                       className="font-mono text-xs bg-muted"
                     />
                   </div>
@@ -303,9 +353,7 @@ export function AuthConfigForm() {
                       type="text"
                       placeholder="Enter Google Client ID"
                       value={settings.googleClientId || ""}
-                      onChange={(e) =>
-                        setSettings({ ...settings, googleClientId: e.target.value })
-                      }
+                      onChange={(e) => setSettings({ ...settings, googleClientId: e.target.value })}
                     />
                   </div>
 
@@ -350,19 +398,24 @@ export function AuthConfigForm() {
                     <DialogHeader>
                       <DialogTitle>How to Create a GitHub OAuth App</DialogTitle>
                       <DialogDescription>
-                        Follow these steps to set up GitHub OAuth authentication for your application.
+                        Follow these steps to set up GitHub OAuth authentication for your
+                        application.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-6 text-sm">
                       {/* Callback URL Section */}
                       <div className="space-y-3 p-4 bg-muted rounded-lg">
-                        <h4 className="font-semibold text-base">Callback URL for GitHub OAuth App</h4>
+                        <h4 className="font-semibold text-base">
+                          Callback URL for GitHub OAuth App
+                        </h4>
                         <div className="grid gap-2">
-                          <Label className="text-sm">Copy this URL to your GitHub OAuth app configuration:</Label>
+                          <Label className="text-sm">
+                            Copy this URL to your GitHub OAuth app configuration:
+                          </Label>
                           <div className="flex gap-2">
                             <Input
                               readOnly
-                              value={`${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback/github`}
+                              value={`${typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/github`}
                               className="font-mono text-xs bg-background"
                             />
                             <Button
@@ -370,7 +423,7 @@ export function AuthConfigForm() {
                               variant="outline"
                               size="sm"
                               onClick={async () => {
-                                const url = `${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback/github`;
+                                const url = `${typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/github`;
                                 await navigator.clipboard.writeText(url);
                                 setIsGithubCopied(true);
                                 setTimeout(() => setIsGithubCopied(false), 2000);
@@ -384,7 +437,9 @@ export function AuthConfigForm() {
 
                       {/* Credentials Input Section */}
                       <div className="space-y-3 p-4 bg-muted rounded-lg">
-                        <h4 className="font-semibold text-base">Enter Your GitHub OAuth Credentials</h4>
+                        <h4 className="font-semibold text-base">
+                          Enter Your GitHub OAuth Credentials
+                        </h4>
                         <div className="space-y-3">
                           <div className="grid gap-2">
                             <Label htmlFor="dialogGithubClientId" className="text-sm">
@@ -420,41 +475,68 @@ export function AuthConfigForm() {
                       {/* Instructions */}
                       <div className="space-y-4">
                         <h4 className="font-semibold text-base">Step-by-Step Instructions</h4>
-                        
+
                         <div className="space-y-3">
                           <div className="space-y-2">
                             <h5 className="font-semibold">1. Go to GitHub Developer Settings</h5>
-                            <p>Visit <a href="https://github.com/settings/developers" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://github.com/settings/developers</a> and sign in to your GitHub account.</p>
+                            <p>
+                              Visit{" "}
+                              <a
+                                href="https://github.com/settings/developers"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                https://github.com/settings/developers
+                              </a>{" "}
+                              and sign in to your GitHub account.
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">2. Create New OAuth App</h5>
-                            <p>Click on "OAuth Apps" in the left sidebar, then click "New OAuth App" button.</p>
+                            <p>
+                              Click on &quot;OAuth Apps&quot; in the left sidebar, then click
+                              &quot;New OAuth App&quot; button.
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">3. Fill Application Details</h5>
-                            <p>Enter your application name, homepage URL, and application description.</p>
+                            <p>
+                              Enter your application name, homepage URL, and application
+                              description.
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">4. Set Authorization Callback URL</h5>
-                            <p>In the "Authorization callback URL" field, paste the callback URL shown above (use the Copy button to copy it).</p>
+                            <p>
+                              In the &quot;Authorization callback URL&quot; field, paste the
+                              callback URL shown above (use the Copy button to copy it).
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">5. Register Application</h5>
-                            <p>Click "Register application" to create your OAuth app.</p>
+                            <p>Click &quot;Register application&quot; to create your OAuth app.</p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">6. Generate Client Secret</h5>
-                            <p>After creating the app, click "Generate a new client secret" to create your client secret.</p>
+                            <p>
+                              After creating the app, click &quot;Generate a new client secret&quot;
+                              to create your client secret.
+                            </p>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h5 className="font-semibold">7. Copy Credentials</h5>
-                            <p>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> and paste them into the fields above in this dialog. They will automatically populate the main form.</p>
+                            <p>
+                              Copy the <strong>Client ID</strong> and <strong>Client Secret</strong>{" "}
+                              and paste them into the fields above in this dialog. They will
+                              automatically populate the main form.
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -473,7 +555,7 @@ export function AuthConfigForm() {
                       id="githubCallbackUrl"
                       type="text"
                       readOnly
-                      value={`${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/callback/github`}
+                      value={`${typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/github`}
                       className="font-mono text-xs bg-muted"
                     />
                   </div>
@@ -487,9 +569,7 @@ export function AuthConfigForm() {
                       type="text"
                       placeholder="Enter GitHub Client ID"
                       value={settings.githubClientId || ""}
-                      onChange={(e) =>
-                        setSettings({ ...settings, githubClientId: e.target.value })
-                      }
+                      onChange={(e) => setSettings({ ...settings, githubClientId: e.target.value })}
                     />
                   </div>
 

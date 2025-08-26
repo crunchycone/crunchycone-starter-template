@@ -1,5 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { AuthConfigForm } from "@/components/admin/AuthConfigForm";
 import { EmailConfigForm } from "@/components/admin/EmailConfigForm";
 import { StorageConfigForm } from "@/components/admin/StorageConfigForm";

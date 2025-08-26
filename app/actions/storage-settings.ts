@@ -11,21 +11,21 @@ interface StorageSettings {
   // LocalStorage settings
   localStoragePath?: string;
   localStorageBaseUrl?: string;
-  
+
   // AWS S3 settings
   awsAccessKeyId?: string;
   awsSecretAccessKey?: string;
   awsRegion?: string;
   awsBucket?: string;
   awsCloudFrontDomain?: string;
-  
+
   // Digital Ocean Spaces settings
   doAccessKeyId?: string;
   doSecretAccessKey?: string;
   doRegion?: string;
   doBucket?: string;
   doCdnEndpoint?: string;
-  
+
   // Azure Storage settings
   azureAccountName?: string;
   azureAccountKey?: string;
@@ -33,18 +33,22 @@ interface StorageSettings {
   azureConnectionString?: string;
   azureContainerName?: string;
   azureCdnUrl?: string;
-  
+
   // Google Cloud Storage settings
   gcpProjectId?: string;
   gcpKeyFile?: string;
   gcsBucket?: string;
   gcpCdnUrl?: string;
-  
+
   // CrunchyCone uses CLI authentication and crunchycone.toml project config
   // No additional settings required
 }
 
-export async function getStorageSettings(): Promise<{ success: boolean; settings?: StorageSettings; error?: string }> {
+export async function getStorageSettings(): Promise<{
+  success: boolean;
+  settings?: StorageSettings;
+  error?: string;
+}> {
   try {
     const session = await auth();
     if (!session || !(await hasRole(session.user.id, "admin"))) {
@@ -79,12 +83,14 @@ export async function getStorageSettings(): Promise<{ success: boolean; settings
     };
 
     return { success: true, settings };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Failed to load storage settings" };
   }
 }
 
-export async function updateStorageSettings(settings: StorageSettings): Promise<{ success: boolean; error?: string }> {
+export async function updateStorageSettings(
+  settings: StorageSettings
+): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await auth();
     if (!session || !(await hasRole(session.user.id, "admin"))) {
@@ -94,7 +100,7 @@ export async function updateStorageSettings(settings: StorageSettings): Promise<
     // Read current .env file
     const envPath = path.join(process.cwd(), ".env");
     let envContent = "";
-    
+
     try {
       envContent = fs.readFileSync(envPath, "utf-8");
     } catch {
@@ -132,7 +138,7 @@ export async function updateStorageSettings(settings: StorageSettings): Promise<
     const envLines = envContent.split("\n");
     const envMap = new Map<string, string>();
     const commentLines: string[] = [];
-    
+
     for (const line of envLines) {
       if (line.trim().startsWith("#") || line.trim() === "") {
         commentLines.push(line);
@@ -155,20 +161,22 @@ export async function updateStorageSettings(settings: StorageSettings): Promise<
 
     // Rebuild .env content
     const newEnvLines: string[] = [];
-    
+
     // Add comments and non-storage variables first
     for (const line of envLines) {
       if (line.trim().startsWith("#") || line.trim() === "") {
         newEnvLines.push(line);
       } else if (line.includes("=")) {
         const [key] = line.split("=");
-        if (!key.trim().startsWith("CRUNCHYCONE_STORAGE") && 
-            !key.trim().startsWith("CRUNCHYCONE_LOCALSTORAGE") &&
-            !key.trim().startsWith("CRUNCHYCONE_AWS") &&
-            !key.trim().startsWith("CRUNCHYCONE_DO") &&
-            !key.trim().startsWith("CRUNCHYCONE_AZURE") &&
-            !key.trim().startsWith("CRUNCHYCONE_GCP") &&
-            !key.trim().startsWith("CRUNCHYCONE_GCS")) {
+        if (
+          !key.trim().startsWith("CRUNCHYCONE_STORAGE") &&
+          !key.trim().startsWith("CRUNCHYCONE_LOCALSTORAGE") &&
+          !key.trim().startsWith("CRUNCHYCONE_AWS") &&
+          !key.trim().startsWith("CRUNCHYCONE_DO") &&
+          !key.trim().startsWith("CRUNCHYCONE_AZURE") &&
+          !key.trim().startsWith("CRUNCHYCONE_GCP") &&
+          !key.trim().startsWith("CRUNCHYCONE_GCS")
+        ) {
           newEnvLines.push(line);
         }
       } else {
@@ -196,7 +204,9 @@ export async function updateStorageSettings(settings: StorageSettings): Promise<
   }
 }
 
-export async function testStorageConnection(settings: StorageSettings): Promise<{ success: boolean; error?: string; details?: string }> {
+export async function testStorageConnection(
+  settings: StorageSettings
+): Promise<{ success: boolean; error?: string; details?: string }> {
   try {
     const session = await auth();
     if (!session || !(await hasRole(session.user.id, "admin"))) {
@@ -204,7 +214,9 @@ export async function testStorageConnection(settings: StorageSettings): Promise<
     }
 
     // Import crunchycone-lib storage classes
-    const { initializeStorageProvider, getStorageProvider } = await import("crunchycone-lib/services/storage");
+    const { initializeStorageProvider, getStorageProvider } = await import(
+      "crunchycone-lib/services/storage"
+    );
 
     // Temporarily set environment variables for testing
     const originalEnvVars = new Map<string, string | undefined>();
@@ -215,29 +227,42 @@ export async function testStorageConnection(settings: StorageSettings): Promise<
     // Add provider-specific environment variables
     switch (settings.provider) {
       case "localstorage":
-        if (settings.localStoragePath) testEnvVars.CRUNCHYCONE_LOCALSTORAGE_PATH = settings.localStoragePath;
-        if (settings.localStorageBaseUrl) testEnvVars.CRUNCHYCONE_LOCALSTORAGE_BASE_URL = settings.localStorageBaseUrl;
+        if (settings.localStoragePath)
+          testEnvVars.CRUNCHYCONE_LOCALSTORAGE_PATH = settings.localStoragePath;
+        if (settings.localStorageBaseUrl)
+          testEnvVars.CRUNCHYCONE_LOCALSTORAGE_BASE_URL = settings.localStorageBaseUrl;
         break;
       case "aws":
-        if (settings.awsAccessKeyId) testEnvVars.CRUNCHYCONE_AWS_ACCESS_KEY_ID = settings.awsAccessKeyId;
-        if (settings.awsSecretAccessKey) testEnvVars.CRUNCHYCONE_AWS_SECRET_ACCESS_KEY = settings.awsSecretAccessKey;
+        if (settings.awsAccessKeyId)
+          testEnvVars.CRUNCHYCONE_AWS_ACCESS_KEY_ID = settings.awsAccessKeyId;
+        if (settings.awsSecretAccessKey)
+          testEnvVars.CRUNCHYCONE_AWS_SECRET_ACCESS_KEY = settings.awsSecretAccessKey;
         if (settings.awsRegion) testEnvVars.CRUNCHYCONE_AWS_REGION = settings.awsRegion;
         if (settings.awsBucket) testEnvVars.CRUNCHYCONE_AWS_BUCKET = settings.awsBucket;
-        if (settings.awsCloudFrontDomain) testEnvVars.CRUNCHYCONE_AWS_CLOUDFRONT_DOMAIN = settings.awsCloudFrontDomain;
+        if (settings.awsCloudFrontDomain)
+          testEnvVars.CRUNCHYCONE_AWS_CLOUDFRONT_DOMAIN = settings.awsCloudFrontDomain;
         break;
       case "digitalocean":
-        if (settings.doAccessKeyId) testEnvVars.CRUNCHYCONE_DO_ACCESS_KEY_ID = settings.doAccessKeyId;
-        if (settings.doSecretAccessKey) testEnvVars.CRUNCHYCONE_DO_SECRET_ACCESS_KEY = settings.doSecretAccessKey;
+        if (settings.doAccessKeyId)
+          testEnvVars.CRUNCHYCONE_DO_ACCESS_KEY_ID = settings.doAccessKeyId;
+        if (settings.doSecretAccessKey)
+          testEnvVars.CRUNCHYCONE_DO_SECRET_ACCESS_KEY = settings.doSecretAccessKey;
         if (settings.doRegion) testEnvVars.CRUNCHYCONE_DO_REGION = settings.doRegion;
         if (settings.doBucket) testEnvVars.CRUNCHYCONE_DO_BUCKET = settings.doBucket;
-        if (settings.doCdnEndpoint) testEnvVars.CRUNCHYCONE_DO_CDN_ENDPOINT = settings.doCdnEndpoint;
+        if (settings.doCdnEndpoint)
+          testEnvVars.CRUNCHYCONE_DO_CDN_ENDPOINT = settings.doCdnEndpoint;
         break;
       case "azure":
-        if (settings.azureAccountName) testEnvVars.CRUNCHYCONE_AZURE_ACCOUNT_NAME = settings.azureAccountName;
-        if (settings.azureAccountKey) testEnvVars.CRUNCHYCONE_AZURE_ACCOUNT_KEY = settings.azureAccountKey;
-        if (settings.azureSasToken) testEnvVars.CRUNCHYCONE_AZURE_SAS_TOKEN = settings.azureSasToken;
-        if (settings.azureConnectionString) testEnvVars.CRUNCHYCONE_AZURE_CONNECTION_STRING = settings.azureConnectionString;
-        if (settings.azureContainerName) testEnvVars.CRUNCHYCONE_AZURE_CONTAINER_NAME = settings.azureContainerName;
+        if (settings.azureAccountName)
+          testEnvVars.CRUNCHYCONE_AZURE_ACCOUNT_NAME = settings.azureAccountName;
+        if (settings.azureAccountKey)
+          testEnvVars.CRUNCHYCONE_AZURE_ACCOUNT_KEY = settings.azureAccountKey;
+        if (settings.azureSasToken)
+          testEnvVars.CRUNCHYCONE_AZURE_SAS_TOKEN = settings.azureSasToken;
+        if (settings.azureConnectionString)
+          testEnvVars.CRUNCHYCONE_AZURE_CONNECTION_STRING = settings.azureConnectionString;
+        if (settings.azureContainerName)
+          testEnvVars.CRUNCHYCONE_AZURE_CONTAINER_NAME = settings.azureContainerName;
         if (settings.azureCdnUrl) testEnvVars.CRUNCHYCONE_AZURE_CDN_URL = settings.azureCdnUrl;
         break;
       case "gcp":
@@ -262,22 +287,22 @@ export async function testStorageConnection(settings: StorageSettings): Promise<
       // Initialize and test the storage provider
       initializeStorageProvider();
       const provider = getStorageProvider();
-      
+
       // Test if provider is available
       const isAvailable = await provider.isAvailable();
-      
+
       if (isAvailable) {
         // Try to list files to ensure connection works
         const listResult = await provider.listFiles({ limit: 1 });
-        return { 
-          success: true, 
-          details: `Successfully connected to ${settings.provider} storage. Found ${listResult.totalCount || 0} files.`
+        return {
+          success: true,
+          details: `Successfully connected to ${settings.provider} storage. Found ${listResult.totalCount || 0} files.`,
         };
       } else {
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: `${settings.provider} storage provider is not available`,
-          details: "Provider failed availability check"
+          details: "Provider failed availability check",
         };
       }
     } finally {
@@ -291,10 +316,10 @@ export async function testStorageConnection(settings: StorageSettings): Promise<
       }
     }
   } catch (error) {
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: "Storage connection test failed",
-      details: error instanceof Error ? error.message : "Unknown error"
+      details: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }

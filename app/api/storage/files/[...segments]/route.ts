@@ -6,12 +6,10 @@ import { hasRole } from "@/lib/auth/permissions";
 // Import crunchycone-lib types and functions
 import {
   StorageProvider,
-  FileStreamResult,
   FileStreamOptions,
   initializeStorageProvider,
   getStorageProvider,
 } from "crunchycone-lib/services/storage";
-
 
 /**
  * GET /storage/files/[...path]
@@ -128,7 +126,8 @@ async function streamLocalStorageFile(
   request: NextRequest
 ): Promise<NextResponse> {
   // Check if provider supports the new streaming interface
-  const hasStreamSupport = provider && "getFileStream" in provider && typeof provider.getFileStream === "function";
+  const hasStreamSupport =
+    provider && "getFileStream" in provider && typeof provider.getFileStream === "function";
   console.log(`[Storage] Stream support available: ${hasStreamSupport}`);
 
   if (hasStreamSupport) {

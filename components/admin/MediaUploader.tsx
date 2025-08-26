@@ -1,25 +1,49 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { 
-  Upload, 
-  Search, 
-  Eye, 
-  EyeOff, 
-  Trash2, 
-  Download, 
-  Image, 
-  FileText, 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Upload,
+  Search,
+  Eye,
+  Trash2,
+  Download,
+  Image,
+  FileText,
   File,
   Loader2,
   AlertTriangle,
@@ -31,7 +55,7 @@ import {
   MoreHorizontal,
   Info,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 
 interface FileInfo {
@@ -72,41 +96,44 @@ export function MediaUploader() {
   const [pageSize] = useState(20);
 
   // Load files from API
-  const loadFiles = useCallback(async (page = 1, resetFiles = false) => {
-    try {
-      const offset = (page - 1) * pageSize;
-      const params = new URLSearchParams({
-        limit: pageSize.toString(),
-        offset: offset.toString(),
-      });
-      
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
-      
-      const response = await fetch(`/api/admin/media/files?${params}`);
-      const data = await response.json();
-      
-      if (response.ok) {
-        const newFiles = data.files || [];
-        if (resetFiles) {
-          setFiles(newFiles);
-        } else {
-          setFiles(prevFiles => prevFiles.concat(newFiles));
+  const loadFiles = useCallback(
+    async (page = 1, resetFiles = false) => {
+      try {
+        const offset = (page - 1) * pageSize;
+        const params = new URLSearchParams({
+          limit: pageSize.toString(),
+          offset: offset.toString(),
+        });
+
+        if (searchTerm) {
+          params.append("search", searchTerm);
         }
-        setTotalCount(data.totalCount || 0);
-        setHasMore(data.hasMore || false);
-        setMessage(null);
-      } else {
-        setMessage({ type: "error", text: data.error || "Failed to load files" });
+
+        const response = await fetch(`/api/admin/media/files?${params}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          const newFiles = data.files || [];
+          if (resetFiles) {
+            setFiles(newFiles);
+          } else {
+            setFiles((prevFiles) => prevFiles.concat(newFiles));
+          }
+          setTotalCount(data.totalCount || 0);
+          setHasMore(data.hasMore || false);
+          setMessage(null);
+        } else {
+          setMessage({ type: "error", text: data.error || "Failed to load files" });
+        }
+      } catch (error) {
+        setMessage({ type: "error", text: "Failed to load files" });
+        console.error("Error loading files:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      setMessage({ type: "error", text: "Failed to load files" });
-      console.error("Error loading files:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [pageSize, searchTerm]);
+    },
+    [pageSize, searchTerm]
+  );
 
   // Load files on mount and when search changes
   useEffect(() => {
@@ -157,12 +184,15 @@ export function MediaUploader() {
         setCurrentPage(1);
         setFiles([]);
         await loadFiles(1, true); // Refresh file list from beginning
-        
+
         // Flash the newly uploaded file
         setFlashingFile(result.filePath);
         setTimeout(() => setFlashingFile(null), 2000);
       } else {
-        setMessage({ type: "error", text: (result as any).error || "Upload failed" });
+        setMessage({
+          type: "error",
+          text: (result as { error?: string }).error || "Upload failed",
+        });
       }
     } catch (error) {
       setMessage({ type: "error", text: "Upload failed" });
@@ -175,7 +205,7 @@ export function MediaUploader() {
   // Toggle file visibility
   const toggleVisibility = async (filePath: string, currentVisibility: "public" | "private") => {
     const newVisibility = currentVisibility === "public" ? "private" : "public";
-    
+
     try {
       const response = await fetch(`/api/admin/media/files/${encodeURIComponent(filePath)}`, {
         method: "PATCH",
@@ -238,8 +268,12 @@ export function MediaUploader() {
   // Get file icon
   const getFileIcon = (contentType: string) => {
     if (contentType.startsWith("image/")) {
-      return <Image className="h-4 w-4" />;
-    } else if (contentType.includes("pdf") || contentType.includes("document") || contentType.includes("text")) {
+      return <Image className="h-4 w-4" aria-label="Image file" />;
+    } else if (
+      contentType.includes("pdf") ||
+      contentType.includes("document") ||
+      contentType.includes("text")
+    ) {
       return <FileText className="h-4 w-4" />;
     } else {
       return <File className="h-4 w-4" />;
@@ -261,7 +295,6 @@ export function MediaUploader() {
           </Alert>
         )}
 
-
         {/* Header with Search and Actions */}
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
@@ -274,24 +307,25 @@ export function MediaUploader() {
                 className="pl-8"
               />
             </div>
-            
+
             <div className="flex items-center gap-2">
               {searchTerm && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSearchTerm("")}
-                >
+                <Button variant="outline" size="sm" onClick={() => setSearchTerm("")}>
                   <Filter className="mr-2 h-4 w-4" />
                   Clear
                 </Button>
               )}
-              
-              <Button variant="outline" size="sm" onClick={() => loadFiles(1, true)} disabled={isLoading}>
-                <RefreshCcw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadFiles(1, true)}
+                disabled={isLoading}
+              >
+                <RefreshCcw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
-              
+
               <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -305,9 +339,7 @@ export function MediaUploader() {
                       <Upload className="h-5 w-5" />
                       Upload New File
                     </DialogTitle>
-                    <DialogDescription>
-                      Add a new file to your media library
-                    </DialogDescription>
+                    <DialogDescription>Add a new file to your media library</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="grid gap-2">
@@ -320,7 +352,7 @@ export function MediaUploader() {
                       />
                       <p className="text-sm text-muted-foreground">Maximum file size: 50MB</p>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="folder">Folder (optional)</Label>
@@ -333,7 +365,12 @@ export function MediaUploader() {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="visibility">Visibility</Label>
-                        <Select value={uploadVisibility} onValueChange={(value: "public" | "private") => setUploadVisibility(value)}>
+                        <Select
+                          value={uploadVisibility}
+                          onValueChange={(value: "public" | "private") =>
+                            setUploadVisibility(value)
+                          }
+                        >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -349,10 +386,7 @@ export function MediaUploader() {
                       <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
                         Cancel
                       </Button>
-                      <Button 
-                        onClick={handleUpload} 
-                        disabled={!selectedFile || isUploading}
-                      >
+                      <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
                         {isUploading ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -371,33 +405,35 @@ export function MediaUploader() {
               </Dialog>
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {totalCount > 0 ? `${filteredFiles.length} of ${totalCount} files` : `${filteredFiles.length} files`}
+              {totalCount > 0
+                ? `${filteredFiles.length} of ${totalCount} files`
+                : `${filteredFiles.length} files`}
             </div>
-            
+
             {/* Pagination Controls - Only show when needed */}
             {totalCount > pageSize && (
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                   disabled={currentPage === 1 || isLoading}
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                
+
                 <span className="text-sm text-muted-foreground">
                   Page {currentPage} of {Math.ceil(totalCount / pageSize)}
                 </span>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
                   disabled={!hasMore || isLoading}
                 >
                   Next
@@ -434,18 +470,20 @@ export function MediaUploader() {
               </TableHeader>
               <TableBody>
                 {filteredFiles.map((file) => (
-                  <TableRow 
+                  <TableRow
                     key={file.path}
-                    className={flashingFile === file.path ? "animate-pulse bg-green-50 border-green-200" : ""}
+                    className={
+                      flashingFile === file.path ? "animate-pulse bg-green-50 border-green-200" : ""
+                    }
                   >
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {getFileIcon(file.contentType)}
-                        <a 
+                        <a
                           href={`/api/storage/files/${encodeURIComponent(file.path)}`}
-                          target="_blank" 
+                          target="_blank"
                           rel="noopener noreferrer"
-                          className="truncate max-w-[200px] text-blue-600 hover:text-blue-800 hover:underline cursor-pointer" 
+                          className="truncate max-w-[200px] text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                           title={`Click to view ${file.name}`}
                         >
                           {file.name}
@@ -453,9 +491,7 @@ export function MediaUploader() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {file.contentType.split("/")[0]}
-                      </Badge>
+                      <Badge variant="outline">{file.contentType.split("/")[0]}</Badge>
                     </TableCell>
                     <TableCell>{formatFileSize(file.size)}</TableCell>
                     <TableCell>
@@ -463,9 +499,7 @@ export function MediaUploader() {
                         {file.visibility}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {new Date(file.lastModified).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(file.lastModified).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -498,27 +532,43 @@ export function MediaUploader() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="space-y-3">
                                     <div>
-                                      <Label className="text-sm font-semibold text-muted-foreground">File Name</Label>
+                                      <Label className="text-sm font-semibold text-muted-foreground">
+                                        File Name
+                                      </Label>
                                       <p className="text-sm break-all">{file.name}</p>
                                     </div>
                                     <div>
-                                      <Label className="text-sm font-semibold text-muted-foreground">File Path</Label>
-                                      <p className="text-sm font-mono break-all bg-muted px-2 py-1 rounded">{file.path}</p>
+                                      <Label className="text-sm font-semibold text-muted-foreground">
+                                        File Path
+                                      </Label>
+                                      <p className="text-sm font-mono break-all bg-muted px-2 py-1 rounded">
+                                        {file.path}
+                                      </p>
                                     </div>
                                     <div>
-                                      <Label className="text-sm font-semibold text-muted-foreground">File Size</Label>
+                                      <Label className="text-sm font-semibold text-muted-foreground">
+                                        File Size
+                                      </Label>
                                       <p className="text-sm">{formatFileSize(file.size)}</p>
                                     </div>
                                     <div>
-                                      <Label className="text-sm font-semibold text-muted-foreground">Content Type</Label>
+                                      <Label className="text-sm font-semibold text-muted-foreground">
+                                        Content Type
+                                      </Label>
                                       <p className="text-sm font-mono">{file.contentType}</p>
                                     </div>
                                   </div>
                                   <div className="space-y-3">
                                     <div>
-                                      <Label className="text-sm font-semibold text-muted-foreground">Visibility</Label>
+                                      <Label className="text-sm font-semibold text-muted-foreground">
+                                        Visibility
+                                      </Label>
                                       <div className="flex items-center gap-2">
-                                        <Badge variant={file.visibility === "public" ? "default" : "secondary"}>
+                                        <Badge
+                                          variant={
+                                            file.visibility === "public" ? "default" : "secondary"
+                                          }
+                                        >
                                           {file.visibility}
                                         </Badge>
                                         {file.visibility === "public" ? (
@@ -529,16 +579,22 @@ export function MediaUploader() {
                                       </div>
                                     </div>
                                     <div>
-                                      <Label className="text-sm font-semibold text-muted-foreground">Last Modified</Label>
-                                      <p className="text-sm">{new Date(file.lastModified).toLocaleString()}</p>
+                                      <Label className="text-sm font-semibold text-muted-foreground">
+                                        Last Modified
+                                      </Label>
+                                      <p className="text-sm">
+                                        {new Date(file.lastModified).toLocaleString()}
+                                      </p>
                                     </div>
                                     {file.url && (
                                       <div>
-                                        <Label className="text-sm font-semibold text-muted-foreground">Public URL</Label>
+                                        <Label className="text-sm font-semibold text-muted-foreground">
+                                          Public URL
+                                        </Label>
                                         <p className="text-sm break-all">
-                                          <a 
-                                            href={file.url} 
-                                            target="_blank" 
+                                          <a
+                                            href={file.url}
+                                            target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-blue-600 hover:text-blue-800 hover:underline"
                                           >
@@ -550,12 +606,14 @@ export function MediaUploader() {
                                   </div>
                                 </div>
                                 <div className="border-t pt-4">
-                                  <Label className="text-sm font-semibold text-muted-foreground">Quick Actions</Label>
+                                  <Label className="text-sm font-semibold text-muted-foreground">
+                                    Quick Actions
+                                  </Label>
                                   <div className="flex flex-wrap gap-2 mt-2">
                                     <Button size="sm" variant="outline" asChild>
-                                      <a 
-                                        href={`/api/storage/files/${encodeURIComponent(file.path)}`} 
-                                        target="_blank" 
+                                      <a
+                                        href={`/api/storage/files/${encodeURIComponent(file.path)}`}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                       >
                                         <Eye className="mr-2 h-4 w-4" />
@@ -564,9 +622,9 @@ export function MediaUploader() {
                                     </Button>
                                     {file.url && (
                                       <Button size="sm" variant="outline" asChild>
-                                        <a 
-                                          href={file.url} 
-                                          target="_blank" 
+                                        <a
+                                          href={file.url}
+                                          target="_blank"
                                           rel="noopener noreferrer"
                                         >
                                           <Download className="mr-2 h-4 w-4" />
@@ -574,8 +632,8 @@ export function MediaUploader() {
                                         </a>
                                       </Button>
                                     )}
-                                    <Button 
-                                      size="sm" 
+                                    <Button
+                                      size="sm"
                                       variant="outline"
                                       onClick={() => toggleVisibility(file.path, file.visibility)}
                                     >
@@ -598,9 +656,9 @@ export function MediaUploader() {
                           </Dialog>
 
                           <DropdownMenuItem asChild>
-                            <a 
-                              href={`/api/storage/files/${encodeURIComponent(file.path)}`} 
-                              target="_blank" 
+                            <a
+                              href={`/api/storage/files/${encodeURIComponent(file.path)}`}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center cursor-pointer"
                             >
@@ -608,12 +666,12 @@ export function MediaUploader() {
                               View File
                             </a>
                           </DropdownMenuItem>
-                          
+
                           {file.url && (
                             <DropdownMenuItem asChild>
-                              <a 
-                                href={file.url} 
-                                target="_blank" 
+                              <a
+                                href={file.url}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center cursor-pointer"
                               >
@@ -622,7 +680,7 @@ export function MediaUploader() {
                               </a>
                             </DropdownMenuItem>
                           )}
-                          
+
                           <DropdownMenuItem
                             onClick={() => toggleVisibility(file.path, file.visibility)}
                             className="cursor-pointer"
@@ -639,7 +697,7 @@ export function MediaUploader() {
                               </>
                             )}
                           </DropdownMenuItem>
-                          
+
                           <Dialog>
                             <DialogTrigger asChild>
                               <DropdownMenuItem
@@ -654,15 +712,15 @@ export function MediaUploader() {
                               <DialogHeader>
                                 <DialogTitle>Delete File</DialogTitle>
                                 <DialogDescription>
-                                  Are you sure you want to delete "{file.name}"? This action cannot be undone.
+                                  Are you sure you want to delete &quot;{file.name}&quot;? This
+                                  action cannot be undone.
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => {}}>Cancel</Button>
-                                <Button 
-                                  variant="destructive" 
-                                  onClick={() => deleteFile(file.path)}
-                                >
+                                <Button variant="outline" onClick={() => {}}>
+                                  Cancel
+                                </Button>
+                                <Button variant="destructive" onClick={() => deleteFile(file.path)}>
                                   Delete
                                 </Button>
                               </div>

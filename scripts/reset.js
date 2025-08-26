@@ -245,7 +245,7 @@ async function main() {
     log("=====================================\n");
 
     // Check if database exists for first-run detection
-    const dbPath = path.join(process.cwd(), "db", "prod.db");
+    const dbPath = path.join(process.cwd(), "prisma", "db", "prod.db");
     const isFirstRun = !fs.existsSync(dbPath);
 
     logWarning("This will reset the project to its initial state:");

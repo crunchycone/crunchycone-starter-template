@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CheckCircle, AlertTriangle, Loader2, Fingerprint, HelpCircle } from "lucide-react";
+import { CheckCircle, AlertTriangle, Loader2, Fingerprint, HelpCircle, Eye, EyeOff } from "lucide-react";
 import {
   updateAuthSettings,
   getCurrentAuthSettings,
@@ -35,6 +35,30 @@ export function AuthConfigForm() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isGithubCopied, setIsGithubCopied] = useState(false);
+  const [googleHelpOpen, setGoogleHelpOpen] = useState(false);
+  const [githubHelpOpen, setGithubHelpOpen] = useState(false);
+  const [showGoogleSecret, setShowGoogleSecret] = useState(false);
+  const [showGithubSecret, setShowGithubSecret] = useState(false);
+
+  // Handle Google OAuth toggle with credential check
+  const handleGoogleAuthToggle = (checked: boolean) => {
+    setSettings({ ...settings, enableGoogleAuth: checked });
+    
+    // If enabling and credentials are missing, show help dialog
+    if (checked && (!settings.googleClientId || !settings.googleClientSecret)) {
+      setGoogleHelpOpen(true);
+    }
+  };
+
+  // Handle GitHub OAuth toggle with credential check
+  const handleGithubAuthToggle = (checked: boolean) => {
+    setSettings({ ...settings, enableGithubAuth: checked });
+    
+    // If enabling and credentials are missing, show help dialog
+    if (checked && (!settings.githubClientId || !settings.githubClientSecret)) {
+      setGithubHelpOpen(true);
+    }
+  };
 
   // Load current settings on mount
   useEffect(() => {
@@ -159,14 +183,12 @@ export function AuthConfigForm() {
                 <Checkbox
                   id="googleAuth"
                   checked={settings.enableGoogleAuth}
-                  onCheckedChange={(checked) =>
-                    setSettings({ ...settings, enableGoogleAuth: !!checked })
-                  }
+                  onCheckedChange={(checked) => handleGoogleAuthToggle(!!checked)}
                 />
                 <Label htmlFor="googleAuth" className="text-sm">
                   Google OAuth
                 </Label>
-                <Dialog>
+                <Dialog open={googleHelpOpen} onOpenChange={setGoogleHelpOpen}>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-auto p-1">
                       <HelpCircle className="h-4 w-4 text-muted-foreground" />
@@ -237,15 +259,31 @@ export function AuthConfigForm() {
                             <Label htmlFor="dialogGoogleClientSecret" className="text-sm">
                               Google Client Secret
                             </Label>
-                            <Input
-                              id="dialogGoogleClientSecret"
-                              type="password"
-                              placeholder="Enter Google Client Secret"
-                              value={settings.googleClientSecret || ""}
-                              onChange={(e) =>
-                                setSettings({ ...settings, googleClientSecret: e.target.value })
-                              }
-                            />
+                            <div className="relative">
+                              <Input
+                                id="dialogGoogleClientSecret"
+                                type={showGoogleSecret ? "text" : "password"}
+                                placeholder="Enter Google Client Secret"
+                                value={settings.googleClientSecret || ""}
+                                onChange={(e) =>
+                                  setSettings({ ...settings, googleClientSecret: e.target.value })
+                                }
+                                className="pr-10"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowGoogleSecret(!showGoogleSecret)}
+                              >
+                                {showGoogleSecret ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -361,15 +399,31 @@ export function AuthConfigForm() {
                     <Label htmlFor="googleClientSecret" className="text-sm">
                       Google Client Secret
                     </Label>
-                    <Input
-                      id="googleClientSecret"
-                      type="password"
-                      placeholder="Enter Google Client Secret"
-                      value={settings.googleClientSecret || ""}
-                      onChange={(e) =>
-                        setSettings({ ...settings, googleClientSecret: e.target.value })
-                      }
-                    />
+                    <div className="relative">
+                      <Input
+                        id="googleClientSecret"
+                        type={showGoogleSecret ? "text" : "password"}
+                        placeholder="Enter Google Client Secret"
+                        value={settings.googleClientSecret || ""}
+                        onChange={(e) =>
+                          setSettings({ ...settings, googleClientSecret: e.target.value })
+                        }
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowGoogleSecret(!showGoogleSecret)}
+                      >
+                        {showGoogleSecret ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -381,14 +435,12 @@ export function AuthConfigForm() {
                 <Checkbox
                   id="githubAuth"
                   checked={settings.enableGithubAuth}
-                  onCheckedChange={(checked) =>
-                    setSettings({ ...settings, enableGithubAuth: !!checked })
-                  }
+                  onCheckedChange={(checked) => handleGithubAuthToggle(!!checked)}
                 />
                 <Label htmlFor="githubAuth" className="text-sm">
                   GitHub OAuth
                 </Label>
-                <Dialog>
+                <Dialog open={githubHelpOpen} onOpenChange={setGithubHelpOpen}>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-auto p-1">
                       <HelpCircle className="h-4 w-4 text-muted-foreground" />
@@ -459,15 +511,31 @@ export function AuthConfigForm() {
                             <Label htmlFor="dialogGithubClientSecret" className="text-sm">
                               GitHub Client Secret
                             </Label>
-                            <Input
-                              id="dialogGithubClientSecret"
-                              type="password"
-                              placeholder="Enter GitHub Client Secret"
-                              value={settings.githubClientSecret || ""}
-                              onChange={(e) =>
-                                setSettings({ ...settings, githubClientSecret: e.target.value })
-                              }
-                            />
+                            <div className="relative">
+                              <Input
+                                id="dialogGithubClientSecret"
+                                type={showGithubSecret ? "text" : "password"}
+                                placeholder="Enter GitHub Client Secret"
+                                value={settings.githubClientSecret || ""}
+                                onChange={(e) =>
+                                  setSettings({ ...settings, githubClientSecret: e.target.value })
+                                }
+                                className="pr-10"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowGithubSecret(!showGithubSecret)}
+                              >
+                                {showGithubSecret ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -577,15 +645,31 @@ export function AuthConfigForm() {
                     <Label htmlFor="githubClientSecret" className="text-sm">
                       GitHub Client Secret
                     </Label>
-                    <Input
-                      id="githubClientSecret"
-                      type="password"
-                      placeholder="Enter GitHub Client Secret"
-                      value={settings.githubClientSecret || ""}
-                      onChange={(e) =>
-                        setSettings({ ...settings, githubClientSecret: e.target.value })
-                      }
-                    />
+                    <div className="relative">
+                      <Input
+                        id="githubClientSecret"
+                        type={showGithubSecret ? "text" : "password"}
+                        placeholder="Enter GitHub Client Secret"
+                        value={settings.githubClientSecret || ""}
+                        onChange={(e) =>
+                          setSettings({ ...settings, githubClientSecret: e.target.value })
+                        }
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowGithubSecret(!showGithubSecret)}
+                      >
+                        {showGithubSecret ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

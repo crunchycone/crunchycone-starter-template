@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Users, Settings, Shield, Database, Upload } from "lucide-react";
+import { LayoutDashboard, Users, Settings, Shield, Database, Upload, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [
@@ -32,6 +32,11 @@ const navigationItems = [
     href: "/admin/media",
     label: "Media",
     icon: Upload,
+  },
+  {
+    href: "/admin/email-templates",
+    label: "Email Templates",
+    icon: Mail,
   },
   {
     href: "/admin/settings",

@@ -594,7 +594,14 @@ export async function testEmailConfiguration(settings: EmailSettings, customTo?:
         };
       }
 
-      const toEmail = customTo || session.user.email;
+      const toEmail = customTo || session?.user?.email;
+      
+      if (!toEmail) {
+        return {
+          success: false,
+          message: "No email address available for test",
+        };
+      }
 
       // For console provider, just validate and show what would be sent
       if (settings.provider === "console") {

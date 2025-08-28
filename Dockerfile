@@ -84,11 +84,23 @@ COPY --from=builder /app/scripts ./scripts
 # Copy database files if they exist (for SQLite databases)
 # External databases (PostgreSQL, MySQL, Turso) use different DATABASE_URL formats
 # Support both ./db/ and ./prisma/db/ locations
-RUN mkdir -p /app/db /app/prisma/db
 RUN --mount=from=builder,source=/app,target=/tmp/builder \
-    if [ -d "/tmp/builder/db" ]; then \
+    mkdir -p /app/db /app/prisma/db && \
+    DB_COPIED=false && \
+    if [ -d "/tmp/builder/db" ] && [ "$(ls -A /tmp/builder/db 2>/dev/null)" ]; then \
         cp -r /tmp/builder/db/* /app/db/ 2>/dev/null || true; \
         cp -r /tmp/builder/db/* /app/prisma/db/ 2>/dev/null || true; \
+        echo "✓ Copied database files from ./db/"; \
+        DB_COPIED=true; \
+    fi && \
+    if [ -d "/tmp/builder/prisma/db" ] && [ "$(ls -A /tmp/builder/prisma/db 2>/dev/null)" ]; then \
+        cp -r /tmp/builder/prisma/db/* /app/db/ 2>/dev/null || true; \
+        cp -r /tmp/builder/prisma/db/* /app/prisma/db/ 2>/dev/null || true; \
+        echo "✓ Copied database files from ./prisma/db/"; \
+        DB_COPIED=true; \
+    fi && \
+    if [ "$DB_COPIED" = "false" ]; then \
+        echo "ℹ️  No database files found in ./db/ or ./prisma/db/"; \
     fi
 
 # Copy all production dependencies including Prisma from deps stage
@@ -101,10 +113,9 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --chown=nextjs:nodejs scripts/unified-entrypoint.sh /app/unified-entrypoint.sh
 RUN chmod +x /app/unified-entrypoint.sh
 
-# Create writable directories for the app and ensure proper permissions
-RUN mkdir -p /app/db && \
-    chown -R nextjs:nodejs /app/prisma /app/db && \
-    chmod 755 /app/db
+# Ensure proper permissions for directories and database files
+RUN chown -R nextjs:nodejs /app/prisma /app/db && \
+    chmod 755 /app/db /app/prisma/db
 
 # Switch to non-root user
 USER nextjs

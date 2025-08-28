@@ -63,6 +63,12 @@ echo "  - HOSTNAME: $HOSTNAME"
 
 # Function to run standard Prisma migrations
 run_prisma_migrations() {
+  echo "🔍 Checking migration status..."
+  if npx prisma migrate status >/dev/null 2>&1; then
+    echo "✅ Database is up-to-date, no migrations needed"
+    return 0
+  fi
+  
   echo "🔄 Running database migrations..."
   npx prisma migrate deploy 2>/dev/null || {
     echo "⚠️  Migrations failed or not found, pushing schema directly..."
@@ -120,8 +126,7 @@ elif echo "$DATABASE_URL" | grep -q "^file:"; then
     fi
   else
     echo "✅ Database found at $DB_PATH"
-    echo "🔄 Checking for pending migrations..."
-    npx prisma migrate deploy 2>/dev/null || echo "ℹ️  No migrations to apply"
+    run_prisma_migrations
   fi
 
 # All other databases (PostgreSQL, MySQL, etc.) - standard migrations

@@ -25,7 +25,7 @@ RUN npm ci --only=production && \
     npm cache clean --force
 
 # Stage 2: Builder
-FROM node:22-slim AS builder
+FROM node:24-slim AS builder
 # Install OpenSSL for Prisma
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
@@ -49,7 +49,7 @@ RUN npm run build
 
 # Stage 3: Runner (production image)
 # Using debian-slim for better compatibility and smaller total size
-FROM node:22-slim AS runner
+FROM node:24-slim AS runner
 # Install OpenSSL for Prisma
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
@@ -80,6 +80,16 @@ RUN find /app -name "*.map" -delete && \
 # Copy Prisma schema and migrations for runtime
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
+
+# Copy database files if they exist (for SQLite databases)
+# External databases (PostgreSQL, MySQL, Turso) use different DATABASE_URL formats
+# Support both ./db/ and ./prisma/db/ locations
+RUN mkdir -p /app/db /app/prisma/db
+RUN --mount=from=builder,source=/app,target=/tmp/builder \
+    if [ -d "/tmp/builder/db" ]; then \
+        cp -r /tmp/builder/db/* /app/db/ 2>/dev/null || true; \
+        cp -r /tmp/builder/db/* /app/prisma/db/ 2>/dev/null || true; \
+    fi
 
 # Copy all production dependencies including Prisma from deps stage
 COPY --from=deps /app/node_modules ./node_modules

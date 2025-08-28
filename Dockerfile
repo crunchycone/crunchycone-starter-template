@@ -11,7 +11,7 @@
 
 # Multi-stage build for optimized production image
 # Stage 1: Dependencies
-FROM node:22-slim AS deps
+FROM node:24-slim AS deps
 # Install OpenSSL for Prisma
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app

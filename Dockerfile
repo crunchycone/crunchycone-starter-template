@@ -71,6 +71,16 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Copy cache if it exists, otherwise create empty cache directory
+RUN --mount=from=builder,source=/app/.next,target=/tmp/next \
+    if [ -d "/tmp/next/cache" ]; then \
+        cp -r /tmp/next/cache ./.next/cache; \
+        echo "✓ Copied Next.js cache from build"; \
+    else \
+        mkdir -p ./.next/cache; \
+        echo "ℹ️  Created empty Next.js cache directory"; \
+    fi
+
 # Clean up build artifacts to reduce size
 RUN find /app -name "*.map" -delete && \
     find /app -name "*.d.ts" -delete && \
@@ -113,9 +123,9 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --chown=nextjs:nodejs scripts/unified-entrypoint.sh /app/unified-entrypoint.sh
 RUN chmod +x /app/unified-entrypoint.sh
 
-# Ensure proper permissions for directories and database files
-RUN chown -R nextjs:nodejs /app/prisma /app/db && \
-    chmod 755 /app/db /app/prisma/db
+# Ensure proper permissions for all directories and cache
+RUN chown -R nextjs:nodejs /app/prisma /app/db /app/.next && \
+    chmod -R 755 /app/db /app/prisma/db /app/.next/cache
 
 # Switch to non-root user
 USER nextjs

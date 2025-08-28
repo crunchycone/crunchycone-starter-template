@@ -108,6 +108,13 @@ export const ulidExtension = Prisma.defineExtension({
 export function createPrismaClient() {
   let basePrisma: PrismaClient;
 
+  // Configure logging based on environment variable
+  const logConfig = process.env.PRISMA_LOG_LEVEL ? 
+    process.env.PRISMA_LOG_LEVEL.split(',').map(level => level.trim()) as any[] :
+    undefined;
+
+  const clientConfig: any = logConfig ? { log: logConfig } : {};
+
   // Check if we're using Turso (libSQL)
   if (process.env.DATABASE_URL?.startsWith("libsql://") && process.env.TURSO_AUTH_TOKEN) {
     try {
@@ -120,15 +127,15 @@ export function createPrismaClient() {
         authToken: process.env.TURSO_AUTH_TOKEN,
       });
 
-      basePrisma = new PrismaClient({ adapter });
+      basePrisma = new PrismaClient({ ...clientConfig, adapter });
       console.log("✅ Turso adapter initialized successfully");
     } catch (error) {
       console.error("Failed to initialize Turso adapter, falling back to standard client:", error);
-      basePrisma = new PrismaClient();
+      basePrisma = new PrismaClient(clientConfig);
     }
   } else {
     // Standard SQLite/PostgreSQL/MySQL
-    basePrisma = new PrismaClient();
+    basePrisma = new PrismaClient(clientConfig);
   }
 
   // Apply ULID extension

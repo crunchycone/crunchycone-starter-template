@@ -5,11 +5,13 @@ This guide covers deploying the CrunchyCone Vanilla Starter Project to various c
 ## Overview
 
 The project includes a production-ready multi-stage Dockerfile with:
-- ✅ **Multi-stage build** for optimized production images
-- ✅ **Automatic platform detection** (Render, Cloudflare, Fly.io, etc.)
-- ✅ **Database auto-migration** on startup (SQLite, Turso, PostgreSQL, MySQL)
-- ✅ **Security hardening** with non-root user
+- ✅ **Node.js 24** with multi-stage build for optimized production images
+- ✅ **Automatic database file copying** and platform detection (Render, Cloudflare, Fly.io, etc.)
+- ✅ **Database auto-migration with status checks** on startup (SQLite, Turso, PostgreSQL, MySQL)
+- ✅ **Migration optimization** - skips unnecessary migrations for better startup performance
+- ✅ **Security hardening** with non-root user and proper file permissions
 - ✅ **Next.js standalone output** for minimal container size
+- ✅ **Build cache management** with optimized .next directory handling
 - ✅ **Health check** endpoint at `/api/health`
 - ✅ **Graceful shutdown** handling
 
@@ -247,10 +249,10 @@ Most platforms auto-detect these from the Dockerfile:
 
 ### Database Migration
 
-The Docker container automatically handles database migrations on startup:
-- **SQLite** (`file:`) - Standard Prisma migrations
-- **Turso** (`libsql:`) - Custom migration system via turso-migrate.js
-- **PostgreSQL/MySQL** - Standard Prisma migrations
+The Docker container automatically handles database migrations on startup with optimization:
+- **SQLite** (`file:`) - Standard Prisma migrations with automatic database file copying
+- **Turso** (`libsql:`) - Custom migration system via turso-migrate.js with status checks and early exit
+- **PostgreSQL/MySQL** - Standard Prisma migrations with status verification to skip unnecessary runs
 
 ## General Deployment Steps
 
@@ -272,8 +274,9 @@ The Docker container automatically handles database migrations on startup:
 
 **Build Failures:**
 - Ensure Docker daemon is running locally for testing
-- Check Node.js version compatibility (requires Node 18+)
+- Check Node.js version compatibility (requires Node 18+, uses Node 24 in production)
 - Verify all dependencies are in package.json
+- Clear build caches: `docker system prune` and `rm -rf .next` if needed
 
 **Database Connection Issues:**
 - Verify DATABASE_URL format matches your database type

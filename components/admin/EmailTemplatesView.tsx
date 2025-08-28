@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -19,10 +25,10 @@ import {
 function getLanguageDisplayName(code: string): string {
   try {
     // Use browser's built-in Intl.DisplayNames API for language names
-    const displayNames = new Intl.DisplayNames(['en'], { type: 'language' });
+    const displayNames = new Intl.DisplayNames(["en"], { type: "language" });
     const displayName = displayNames.of(code);
     return displayName || code.toUpperCase();
-  } catch (error) {
+  } catch {
     // Fallback to uppercase code if Intl.DisplayNames is not available or fails
     return code.toUpperCase();
   }
@@ -45,31 +51,31 @@ export function EmailTemplatesView() {
         const result = await getAvailableTemplates();
         if (result.success && result.templates) {
           setTemplates(result.templates);
-          
+
           // Extract unique languages
-          const languages = Array.from(new Set(result.templates.map(t => t.language))).sort();
+          const languages = Array.from(new Set(result.templates.map((t) => t.language))).sort();
           setAvailableLanguages(languages);
-          
+
           // Set default language to first available
           if (languages.length > 0) {
             setSelectedLanguage(languages[0]);
           }
-          
+
           // Set default template to first one in the selected language
-          const firstTemplate = result.templates.find(t => t.language === (languages[0] || "en"));
+          const firstTemplate = result.templates.find((t) => t.language === (languages[0] || "en"));
           if (firstTemplate) {
             setSelectedTemplate(firstTemplate.id);
           }
         } else {
-          setMessage({ 
-            type: "error", 
-            text: result.message || "Failed to load templates" 
+          setMessage({
+            type: "error",
+            text: result.message || "Failed to load templates",
           });
         }
-      } catch (error) {
-        setMessage({ 
-          type: "error", 
-          text: "Failed to load email templates" 
+      } catch {
+        setMessage({
+          type: "error",
+          text: "Failed to load email templates",
         });
       } finally {
         setIsLoading(false);
@@ -79,28 +85,23 @@ export function EmailTemplatesView() {
     loadTemplates();
   }, []);
 
-  // Load preview when template changes
-  useEffect(() => {
-    if (selectedTemplate) {
-      handlePreviewTemplate();
-    }
-  }, [selectedTemplate]);
 
   // Update available templates when language changes
   useEffect(() => {
-    const templatesForLanguage = templates.filter(t => t.language === selectedLanguage);
+    const templatesForLanguage = templates.filter((t) => t.language === selectedLanguage);
     if (templatesForLanguage.length > 0) {
-      const currentTemplate = templatesForLanguage.find(t => t.id === selectedTemplate);
+      const currentTemplate = templatesForLanguage.find((t) => t.id === selectedTemplate);
       if (!currentTemplate) {
         setSelectedTemplate(templatesForLanguage[0].id);
       }
     }
-  }, [selectedLanguage, templates]);
+  }, [selectedLanguage, templates, selectedTemplate]);
 
   // Get filtered templates for current language
-  const filteredTemplates = templates.filter(t => t.language === selectedLanguage);
+  const filteredTemplates = templates.filter((t) => t.language === selectedLanguage);
 
-  const handlePreviewTemplate = async () => {
+  // Define handlePreviewTemplate before using it in useEffect
+  const handlePreviewTemplate = useCallback(async () => {
     if (!selectedTemplate) return;
 
     setIsLoadingPreview(true);
@@ -112,24 +113,31 @@ export function EmailTemplatesView() {
         setPreview(result.preview);
         setMessage(null); // Clear any previous error messages
       } else {
-        setMessage({ 
-          type: "error", 
-          text: result.message || "Failed to render template" 
+        setMessage({
+          type: "error",
+          text: result.message || "Failed to render template",
         });
         setPreview(null);
       }
-    } catch (error) {
-      setMessage({ 
-        type: "error", 
-        text: "Failed to render template preview" 
+    } catch {
+      setMessage({
+        type: "error",
+        text: "Failed to render template preview",
       });
       setPreview(null);
     } finally {
       setIsLoadingPreview(false);
     }
-  };
+  }, [selectedTemplate]);
 
-  const selectedTemplateInfo = filteredTemplates.find(t => t.id === selectedTemplate);
+  // Auto-preview when template changes
+  useEffect(() => {
+    if (selectedTemplate) {
+      handlePreviewTemplate();
+    }
+  }, [selectedTemplate, handlePreviewTemplate]);
+
+  const selectedTemplateInfo = filteredTemplates.find((t) => t.id === selectedTemplate);
 
   if (isLoading) {
     return (
@@ -161,9 +169,7 @@ export function EmailTemplatesView() {
               <Mail className="h-5 w-5" />
               Email Templates
             </CardTitle>
-            <CardDescription>
-              Select a template to preview
-            </CardDescription>
+            <CardDescription>Select a template to preview</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -178,7 +184,7 @@ export function EmailTemplatesView() {
                       <div className="flex items-center gap-2">
                         <span>{getLanguageDisplayName(language)}</span>
                         <Badge variant="outline" className="text-xs">
-                          {templates.filter(t => t.language === language).length} templates
+                          {templates.filter((t) => t.language === language).length} templates
                         </Badge>
                       </div>
                     </SelectItem>
@@ -213,11 +219,13 @@ export function EmailTemplatesView() {
                       <span className="font-medium">Name:</span> {selectedTemplateInfo.name}
                     </div>
                     <div>
-                      <span className="font-medium">Language:</span> {getLanguageDisplayName(selectedTemplateInfo.language)}
+                      <span className="font-medium">Language:</span>{" "}
+                      {getLanguageDisplayName(selectedTemplateInfo.language)}
                     </div>
                     {selectedTemplateInfo.description && (
                       <div>
-                        <span className="font-medium">Description:</span> {selectedTemplateInfo.description}
+                        <span className="font-medium">Description:</span>{" "}
+                        {selectedTemplateInfo.description}
                       </div>
                     )}
                     <div>
@@ -239,8 +247,8 @@ export function EmailTemplatesView() {
               </div>
             )}
 
-            <Button 
-              onClick={handlePreviewTemplate} 
+            <Button
+              onClick={handlePreviewTemplate}
               disabled={!selectedTemplate || isLoadingPreview}
               className="w-full"
             >
@@ -269,15 +277,14 @@ export function EmailTemplatesView() {
               Template Preview
             </CardTitle>
             <CardDescription>
-              {selectedTemplateInfo 
-                ? `Previewing: ${selectedTemplateInfo.name}` 
-                : "Select a template to see preview"
-              }
+              {selectedTemplateInfo
+                ? `Previewing: ${selectedTemplateInfo.name}`
+                : "Select a template to see preview"}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {message && (
-              <Alert 
+              <Alert
                 variant={message.type === "error" ? "destructive" : "default"}
                 className="mb-4"
               >
@@ -322,7 +329,7 @@ export function EmailTemplatesView() {
 
                   <TabsContent value="html" className="mt-0">
                     <div className="border rounded-md">
-                      <iframe 
+                      <iframe
                         srcDoc={preview.html}
                         className="w-full h-96 border-0"
                         title="Email Template Preview"
@@ -332,9 +339,7 @@ export function EmailTemplatesView() {
 
                   <TabsContent value="text" className="mt-0">
                     <div className="border rounded-md p-4 bg-muted/30">
-                      <pre className="text-sm whitespace-pre-wrap font-mono">
-                        {preview.text}
-                      </pre>
+                      <pre className="text-sm whitespace-pre-wrap font-mono">{preview.text}</pre>
                     </div>
                   </TabsContent>
 
@@ -353,7 +358,7 @@ export function EmailTemplatesView() {
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Mail className="h-12 w-12 mb-4" />
                 <p className="text-center">
-                  Click "Preview Template" to render and view the selected template
+                  Click &quot;Preview Template&quot; to render and view the selected template
                 </p>
               </div>
             )}
@@ -361,9 +366,7 @@ export function EmailTemplatesView() {
             {!selectedTemplate && (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Mail className="h-12 w-12 mb-4" />
-                <p className="text-center">
-                  Select a template from the dropdown to preview it
-                </p>
+                <p className="text-center">Select a template from the dropdown to preview it</p>
               </div>
             )}
           </CardContent>

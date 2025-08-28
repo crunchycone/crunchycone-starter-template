@@ -14,10 +14,10 @@ export default async function EmailTemplatesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Email Templates</h1>
         <p className="text-muted-foreground">
-          Preview and manage your application's email templates
+          Preview and manage your application&apos;s email templates
         </p>
       </div>
-      
+
       <EmailTemplatesView />
     </div>
   );

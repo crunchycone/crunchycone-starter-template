@@ -5,6 +5,9 @@ import { SessionProvider } from "@/components/auth/SessionProvider";
 import { DebugBubble } from "@/components/DebugBubble";
 import "./globals.css";
 
+// Initialize structured logging for production
+import "@/lib/utils/logger";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

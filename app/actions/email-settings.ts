@@ -28,55 +28,14 @@ class TestEmailProvider implements TemplateEmailProvider {
     text?: string;
     from?: string;
   }): Promise<void> {
-    // Build provider-specific configuration for crunchycone-lib
-    let providerConfig: Record<string, unknown> = {};
-
-    switch (this.settings.provider) {
-      case "smtp":
-        providerConfig = {
-          host: this.settings.smtpHost,
-          port: parseInt(this.settings.smtpPort || "587"),
-          secure: this.settings.smtpSecure || false,
-          auth: {
-            user: this.settings.smtpUser,
-            pass: this.settings.smtpPassword,
-          },
-        };
-        break;
-      case "sendgrid":
-        providerConfig = {
-          apiKey: this.settings.sendgridApiKey,
-        };
-        break;
-      case "resend":
-        providerConfig = {
-          apiKey: this.settings.resendApiKey,
-        };
-        break;
-      case "aws-ses":
-        providerConfig = {
-          region: this.settings.awsRegion,
-          accessKeyId: this.settings.awsAccessKeyId,
-          secretAccessKey: this.settings.awsSecretAccessKey,
-        };
-        break;
-      case "mailgun":
-        providerConfig = {
-          apiKey: this.settings.mailgunApiKey,
-          domain: this.settings.mailgunDomain,
-        };
-        break;
-      case "crunchycone":
-        // CrunchyCone uses CLI authentication, no config needed
-        providerConfig = {};
-        break;
-    }
+    // Note: Provider-specific configuration is handled by crunchycone-lib internally
+    // via environment variables set during testing
 
     // Try to send actual email using crunchycone-lib
     try {
       // Store original env vars
       const originalEnvVars: Record<string, string | undefined> = {};
-      
+
       if (this.settings.provider === "smtp") {
         // Store original values
         originalEnvVars.CRUNCHYCONE_SMTP_HOST = process.env.CRUNCHYCONE_SMTP_HOST;
@@ -93,7 +52,7 @@ class TestEmailProvider implements TemplateEmailProvider {
         process.env.CRUNCHYCONE_SMTP_PASS = this.settings.smtpPassword;
         process.env.CRUNCHYCONE_SMTP_FROM = this.settings.fromAddress;
         process.env.CRUNCHYCONE_SMTP_SECURE = this.settings.smtpSecure?.toString() || "false";
-        
+
         // Clear the module cache for email factory to force re-reading env vars
         try {
           const factoryId = require.resolve("crunchycone-lib");
@@ -125,9 +84,9 @@ class TestEmailProvider implements TemplateEmailProvider {
       if (this.settings.provider === "smtp") {
         for (const [key, value] of Object.entries(originalEnvVars)) {
           if (value === undefined) {
-            delete (process.env as any)[key];
+            delete (process.env as Record<string, string | undefined>)[key];
           } else {
-            (process.env as any)[key] = value;
+            (process.env as Record<string, string | undefined>)[key] = value;
           }
         }
       }
@@ -595,7 +554,7 @@ export async function testEmailConfiguration(settings: EmailSettings, customTo?:
       }
 
       const toEmail = customTo || session?.user?.email;
-      
+
       if (!toEmail) {
         return {
           success: false,

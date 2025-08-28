@@ -93,11 +93,11 @@ const buildProviders = () => {
           try {
             // Import crunchycone-lib services
             const { createEmailService, getEmailTemplateService } = await import("crunchycone-lib");
-            
+
             // Set email provider to the configured provider temporarily for template rendering
             const originalProvider = process.env.CRUNCHYCONE_EMAIL_PROVIDER;
             process.env.CRUNCHYCONE_EMAIL_PROVIDER = "console";
-            
+
             try {
               // Render the magic-link template
               const templateService = getEmailTemplateService();
@@ -106,16 +106,20 @@ const buildProviders = () => {
                 appName: process.env.NEXT_PUBLIC_APP_NAME || "Your App",
                 supportEmail: process.env.CRUNCHYCONE_EMAIL_FROM || "support@example.com",
               };
-              
-              const rendered = await templateService.previewTemplate("magic-link", templateData, "en");
-              
+
+              const rendered = await templateService.previewTemplate(
+                "magic-link",
+                templateData,
+                "en"
+              );
+
               // Restore original email provider
               if (originalProvider === undefined) {
                 delete process.env.CRUNCHYCONE_EMAIL_PROVIDER;
               } else {
                 process.env.CRUNCHYCONE_EMAIL_PROVIDER = originalProvider;
               }
-              
+
               // Send the email using the actual email service
               const emailService = createEmailService();
               const result = await emailService.sendEmail({
@@ -150,7 +154,7 @@ const buildProviders = () => {
             }
           } catch (error) {
             console.error("Magic link email error:", error);
-            
+
             // Fallback to console logging for development
             console.log(`
 🔗 Magic Link Email (Fallback - Check Email Configuration)

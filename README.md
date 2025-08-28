@@ -42,6 +42,7 @@ A production-ready Next.js starter template with authentication, admin dashboard
 - 📧 **Email System**
   - **CrunchyCone-lib integration** with multiple provider support
   - Console email provider for development
+  - **Auto-preview email templates** with real-time template switching
   - Ready-to-use templates for verification, reset, and magic links
   - Support for SendGrid, Resend, AWS SES, SMTP, Mailgun, CrunchyCone
   - **Admin configuration UI** with provider availability checking
@@ -56,7 +57,8 @@ A production-ready Next.js starter template with authentication, admin dashboard
   - **CrunchyCone-lib powered** with seamless provider switching
 
 - 🛠️ **Developer Experience**
-  - TypeScript for complete type safety
+  - **TypeScript with zero linting errors** - complete type safety and code quality
+  - **Structured JSON logging** with PII sanitization for production debugging
   - **Prisma ORM with modern Client Extensions API** (SQLite, production database ready)
   - **Automatic ULID generation** for all database records
   - Server Components and Server Actions
@@ -67,13 +69,13 @@ A production-ready Next.js starter template with authentication, admin dashboard
   - Cross-platform development support
 
 - 🔧 **Production Ready**
-  - Environment-based configuration
+  - Environment-based configuration with structured logging
   - Security best practices built-in
-  - Comprehensive error handling
+  - Comprehensive error handling with PII sanitization
   - API rate limiting considerations
-  - Deployment-ready structure
-  - Database migration system
-  - Logging and monitoring hooks
+  - Deployment-ready structure with optimized Docker builds
+  - Database migration system with status checks
+  - Production logging and monitoring hooks
 
 ## Tech Stack
 
@@ -636,24 +638,28 @@ This project includes a production-ready multi-stage Dockerfile with automatic p
 - **[Railway](https://railway.app)** - Developer-first deployment platform
 
 **Docker Features:**
-- ✅ Multi-stage build for optimized production images
-- ✅ Automatic platform detection and database auto-migration
+- ✅ Node.js 24 with multi-stage build for optimized production images
+- ✅ Automatic database file copying and platform detection with migration status checks
 - ✅ Security hardening with non-root user and health checks
 - ✅ Next.js standalone output for minimal container size
+- ✅ Build cache management and migration optimization
 
 **Setup Guide:** See [docs/container-deployment.md](./docs/container-deployment.md) for complete deployment instructions including platform-specific configuration, environment variables, and step-by-step setup guides.
 
 ## Testing
 
 ```bash
-# Run type checking
-npm run type-check
-
-# Run linting
+# Run linting (zero errors/warnings maintained)
 npm run lint
+
+# Run linting with automatic fixes
+npm run lint --fix
 
 # Build for production
 npm run build
+
+# Test structured logging (production mode)
+NODE_ENV=production LOG_LEVEL=debug npm run build
 ```
 
 ## Documentation

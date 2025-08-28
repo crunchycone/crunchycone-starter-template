@@ -1,5 +1,6 @@
 import { ulid } from "ulid";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { logger } from "./logger";
 
 /**
  * Generate a new ULID
@@ -109,11 +110,23 @@ export function createPrismaClient() {
   let basePrisma: PrismaClient;
 
   // Configure logging based on environment variable
-  const logConfig = process.env.PRISMA_LOG_LEVEL ? 
-    process.env.PRISMA_LOG_LEVEL.split(',').map(level => level.trim()) as any[] :
-    undefined;
+  const logConfig = process.env.PRISMA_LOG_LEVEL
+    ? (process.env.PRISMA_LOG_LEVEL.split(",").map((level) => level.trim()) as (
+        | "query"
+        | "info"
+        | "warn"
+        | "error"
+      )[])
+    : undefined;
 
-  const clientConfig: any = logConfig ? { log: logConfig } : {};
+  const clientConfig = logConfig
+    ? {
+        log: logConfig.map((level) => ({
+          level: level as "query" | "info" | "warn" | "error",
+          emit: "event" as const,
+        })),
+      }
+    : {};
 
   // Check if we're using Turso (libSQL)
   if (process.env.DATABASE_URL?.startsWith("libsql://") && process.env.TURSO_AUTH_TOKEN) {
@@ -136,6 +149,39 @@ export function createPrismaClient() {
   } else {
     // Standard SQLite/PostgreSQL/MySQL
     basePrisma = new PrismaClient(clientConfig);
+  }
+
+  // Set up structured logging event listeners
+  if (logConfig) {
+    logConfig.forEach((level) => {
+      switch (level) {
+        case "query":
+          basePrisma.$on("query", (e) => {
+            logger.debug("Database Query", {
+              query: e.query,
+              params: e.params,
+              duration: `${e.duration}ms`,
+              target: e.target,
+            });
+          });
+          break;
+        case "info":
+          basePrisma.$on("info", (e) => {
+            logger.info("Database Info", { message: e.message, target: e.target });
+          });
+          break;
+        case "warn":
+          basePrisma.$on("warn", (e) => {
+            logger.warn("Database Warning", { message: e.message, target: e.target });
+          });
+          break;
+        case "error":
+          basePrisma.$on("error", (e) => {
+            logger.error("Database Error", undefined, { message: e.message, target: e.target });
+          });
+          break;
+      }
+    });
   }
 
   // Apply ULID extension

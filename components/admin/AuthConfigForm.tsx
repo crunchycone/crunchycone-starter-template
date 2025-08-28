@@ -16,7 +16,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CheckCircle, AlertTriangle, Loader2, Fingerprint, HelpCircle, Eye, EyeOff } from "lucide-react";
+import {
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+  Fingerprint,
+  HelpCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import {
   updateAuthSettings,
   getCurrentAuthSettings,
@@ -43,7 +51,7 @@ export function AuthConfigForm() {
   // Handle Google OAuth toggle with credential check
   const handleGoogleAuthToggle = (checked: boolean) => {
     setSettings({ ...settings, enableGoogleAuth: checked });
-    
+
     // If enabling and credentials are missing, show help dialog
     if (checked && (!settings.googleClientId || !settings.googleClientSecret)) {
       setGoogleHelpOpen(true);
@@ -53,7 +61,7 @@ export function AuthConfigForm() {
   // Handle GitHub OAuth toggle with credential check
   const handleGithubAuthToggle = (checked: boolean) => {
     setSettings({ ...settings, enableGithubAuth: checked });
-    
+
     // If enabling and credentials are missing, show help dialog
     if (checked && (!settings.githubClientId || !settings.githubClientSecret)) {
       setGithubHelpOpen(true);

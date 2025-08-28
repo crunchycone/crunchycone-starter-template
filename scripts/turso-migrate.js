@@ -89,8 +89,10 @@ async function runMigrations() {
   }
 
   // Early exit if no pending migrations
-  const pendingMigrations = migrationFolders.filter(folder => !appliedMigrations.includes(folder));
-  
+  const pendingMigrations = migrationFolders.filter(
+    (folder) => !appliedMigrations.includes(folder)
+  );
+
   if (pendingMigrations.length === 0 && migrationFolders.length > 0) {
     console.log("✅ Database is up to date, no migrations needed");
     client.close();

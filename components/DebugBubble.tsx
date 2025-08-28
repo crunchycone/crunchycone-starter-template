@@ -87,32 +87,34 @@ export function DebugBubble() {
         `Error Type: ${error.type.toUpperCase()}`,
         `Message: ${error.message}`,
         `Timestamp: ${error.timestamp.toISOString()}`,
-        error.stack ? `Stack Trace:\n${error.stack}` : '',
+        error.stack ? `Stack Trace:\n${error.stack}` : "",
         `URL: ${window.location.href}`,
         `User Agent: ${navigator.userAgent}`,
-      ].filter(Boolean).join('\n\n');
+      ]
+        .filter(Boolean)
+        .join("\n\n");
 
       await navigator.clipboard.writeText(errorDetails);
       setCopiedErrorId(error.id);
-      
+
       // Clear the copied state after 2 seconds
       setTimeout(() => {
         setCopiedErrorId(null);
       }, 2000);
     } catch (err) {
-      console.warn('Failed to copy error details:', err);
+      console.warn("Failed to copy error details:", err);
       // Fallback for browsers that don't support clipboard API
       try {
-        const textarea = document.createElement('textarea');
-        textarea.value = `Error: ${error.message}\nStack: ${error.stack || 'No stack trace'}`;
+        const textarea = document.createElement("textarea");
+        textarea.value = `Error: ${error.message}\nStack: ${error.stack || "No stack trace"}`;
         document.body.appendChild(textarea);
         textarea.select();
-        document.execCommand('copy');
+        document.execCommand("copy");
         document.body.removeChild(textarea);
         setCopiedErrorId(error.id);
         setTimeout(() => setCopiedErrorId(null), 2000);
       } catch (fallbackErr) {
-        console.warn('Fallback copy also failed:', fallbackErr);
+        console.warn("Fallback copy also failed:", fallbackErr);
       }
     }
   }, []);

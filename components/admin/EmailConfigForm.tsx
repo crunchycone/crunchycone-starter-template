@@ -812,7 +812,6 @@ export function EmailConfigForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-
           {/* Basic Settings */}
           <div className="space-y-4">
             <div className="grid gap-2">

@@ -137,17 +137,20 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 **Optional**: `TURSO_AUTH_TOKEN` (for Turso), OAuth provider vars, storage provider vars
 **OAuth**: `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`, provider toggles
 **Storage**: `CRUNCHYCONE_STORAGE_PROVIDER`, provider-specific keys (AWS, Azure, GCP, DigitalOcean)
+**Logging**: `NODE_ENV`, `LOG_LEVEL`, `PRISMA_LOG_LEVEL` for structured logging and query debugging
 **Auto-generated**: `npm run setup-env` creates .env with AUTH_SECRET
 
 ## Development
 
 **Workflow**: Schema → migrate → server actions → components → pages
 **Security**: Role checks, self-protection, bcrypt, HTTP-only cookies, JWT expiry
+**Logging**: Set `NODE_ENV=production` and `LOG_LEVEL=debug` for structured JSON logs with PII sanitization
+**Linting**: `npm run lint` - zero errors/warnings maintained with automatic fixes
 
 ## Email System
 
 **Current**: Console provider (dev-friendly)
-**Templates**: Verification, password reset, magic link
+**Templates**: Verification, password reset, magic link, auto-preview on selection
 **Production**: SendGrid, Resend, AWS SES, SMTP (see `docs/email-providers.md`)
 **Pattern**: Swappable provider interface
 **Integration**: Full crunchycone-lib email service integration with availability checking
@@ -169,12 +172,16 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 ## Recent Updates
 
+- **Production Logging**: Structured JSON logging with PII sanitization, configurable via `LOG_LEVEL` and `NODE_ENV`
+- **Email Templates**: Auto-preview functionality - templates automatically render when switching selections
+- **TypeScript**: Zero linting errors/warnings - full type safety with proper union types and null checks
+- **Docker**: Node.js 24, optimized database file copying, Prisma migration status checks, cache management
 - **Storage Configuration**: Added Google Cloud Storage support, comprehensive admin settings UI with help dialogs
 - **MJML Warnings**: Configured webpack to suppress crunchycone-lib MJML dependency warnings
 - **Media Manager**: Complete file management with crunchycone-lib integration, pagination, search
 - **CrunchyCone-lib**: Full email and storage provider integration with availability checking
 - **Auth.js v4**: Complete migration from custom JWT, Prisma adapter, console email provider
-- **Prisma**: Client Extensions API, modernized config, ULID auto-generation
+- **Prisma**: Client Extensions API, modernized config, ULID auto-generation, structured query logging
 - **Themes**: TypeScript system with 5 themes, type-safe registry
 - **Git**: Local database exclusions
 
@@ -198,13 +205,17 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 **Common Issues**: No admin loop (`npm run db:seed`), DB locked (restart), type errors (`npx prisma generate`)
 **Debug**: `rm -f db/prod.db && npm run db:reset`, `npm run build`
+**Cache Issues**: `rm -rf .next` to clear Next.js/Turbopack cache when encountering build errors
+**Linting**: `npm run lint --fix` to automatically fix formatting and style issues
 **MJML Warnings**: Automatically suppressed via webpack configuration in `next.config.ts`
 
 ## Docker Deployment
 
+**Features**: Node.js 24, optimized multi-stage builds, automatic database file copying
 **Auto-Detection**: Cloudflare, Render, Fly.io, GCP based on env vars
-**Database Setup**: Auto-detects SQLite/Turso/PostgreSQL/MySQL, runs migrations
-**Zero Config**: Platform-specific ports, migration modes, error handling
+**Database Setup**: Auto-detects SQLite/Turso/PostgreSQL/MySQL, runs migrations with status checks
+**Migration Optimization**: Skips unnecessary migrations, early exit for up-to-date databases
+**Zero Config**: Platform-specific ports, migration modes, error handling, cache management
 
 ## Documentation
 

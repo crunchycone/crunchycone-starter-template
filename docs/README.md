@@ -8,11 +8,14 @@ This directory contains detailed guides for extending the CrunchyCone Vanilla St
 
 Learn how to implement different email providers:
 
+- Console (development-friendly logging)
+- CrunchyCone email service
 - SendGrid
 - Resend
 - AWS SES
 - SMTP (Gmail, custom servers)
-- Development tools (Mailtrap, Ethereal)
+- Mailgun
+- Auto-preview email templates feature
 
 ### 🔐 [Authentication Providers](./auth-providers.md)
 
@@ -29,18 +32,29 @@ Add OAuth and social login providers:
 
 Create and customize themes:
 
-- Adding preset themes
+- TypeScript-based theme system
+- Adding preset themes (Ocean, Forest, Midnight)
 - User-customizable themes
-- Dynamic theme loading
+- Dynamic theme loading with type safety
 - Theme editor component
 - Color utilities and guidelines
-- Seasonal and high-contrast themes
+- System theme detection
+
+### 🐳 [Container Deployment](./container-deployment.md)
+
+Deploy to production container platforms:
+
+- Docker with Node.js 24 and optimized builds
+- Render.com, Fly.io, Google Cloud Run
+- AWS App Runner, Railway, DigitalOcean
+- Database migration automation
+- Production logging and monitoring
 
 ## Quick Links
 
 - [Main README](../README.md) - Project overview and quick start
 - [CLAUDE.md](../CLAUDE.md) - Technical documentation for developers
-- [Implementation Guide](../implementation-guide.md) - Step-by-step setup instructions
+- [Container Deployment](./container-deployment.md) - Production deployment guide
 
 ## Contributing
 

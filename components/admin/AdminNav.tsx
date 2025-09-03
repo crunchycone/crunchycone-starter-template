@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Settings, Shield, Database, Upload, Mail } from "lucide-react";
+import { LayoutDashboard, Users, Settings, Shield, Database, Upload, Mail, Terminal } from "lucide-react";
 
 const navigationItems = [
   {
@@ -36,6 +36,11 @@ const navigationItems = [
     href: "/admin/email-templates",
     label: "Email Templates",
     icon: Mail,
+  },
+  {
+    href: "/admin/environment",
+    label: "Environment",
+    icon: Terminal,
   },
   {
     href: "/admin/settings",

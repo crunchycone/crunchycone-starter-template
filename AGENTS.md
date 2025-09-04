@@ -51,6 +51,13 @@ All agents should follow patterns defined in `.cursor/rules/` before making any 
 - User management and role assignment
 - Self-protection mechanisms (admin can't remove own admin role)
 
+📋 **Dynamic Rendering Rules**: `.cursor/rules/10-CRITICAL-dynamic-rendering.mdc` - Build optimization, performance
+
+- Force dynamic rendering for external processes
+- Prevent build timeouts and memory issues
+- Docker/container deployment compatibility
+- CLI command and authentication handling
+
 #### UI & Theming
 
 📋 **Theme Rules**: `.cursor/rules/themes.md` - Theme system, customization, TypeScript patterns
@@ -90,16 +97,17 @@ All agents should follow patterns defined in `.cursor/rules/` before making any 
 
 ## Rule Reference Matrix
 
-| Task Type           | Primary Rule        | Secondary Rules                   | Key Patterns                          |
-| ------------------- | ------------------- | --------------------------------- | ------------------------------------- |
-| Auth Implementation | `auth.md`           | `project.md`, `server-actions.md` | Session handling, role checks         |
-| Database Changes    | `database.md`       | `prisma.md`                       | Soft deletes, ULID IDs, migrations    |
-| Admin Features      | `admin.md`          | `auth.md`, `server-actions.md`    | Role protection, self-protection      |
-| Server Actions      | `server-actions.md` | `auth.md`, `database.md`          | Validation, revalidation, auth checks |
-| UI Components       | `project.md`        | `themes.md`                       | shadcn/ui patterns, theme integration |
-| Schema Updates      | `prisma.md`         | `database.md`                     | Migration workflow, type generation   |
-| Theme Work          | `themes.md`         | `project.md`                      | TypeScript themes, CSS generation     |
-| Environment Setup   | `setup.md`          | `project.md`                      | Initialization order, env vars        |
+| Task Type           | Primary Rule               | Secondary Rules                   | Key Patterns                          |
+| ------------------- | -------------------------- | --------------------------------- | ------------------------------------- |
+| Auth Implementation | `auth.md`                  | `project.md`, `server-actions.md` | Session handling, role checks         |
+| Database Changes    | `database.md`              | `prisma.md`                       | Soft deletes, ULID IDs, migrations    |
+| Admin Features      | `admin.md`                 | `auth.md`, `server-actions.md`    | Role protection, self-protection      |
+| Server Actions      | `server-actions.md`        | `auth.md`, `database.md`          | Validation, revalidation, auth checks |
+| UI Components       | `project.md`               | `themes.md`                       | shadcn/ui patterns, theme integration |
+| Schema Updates      | `prisma.md`                | `database.md`                     | Migration workflow, type generation   |
+| Theme Work          | `themes.md`                | `project.md`                      | TypeScript themes, CSS generation     |
+| Environment Setup   | `setup.md`                 | `project.md`                      | Initialization order, env vars        |
+| API Routes/Pages    | `10-CRITICAL-dynamic-rendering.mdc` | `admin.md`, `auth.md`     | Force dynamic, prevent build issues  |
 
 ## Context-Aware Decision Making
 
@@ -138,6 +146,11 @@ All agents should follow patterns defined in `.cursor/rules/` before making any 
 - Creating custom UI components when shadcn/ui exists
 - Bypassing authentication checks in protected routes
 - Not using soft delete patterns for data removal
+- **CRITICAL**: Missing `export const dynamic = "force-dynamic"` on pages/routes with:
+  - CLI commands (`execSync`, `spawn`, `exec`)
+  - File system operations (`fs.readFile`, `fs.writeFile`)
+  - External API calls or authentication checks
+  - Database operations during page render
 
 ### Quality Assurance Checklist
 

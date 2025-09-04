@@ -69,6 +69,38 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 **Don't Mix**: Use Server Actions directly in forms, not fetch() calls
 
+## Dynamic Rendering - CRITICAL
+
+**ALWAYS use `export const dynamic = "force-dynamic";` for:**
+
+**Pages requiring dynamic rendering:**
+- All admin pages (`/admin/*`)
+- Pages with authentication checks
+- Pages accessing environment variables/file system
+- Pages making database queries at render time
+
+**API routes requiring dynamic rendering:**
+- Routes using CLI commands (`execSync`, `spawn`, `exec`)
+- Routes with external API calls or file system access
+- Routes with database operations or authentication
+- CrunchyCone integration routes (`/api/admin/environment/*`, `/api/admin/crunchycone-*`)
+
+**Why critical:**
+- Prevents build timeouts from external processes
+- Avoids memory issues during static generation
+- Prevents authentication errors during build
+- Essential for Docker/container deployments
+
+**Pattern:**
+```typescript
+import { NextResponse } from "next/server";
+
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
+export async function GET() { ... }
+```
+
 ## Admin Dashboard
 
 **Pages**: Dashboard, Users, Roles, Database Viewer, Media Manager, Settings

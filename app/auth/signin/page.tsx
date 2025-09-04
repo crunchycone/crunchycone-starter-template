@@ -4,6 +4,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 interface SignInPageProps {
   searchParams: Promise<{
     message?: string;

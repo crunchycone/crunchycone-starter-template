@@ -1,6 +1,9 @@
 import { requireRole } from "@/lib/auth/permissions";
 import { EmailTemplatesView } from "@/components/admin/EmailTemplatesView";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Email Templates - Admin Dashboard",
   description: "Manage and preview email templates",

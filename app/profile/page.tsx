@@ -7,6 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { AccountLinking } from "@/components/profile/AccountLinking";
 import { UserDetails } from "@/components/profile/UserDetails";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 export default async function ProfilePage() {
   const session = await auth();
 

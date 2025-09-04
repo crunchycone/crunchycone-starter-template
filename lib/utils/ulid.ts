@@ -126,7 +126,7 @@ export function createPrismaClient() {
           emit: "event" as const,
         })),
       }
-    : {};
+    : undefined;
 
   // Check if we're using Turso (libSQL)
   if (process.env.DATABASE_URL?.startsWith("libsql://") && process.env.TURSO_AUTH_TOKEN) {
@@ -140,7 +140,7 @@ export function createPrismaClient() {
         authToken: process.env.TURSO_AUTH_TOKEN,
       });
 
-      basePrisma = new PrismaClient({ ...clientConfig, adapter });
+      basePrisma = new PrismaClient({ ...(clientConfig || {}), adapter });
       console.log("✅ Turso adapter initialized successfully");
     } catch (error) {
       console.error("Failed to initialize Turso adapter, falling back to standard client:", error);
@@ -152,11 +152,21 @@ export function createPrismaClient() {
   }
 
   // Set up structured logging event listeners
-  if (logConfig) {
+  if (logConfig && basePrisma) {
+    // Type assertion for PrismaClient with event emitters enabled
+    type PrismaClientWithEvents = PrismaClient & {
+      $on(event: "query", callback: (e: Prisma.QueryEvent) => void): void;
+      $on(event: "info", callback: (e: Prisma.LogEvent) => void): void;
+      $on(event: "warn", callback: (e: Prisma.LogEvent) => void): void;
+      $on(event: "error", callback: (e: Prisma.LogEvent) => void): void;
+    };
+
+    const eventPrisma = basePrisma as PrismaClientWithEvents;
+
     logConfig.forEach((level) => {
       switch (level) {
         case "query":
-          basePrisma.$on("query", (e) => {
+          eventPrisma.$on("query", (e: Prisma.QueryEvent) => {
             logger.debug("Database Query", {
               query: e.query,
               params: e.params,
@@ -166,17 +176,17 @@ export function createPrismaClient() {
           });
           break;
         case "info":
-          basePrisma.$on("info", (e) => {
+          eventPrisma.$on("info", (e: Prisma.LogEvent) => {
             logger.info("Database Info", { message: e.message, target: e.target });
           });
           break;
         case "warn":
-          basePrisma.$on("warn", (e) => {
+          eventPrisma.$on("warn", (e: Prisma.LogEvent) => {
             logger.warn("Database Warning", { message: e.message, target: e.target });
           });
           break;
         case "error":
-          basePrisma.$on("error", (e) => {
+          eventPrisma.$on("error", (e: Prisma.LogEvent) => {
             logger.error("Database Error", undefined, { message: e.message, target: e.target });
           });
           break;

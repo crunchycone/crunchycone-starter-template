@@ -104,8 +104,8 @@ async function checkCrunchyConeAuth() {
 
 async function generateJwtOnly() {
   try {
-    log("\n🔐 JWT Secret Generation", "\x1b[1m\x1b[34m"); // Bold Blue
-    log("========================\n");
+    log("\n🔐 Auth Secret Generation", "\x1b[1m\x1b[34m"); // Bold Blue
+    log("=========================\n");
 
     const envPath = path.join(process.cwd(), ".env");
     const envExamplePath = path.join(process.cwd(), ".env.example");
@@ -119,22 +119,40 @@ async function generateJwtOnly() {
       process.exit(1);
     }
 
-    // Step 2: Generate JWT_SECRET
-    const envContent = fs.readFileSync(envPath, "utf8");
-    const hasDefaultJwtSecret = envContent.includes(
-      'JWT_SECRET="your-secret-key-change-in-production"'
-    );
+    // Step 2: Generate AUTH_SECRET and NEXTAUTH_SECRET
+    let envContent = fs.readFileSync(envPath, "utf8");
+    const hasDefaultAuthSecret =
+      envContent.includes('AUTH_SECRET="your-secret-key-change-in-production"') ||
+      envContent.includes('NEXTAUTH_SECRET="your-secret-key-change-in-production"');
 
-    if (hasDefaultJwtSecret || envContent.match(/JWT_SECRET=""/)) {
-      const jwtSecret = crypto.randomBytes(32).toString("hex");
-      const updatedEnvContent = envContent.replace(
-        /JWT_SECRET="[^"]*"/,
-        `JWT_SECRET="${jwtSecret}"`
-      );
-      fs.writeFileSync(envPath, updatedEnvContent);
-      logSuccess("Generated secure JWT_SECRET");
+    if (
+      hasDefaultAuthSecret ||
+      envContent.match(/AUTH_SECRET=""/) ||
+      envContent.match(/NEXTAUTH_SECRET=""/)
+    ) {
+      const authSecret = crypto.randomBytes(32).toString("hex");
+
+      // Update or add AUTH_SECRET
+      if (envContent.includes("AUTH_SECRET=")) {
+        envContent = envContent.replace(/AUTH_SECRET="[^"]*"/, `AUTH_SECRET="${authSecret}"`);
+      } else {
+        envContent += `\nAUTH_SECRET="${authSecret}"\n`;
+      }
+
+      // Update or add NEXTAUTH_SECRET
+      if (envContent.includes("NEXTAUTH_SECRET=")) {
+        envContent = envContent.replace(
+          /NEXTAUTH_SECRET="[^"]*"/,
+          `NEXTAUTH_SECRET="${authSecret}"`
+        );
+      } else {
+        envContent += `NEXTAUTH_SECRET="${authSecret}"\n`;
+      }
+
+      fs.writeFileSync(envPath, envContent);
+      logSuccess("Generated secure AUTH_SECRET and NEXTAUTH_SECRET");
     } else {
-      logInfo("JWT_SECRET already configured");
+      logInfo("AUTH_SECRET and NEXTAUTH_SECRET already configured");
     }
 
     // Check CrunchyCone authentication and configure email provider if authenticated
@@ -143,10 +161,10 @@ async function generateJwtOnly() {
       await setupCrunchyConeEmailProvider(envPath);
     }
 
-    log("\n✅ JWT generation completed!", "\x1b[1m\x1b[32m");
+    log("\n✅ Auth secret generation completed!", "\x1b[1m\x1b[32m");
     return true;
   } catch (error) {
-    logError(`JWT generation failed: ${error.message}`);
+    logError(`Auth secret generation failed: ${error.message}`);
     return false;
   }
 }
@@ -294,30 +312,46 @@ async function main() {
       logWarning(".env.example not found - you may need to create .env manually");
     }
 
-    // Generate JWT_SECRET if needed
+    // Generate AUTH_SECRET and NEXTAUTH_SECRET if needed
     if (fs.existsSync(envPath)) {
-      const envContent = fs.readFileSync(envPath, "utf8");
-      const hasDefaultJwtSecret = envContent.includes(
-        'JWT_SECRET="your-secret-key-change-in-production"'
-      );
+      let envContent = fs.readFileSync(envPath, "utf8");
+      const hasDefaultAuthSecret =
+        envContent.includes('AUTH_SECRET="your-secret-key-change-in-production"') ||
+        envContent.includes('NEXTAUTH_SECRET="your-secret-key-change-in-production"');
       const forceNewSecret =
         process.argv.includes("--new-secret") || process.argv.includes("--new-jwt");
 
-      if (hasDefaultJwtSecret || forceNewSecret) {
-        const jwtSecret = crypto.randomBytes(32).toString("hex");
-        const updatedEnvContent = envContent.replace(
-          /JWT_SECRET="[^"]*"/,
-          `JWT_SECRET="${jwtSecret}"`
-        );
-        fs.writeFileSync(envPath, updatedEnvContent);
+      if (hasDefaultAuthSecret || forceNewSecret) {
+        const authSecret = crypto.randomBytes(32).toString("hex");
 
-        if (forceNewSecret && !hasDefaultJwtSecret) {
-          logSuccess("Generated new JWT_SECRET (forced)");
+        // Update or add AUTH_SECRET
+        if (envContent.includes("AUTH_SECRET=")) {
+          envContent = envContent.replace(/AUTH_SECRET="[^"]*"/, `AUTH_SECRET="${authSecret}"`);
         } else {
-          logSuccess("Generated secure JWT_SECRET (replaced default)");
+          envContent += `\nAUTH_SECRET="${authSecret}"\n`;
+        }
+
+        // Update or add NEXTAUTH_SECRET
+        if (envContent.includes("NEXTAUTH_SECRET=")) {
+          envContent = envContent.replace(
+            /NEXTAUTH_SECRET="[^"]*"/,
+            `NEXTAUTH_SECRET="${authSecret}"`
+          );
+        } else {
+          envContent += `NEXTAUTH_SECRET="${authSecret}"\n`;
+        }
+
+        fs.writeFileSync(envPath, envContent);
+
+        if (forceNewSecret && !hasDefaultAuthSecret) {
+          logSuccess("Generated new AUTH_SECRET and NEXTAUTH_SECRET (forced)");
+        } else {
+          logSuccess("Generated secure AUTH_SECRET and NEXTAUTH_SECRET (replaced default)");
         }
       } else if (!envFileCreated) {
-        logInfo("JWT_SECRET already configured (use --new-secret to regenerate)");
+        logInfo(
+          "AUTH_SECRET and NEXTAUTH_SECRET already configured (use --new-secret to regenerate)"
+        );
       }
 
       // Check CrunchyCone authentication and configure email provider if authenticated

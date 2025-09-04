@@ -3,7 +3,16 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Users, Settings, Shield, Database, Upload, Mail, Terminal } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Settings,
+  Shield,
+  Database,
+  Upload,
+  Mail,
+  Terminal,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigationItems = [

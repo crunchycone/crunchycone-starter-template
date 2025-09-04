@@ -8,9 +8,7 @@ export default function AdminEnvironmentPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Environment Variables</h1>
-        <p className="text-muted-foreground">
-          View environment variables
-        </p>
+        <p className="text-muted-foreground">View environment variables</p>
       </div>
 
       <EnvironmentVariablesDisplay />

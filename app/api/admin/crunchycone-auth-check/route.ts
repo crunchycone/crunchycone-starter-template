@@ -3,6 +3,9 @@ import { requireRole } from "@/lib/auth/permissions";
 import { exec } from "child_process";
 import { promisify } from "util";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 const execAsync = promisify(exec);
 
 export async function POST(_request: NextRequest) {

@@ -5,6 +5,9 @@ import { promisify } from "util";
 import fs from "fs";
 import path from "path";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 const execAsync = promisify(exec);
 
 interface CrunchyConeProject {

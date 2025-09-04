@@ -3,7 +3,18 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, AlertTriangle, Copy, Check, Edit2, Trash2, Plus, Loader2, RefreshCw } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  Copy,
+  Check,
+  Edit2,
+  Trash2,
+  Plus,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -49,10 +60,13 @@ export function EnvironmentVariablesDisplay() {
   const [error, setError] = useState<string | null>(null);
   const [hasCrunchyConeConfig, setHasCrunchyConeConfig] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [crunchyConeStats, setCrunchyConeStats] = useState<{envCount: number, secretCount: number}>({ envCount: 0, secretCount: 0 });
+  const [crunchyConeStats, setCrunchyConeStats] = useState<{
+    envCount: number;
+    secretCount: number;
+  }>({ envCount: 0, secretCount: 0 });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [visibleLocalValues, setVisibleLocalValues] = useState<Set<string>>(new Set());
-  
+
   // Edit dialog state
   const [editDialog, setEditDialog] = useState<{
     isOpen: boolean;
@@ -65,7 +79,7 @@ export function EnvironmentVariablesDisplay() {
     currentValue: "",
     editValue: "",
   });
-  
+
   // Delete dialog state
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
@@ -74,7 +88,7 @@ export function EnvironmentVariablesDisplay() {
     isOpen: false,
     variableKey: "",
   });
-  
+
   // Add dialog state
   const [addDialog, setAddDialog] = useState<{
     isOpen: boolean;
@@ -102,7 +116,7 @@ export function EnvironmentVariablesDisplay() {
     targetValue: "",
     isSecret: false,
   });
-  
+
   const [syncLoading, setSyncLoading] = useState(false);
 
   useEffect(() => {
@@ -125,16 +139,20 @@ export function EnvironmentVariablesDisplay() {
       setEnvVars(data.variables);
       setHasCrunchyConeConfig(data.hasCrunchyConeConfig);
       setIsAuthenticated(data.isAuthenticated || false);
-      
+
       // Calculate CrunchyCone stats
       if (data.isAuthenticated && data.variables) {
-        const envCount = data.variables.filter((v: EnvironmentVariable) => v.crunchyconeValue && !v.isRemoteSecret).length;
-        const secretCount = data.variables.filter((v: EnvironmentVariable) => v.crunchyconeValue && v.isRemoteSecret).length;
+        const envCount = data.variables.filter(
+          (v: EnvironmentVariable) => v.crunchyconeValue && !v.isRemoteSecret
+        ).length;
+        const secretCount = data.variables.filter(
+          (v: EnvironmentVariable) => v.crunchyconeValue && v.isRemoteSecret
+        ).length;
         setCrunchyConeStats({ envCount, secretCount });
       } else {
         setCrunchyConeStats({ envCount: 0, secretCount: 0 });
       }
-    } catch (err) {
+    } catch {
       setError("Error loading environment variables");
     } finally {
       setLoading(false);
@@ -151,9 +169,8 @@ export function EnvironmentVariablesDisplay() {
     }
   };
 
-
   const toggleLocalValueVisibility = (key: string) => {
-    setVisibleLocalValues(prev => {
+    setVisibleLocalValues((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(key)) {
         newSet.delete(key);
@@ -166,19 +183,52 @@ export function EnvironmentVariablesDisplay() {
 
   const isSensitiveLocalValue = (key: string) => {
     const upperKey = key.toUpperCase();
-    return upperKey.includes('KEY') || upperKey.includes('AUTH') || upperKey.includes('SECRET') || upperKey.includes('PASS');
+    return (
+      upperKey.includes("KEY") ||
+      upperKey.includes("AUTH") ||
+      upperKey.includes("SECRET") ||
+      upperKey.includes("PASS")
+    );
   };
 
   const isSensitiveKey = (key: string) => {
     const sensitiveKeywords = [
-      "secret", "key", "password", "token", "auth", "api", "private",
-      "credential", "pass", "jwt", "oauth", "github", "google", "aws",
-      "azure", "gcp", "stripe", "paypal", "database", "db", "redis",
-      "session", "cookie", "smtp", "email", "twilio", "sendgrid",
-      "crunchycone", "do", "spaces", "bucket", "access", "client"
+      "secret",
+      "key",
+      "password",
+      "token",
+      "auth",
+      "api",
+      "private",
+      "credential",
+      "pass",
+      "jwt",
+      "oauth",
+      "github",
+      "google",
+      "aws",
+      "azure",
+      "gcp",
+      "stripe",
+      "paypal",
+      "database",
+      "db",
+      "redis",
+      "session",
+      "cookie",
+      "smtp",
+      "email",
+      "twilio",
+      "sendgrid",
+      "crunchycone",
+      "do",
+      "spaces",
+      "bucket",
+      "access",
+      "client",
     ];
     const lowerKey = key.toLowerCase();
-    return sensitiveKeywords.some(keyword => lowerKey.includes(keyword));
+    return sensitiveKeywords.some((keyword) => lowerKey.includes(keyword));
   };
 
   const openEditDialog = (variableKey: string, currentValue: string) => {
@@ -242,13 +292,13 @@ export function EnvironmentVariablesDisplay() {
 
   const openPushDialog = (variableKey: string, localValue: string, remoteValue: string) => {
     // Find the current variable to check if it's already a remote secret
-    const currentVar = envVars.find(v => v.key === variableKey);
-    
+    const currentVar = envVars.find((v) => v.key === variableKey);
+
     // Default to secret if:
     // 1. Variable is already stored as a secret in CrunchyCone, OR
     // 2. Variable name suggests it's sensitive (fallback)
     const defaultIsSecret = currentVar?.isRemoteSecret || isSensitiveKey(variableKey);
-    
+
     setSyncDialog({
       isOpen: true,
       variableKey,
@@ -290,11 +340,13 @@ export function EnvironmentVariablesDisplay() {
       }
 
       // Update local state
-      setEnvVars(prev => prev.map(envVar =>
-        envVar.key === editDialog.variableKey
-          ? { ...envVar, localValue: editDialog.editValue }
-          : envVar
-      ));
+      setEnvVars((prev) =>
+        prev.map((envVar) =>
+          envVar.key === editDialog.variableKey
+            ? { ...envVar, localValue: editDialog.editValue }
+            : envVar
+        )
+      );
 
       closeEditDialog();
     } catch (err) {
@@ -320,7 +372,7 @@ export function EnvironmentVariablesDisplay() {
       }
 
       // Update local state
-      setEnvVars(prev => prev.filter(envVar => envVar.key !== deleteDialog.variableKey));
+      setEnvVars((prev) => prev.filter((envVar) => envVar.key !== deleteDialog.variableKey));
 
       closeDeleteDialog();
     } catch (err) {
@@ -357,7 +409,7 @@ export function EnvironmentVariablesDisplay() {
         isSecret: isSensitiveKey(addDialog.name),
       };
 
-      setEnvVars(prev => {
+      setEnvVars((prev) => {
         const updated = [...prev, newVar];
         // Sort alphabetically
         return updated.sort((a, b) => a.key.localeCompare(b.key));
@@ -373,10 +425,10 @@ export function EnvironmentVariablesDisplay() {
   const handleSync = async () => {
     try {
       setSyncLoading(true);
-      
+
       // Use the secret status from the dialog state
       const isSecret = syncDialog.isSecret;
-      
+
       const response = await fetch("/api/admin/environment/sync", {
         method: "POST",
         headers: {
@@ -395,7 +447,7 @@ export function EnvironmentVariablesDisplay() {
 
       // Refresh the environment variables to show updated values
       await fetchEnvironmentVariables();
-      
+
       // Small delay to show completion before closing
       setTimeout(() => {
         closeSyncDialog();
@@ -451,9 +503,10 @@ export function EnvironmentVariablesDisplay() {
             <CardTitle>Environment Variables</CardTitle>
             <div className="text-sm text-muted-foreground">
               {envVars.length} variables from .env file
-              {hasCrunchyConeConfig && (isAuthenticated 
-                ? ` • CrunchyCone: ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`
-                : " • CrunchyCone project (not authenticated)")}
+              {hasCrunchyConeConfig &&
+                (isAuthenticated
+                  ? ` • CrunchyCone: ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`
+                  : " • CrunchyCone project (not authenticated)")}
             </div>
           </div>
           <Button onClick={openAddDialog} size="sm">
@@ -527,17 +580,26 @@ export function EnvironmentVariablesDisplay() {
                       </div>
                     )}
                     <div className="flex items-center gap-1">
-                      {hasCrunchyConeConfig && isAuthenticated && envVar.crunchyconeValue && !envVar.isRemoteSecret && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
-                          onClick={() => openPullDialog(envVar.key, envVar.localValue, envVar.crunchyconeValue!)}
-                          title="Pull value from CrunchyCone"
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                        </Button>
-                      )}
+                      {hasCrunchyConeConfig &&
+                        isAuthenticated &&
+                        envVar.crunchyconeValue &&
+                        !envVar.isRemoteSecret && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                            onClick={() =>
+                              openPullDialog(
+                                envVar.key,
+                                envVar.localValue,
+                                envVar.crunchyconeValue!
+                              )
+                            }
+                            title="Pull value from CrunchyCone"
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                          </Button>
+                        )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -586,7 +648,13 @@ export function EnvironmentVariablesDisplay() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
-                          onClick={() => openPushDialog(envVar.key, envVar.localValue, envVar.crunchyconeValue || "")}
+                          onClick={() =>
+                            openPushDialog(
+                              envVar.key,
+                              envVar.localValue,
+                              envVar.crunchyconeValue || ""
+                            )
+                          }
                           title="Push value to CrunchyCone"
                         >
                           <RefreshCw className="h-3 w-3" />
@@ -607,7 +675,8 @@ export function EnvironmentVariablesDisplay() {
           <DialogHeader>
             <DialogTitle>Edit Environment Variable</DialogTitle>
             <DialogDescription>
-              Modify the value for <code className="bg-muted px-1 rounded">{editDialog.variableKey}</code>
+              Modify the value for{" "}
+              <code className="bg-muted px-1 rounded">{editDialog.variableKey}</code>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -617,7 +686,7 @@ export function EnvironmentVariablesDisplay() {
                 id="edit-value"
                 type={isSensitiveLocalValue(editDialog.variableKey) ? "password" : "text"}
                 value={editDialog.editValue}
-                onChange={(e) => setEditDialog(prev => ({ ...prev, editValue: e.target.value }))}
+                onChange={(e) => setEditDialog((prev) => ({ ...prev, editValue: e.target.value }))}
                 className="font-mono"
                 placeholder="Enter value..."
               />
@@ -627,9 +696,7 @@ export function EnvironmentVariablesDisplay() {
             <Button variant="outline" onClick={closeEditDialog}>
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit}>
-              Save
-            </Button>
+            <Button onClick={handleSaveEdit}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -640,13 +707,17 @@ export function EnvironmentVariablesDisplay() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Environment Variable</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <code className="bg-muted px-1 rounded">{deleteDialog.variableKey}</code>? 
-              This will remove it from your .env file and cannot be undone.
+              Are you sure you want to delete{" "}
+              <code className="bg-muted px-1 rounded">{deleteDialog.variableKey}</code>? This will
+              remove it from your .env file and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeDeleteDialog}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -658,9 +729,7 @@ export function EnvironmentVariablesDisplay() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Environment Variable</DialogTitle>
-            <DialogDescription>
-              Add a new variable to your .env file
-            </DialogDescription>
+            <DialogDescription>Add a new variable to your .env file</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -669,7 +738,7 @@ export function EnvironmentVariablesDisplay() {
                 id="variable-name"
                 type="text"
                 value={addDialog.name}
-                onChange={(e) => setAddDialog(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => setAddDialog((prev) => ({ ...prev, name: e.target.value }))}
                 className="font-mono"
                 placeholder="VARIABLE_NAME"
               />
@@ -680,7 +749,7 @@ export function EnvironmentVariablesDisplay() {
                 id="variable-value"
                 type={isSensitiveLocalValue(addDialog.name) ? "password" : "text"}
                 value={addDialog.value}
-                onChange={(e) => setAddDialog(prev => ({ ...prev, value: e.target.value }))}
+                onChange={(e) => setAddDialog((prev) => ({ ...prev, value: e.target.value }))}
                 className="font-mono"
                 placeholder="Enter value..."
               />
@@ -698,18 +767,21 @@ export function EnvironmentVariablesDisplay() {
       </Dialog>
 
       {/* Sync Confirmation Dialog */}
-      <Dialog open={syncDialog.isOpen} onOpenChange={(open) => {
-        if (!open && !syncLoading) {
-          closeSyncDialog();
-        }
-      }}>
+      <Dialog
+        open={syncDialog.isOpen}
+        onOpenChange={(open) => {
+          if (!open && !syncLoading) {
+            closeSyncDialog();
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {syncDialog.direction === "pull" ? "Pull from CrunchyCone" : "Push to CrunchyCone"}
             </DialogTitle>
             <DialogDescription>
-              {syncDialog.direction === "pull" 
+              {syncDialog.direction === "pull"
                 ? `Pull the remote value from CrunchyCone to your local .env file for `
                 : `Push the local value from your .env file to CrunchyCone for `}
               <code className="bg-muted px-1 rounded">{syncDialog.variableKey}</code>?
@@ -720,20 +792,16 @@ export function EnvironmentVariablesDisplay() {
               <Label className="text-sm font-medium">
                 {syncDialog.direction === "pull" ? "Source (CrunchyCone):" : "Source (Local):"}
               </Label>
-              <div className="bg-muted p-2 rounded font-mono text-sm">
-                {syncDialog.sourceValue}
-              </div>
+              <div className="bg-muted p-2 rounded font-mono text-sm">{syncDialog.sourceValue}</div>
             </div>
             <div>
               <Label className="text-sm font-medium">
                 {syncDialog.direction === "pull" ? "Target (Local):" : "Target (CrunchyCone):"}
               </Label>
-              <div className="bg-muted p-2 rounded font-mono text-sm">
-                {syncDialog.targetValue}
-              </div>
+              <div className="bg-muted p-2 rounded font-mono text-sm">{syncDialog.targetValue}</div>
             </div>
             <div className="text-sm text-muted-foreground">
-              {syncDialog.direction === "pull" 
+              {syncDialog.direction === "pull"
                 ? "This will overwrite your local value with the CrunchyCone value."
                 : "This will overwrite the CrunchyCone value with your local value."}
             </div>
@@ -743,7 +811,9 @@ export function EnvironmentVariablesDisplay() {
                   <Checkbox
                     id="secret-checkbox"
                     checked={syncDialog.isSecret}
-                    onCheckedChange={(checked) => setSyncDialog(prev => ({...prev, isSecret: !!checked}))}
+                    onCheckedChange={(checked) =>
+                      setSyncDialog((prev) => ({ ...prev, isSecret: !!checked }))
+                    }
                   />
                   <Label htmlFor="secret-checkbox" className="text-sm font-medium">
                     Store as secret
@@ -753,7 +823,9 @@ export function EnvironmentVariablesDisplay() {
                   <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
                     <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                     <div className="text-amber-800">
-                      <strong>Secret Warning:</strong> This value will be stored as a secret in CrunchyCone. Once saved, you won't be able to view its value again - it will only display as "••••••••".
+                      <strong>Secret Warning:</strong> This value will be stored as a secret in
+                      CrunchyCone. Once saved, you won&apos;t be able to view its value again - it
+                      will only display as &quot;••••••••&quot;.
                     </div>
                   </div>
                 )}
@@ -761,7 +833,9 @@ export function EnvironmentVariablesDisplay() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeSyncDialog} disabled={syncLoading}>Cancel</Button>
+            <Button variant="outline" onClick={closeSyncDialog} disabled={syncLoading}>
+              Cancel
+            </Button>
             <Button onClick={handleSync} disabled={syncLoading}>
               {syncLoading ? (
                 <>

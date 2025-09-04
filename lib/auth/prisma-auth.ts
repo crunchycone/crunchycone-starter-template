@@ -19,7 +19,7 @@ const clientConfig = logConfig
         emit: "event" as const,
       })),
     }
-  : {};
+  : undefined;
 
 // Create base Prisma client
 const basePrismaAuth = new PrismaClient(clientConfig);

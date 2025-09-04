@@ -85,7 +85,6 @@ export function EmailTemplatesView() {
     loadTemplates();
   }, []);
 
-
   // Update available templates when language changes
   useEffect(() => {
     const templatesForLanguage = templates.filter((t) => t.language === selectedLanguage);

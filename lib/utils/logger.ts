@@ -45,7 +45,11 @@ class Logger {
   private sanitizeData(data: unknown): unknown {
     if (!data || typeof data !== "object") return data;
 
-    const sanitized = Array.isArray(data) ? [...data] : { ...data };
+    if (Array.isArray(data)) {
+      return data.map((item) => this.sanitizeData(item));
+    }
+
+    const sanitized = { ...(data as Record<string, unknown>) };
 
     for (const [key, value] of Object.entries(sanitized)) {
       const lowerKey = key.toLowerCase();
@@ -87,7 +91,7 @@ class Logger {
     };
 
     if (meta && Object.keys(meta).length > 0) {
-      logEntry.meta = this.sanitizeData(meta);
+      logEntry.meta = this.sanitizeData(meta) as Record<string, unknown>;
     }
 
     if (error) {
@@ -100,7 +104,8 @@ class Logger {
 
     if (this.isProduction) {
       // Production: JSON format
-      console.log(JSON.stringify(logEntry));
+      // Use process.stdout to avoid console override recursion
+      process.stdout.write(JSON.stringify(logEntry) + "\n");
     } else {
       // Development: readable format
       const timestamp = new Date().toLocaleTimeString();
@@ -109,7 +114,7 @@ class Logger {
       const metaStr = sanitizedMeta ? ` ${JSON.stringify(sanitizedMeta)}` : "";
       const errorStr = error ? `\n${error.stack}` : "";
 
-      console.log(`${timestamp} ${levelTag} ${message}${metaStr}${errorStr}`);
+      process.stdout.write(`${timestamp} ${levelTag} ${message}${metaStr}${errorStr}\n`);
     }
   }
 

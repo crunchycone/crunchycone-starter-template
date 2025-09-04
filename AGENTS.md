@@ -58,6 +58,13 @@ All agents should follow patterns defined in `.cursor/rules/` before making any 
 - Docker/container deployment compatibility
 - CLI command and authentication handling
 
+📋 **Docker Build Troubleshooting**: `.cursor/rules/11-TROUBLESHOOT-docker-builds.mdc` - Production deployment issues
+
+- Diagnose build hangs and timeouts
+- Memory exhaustion and OOM kill fixes
+- CLI command and database connection errors
+- Emergency fixes and prevention strategies
+
 #### UI & Theming
 
 📋 **Theme Rules**: `.cursor/rules/themes.md` - Theme system, customization, TypeScript patterns
@@ -108,6 +115,7 @@ All agents should follow patterns defined in `.cursor/rules/` before making any 
 | Theme Work          | `themes.md`                | `project.md`                      | TypeScript themes, CSS generation     |
 | Environment Setup   | `setup.md`                 | `project.md`                      | Initialization order, env vars        |
 | API Routes/Pages    | `10-CRITICAL-dynamic-rendering.mdc` | `admin.md`, `auth.md`     | Force dynamic, prevent build issues  |
+| Docker Build Issues | `11-TROUBLESHOOT-docker-builds.mdc` | `10-CRITICAL-dynamic-rendering.mdc` | Diagnose timeouts, fix OOM kills |
 
 ## Context-Aware Decision Making
 
@@ -151,6 +159,9 @@ All agents should follow patterns defined in `.cursor/rules/` before making any 
   - File system operations (`fs.readFile`, `fs.writeFile`)
   - External API calls or authentication checks
   - Database operations during page render
+- **DOCKER**: Ignoring build timeouts or hangs - always indicates missing dynamic exports
+- **DOCKER**: Using localhost database URLs in containerized builds
+- **DOCKER**: Not testing build locally before Docker deployment
 
 ### Quality Assurance Checklist
 

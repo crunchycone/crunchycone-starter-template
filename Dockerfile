@@ -91,6 +91,9 @@ RUN find /app -name "*.map" -delete && \
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 
+# Copy email templates for runtime
+COPY --from=builder /app/templates ./templates
+
 # Copy database files if they exist (for SQLite databases)
 # External databases (PostgreSQL, MySQL, Turso) use different DATABASE_URL formats
 # Support both ./db/ and ./prisma/db/ locations

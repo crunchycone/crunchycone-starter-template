@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
         userAgent: request.headers.get("user-agent"),
         referer: request.headers.get("referer"),
         ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
-      }
+      },
     };
     console.log(JSON.stringify(logEntry));
   }
@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
     const duration = Date.now() - startTime;
     const logEntry = {
       timestamp: new Date().toISOString(),
-      level: "debug", 
+      level: "debug",
       message: `Response: ${request.method} ${pathname} ${response.status}`,
       meta: {
         method: request.method,
@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
         pathname: pathname,
         status: response.status,
         duration: `${duration}ms`,
-      }
+      },
     };
     console.log(JSON.stringify(logEntry));
   }

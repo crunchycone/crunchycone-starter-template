@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { ulidExtension } from "@/lib/utils/ulid";
 import { logger } from "@/lib/utils/logger";
 
@@ -22,14 +22,50 @@ const clientConfig = logConfig
   : undefined;
 
 // Create base Prisma client
-const basePrismaAuth = new PrismaClient(clientConfig);
+let basePrismaAuth: PrismaClient;
+
+// Check if we're using Turso (libSQL)
+if (process.env.DATABASE_URL?.startsWith("libsql://") && process.env.TURSO_AUTH_TOKEN) {
+  try {
+    // Import Turso adapter - webpack is configured to handle these files
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { PrismaLibSQL } = require("@prisma/adapter-libsql");
+
+    const adapter = new PrismaLibSQL({
+      url: process.env.DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
+
+    basePrismaAuth = new PrismaClient({ ...(clientConfig || {}), adapter });
+    console.log("✅ Auth Turso adapter initialized successfully");
+  } catch (error) {
+    console.error(
+      "Failed to initialize Auth Turso adapter, falling back to standard client:",
+      error
+    );
+    basePrismaAuth = new PrismaClient(clientConfig);
+  }
+} else {
+  // Standard SQLite/PostgreSQL/MySQL
+  basePrismaAuth = new PrismaClient(clientConfig);
+}
 
 // Set up structured logging event listeners for auth client
-if (logConfig) {
+if (logConfig && basePrismaAuth) {
+  // Type assertion for PrismaClient with event emitters enabled
+  type PrismaClientWithEvents = PrismaClient & {
+    $on(event: "query", callback: (e: Prisma.QueryEvent) => void): void;
+    $on(event: "info", callback: (e: Prisma.LogEvent) => void): void;
+    $on(event: "warn", callback: (e: Prisma.LogEvent) => void): void;
+    $on(event: "error", callback: (e: Prisma.LogEvent) => void): void;
+  };
+
+  const eventPrisma = basePrismaAuth as PrismaClientWithEvents;
+
   logConfig.forEach((level) => {
     switch (level) {
       case "query":
-        basePrismaAuth.$on("query", (e) => {
+        eventPrisma.$on("query", (e: Prisma.QueryEvent) => {
           logger.debug("Auth Database Query", {
             query: e.query,
             params: e.params,
@@ -39,17 +75,17 @@ if (logConfig) {
         });
         break;
       case "info":
-        basePrismaAuth.$on("info", (e) => {
+        eventPrisma.$on("info", (e: Prisma.LogEvent) => {
           logger.info("Auth Database Info", { message: e.message, target: e.target });
         });
         break;
       case "warn":
-        basePrismaAuth.$on("warn", (e) => {
+        eventPrisma.$on("warn", (e: Prisma.LogEvent) => {
           logger.warn("Auth Database Warning", { message: e.message, target: e.target });
         });
         break;
       case "error":
-        basePrismaAuth.$on("error", (e) => {
+        eventPrisma.$on("error", (e: Prisma.LogEvent) => {
           logger.error("Auth Database Error", undefined, { message: e.message, target: e.target });
         });
         break;

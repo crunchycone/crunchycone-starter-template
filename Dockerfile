@@ -130,8 +130,9 @@ RUN chmod +x /app/unified-entrypoint.sh
 RUN chown -R nextjs:nodejs /app/prisma /app/db /app/.next && \
     chmod -R 755 /app/db /app/prisma/db /app/.next/cache
 
-# Switch to non-root user
-USER nextjs
+# Switch to non-root user (using numeric UID for Kubernetes security compliance)
+# This satisfies runAsNonRoot: true requirements by using numeric user ID
+USER 1001:1001
 
 # Expose port range (Render auto-assigns port via PORT env var)
 EXPOSE 3000 10000

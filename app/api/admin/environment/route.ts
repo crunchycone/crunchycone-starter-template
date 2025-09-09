@@ -12,6 +12,19 @@ import { getCrunchyConeAuthService } from "@/lib/crunchycone-auth-service";
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
 
+// Helper function to determine if a key is sensitive
+function isSensitiveKey(key: string): boolean {
+  const sensitiveKeywords = [
+    "secret", "key", "password", "token", "auth", "api", "private", 
+    "credential", "pass", "jwt", "oauth", "github", "google", "aws", 
+    "azure", "gcp", "stripe", "paypal", "database", "db", "redis", 
+    "session", "cookie", "smtp", "email", "twilio", "sendgrid", 
+    "crunchycone", "do", "spaces", "bucket", "access", "client"
+  ];
+  const lowerKey = key.toLowerCase();
+  return sensitiveKeywords.some(keyword => lowerKey.includes(keyword));
+}
+
 export async function GET() {
   try {
     // Check authentication and admin status
@@ -39,7 +52,17 @@ export async function GET() {
     }
 
     // Get environment data using unified service
-    const variables = await getAllEnvironmentVariables();
+    const variablesObject = await getAllEnvironmentVariables();
+
+    // Convert object to array format expected by client
+    const variables = Object.entries(variablesObject).map(([key, value]) => ({
+      key,
+      localValue: value || "",
+      isSecret: isSensitiveKey(key),
+      // TODO: Add CrunchyCone remote values when implemented
+      crunchyconeValue: undefined,
+      isRemoteSecret: false,
+    }));
 
     // Check CrunchyCone authentication if needed
     let crunchyConeAuth: { isAuthenticated: boolean; source: "api" | "cli" | "unknown" } = { 

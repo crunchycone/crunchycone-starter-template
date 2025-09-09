@@ -6,6 +6,7 @@ import {
   updateEnvironmentVariables,
   getEnvironmentServiceInfo,
   isOnCrunchyConePlatform,
+  getEnvironmentService,
 } from "@/lib/environment-service";
 import { getCrunchyConeAuthService } from "@/lib/crunchycone-auth-service";
 
@@ -51,20 +52,7 @@ export async function GET() {
       );
     }
 
-    // Get environment data using unified service
-    const variablesObject = await getAllEnvironmentVariables();
-
-    // Convert object to array format expected by client
-    const variables = Object.entries(variablesObject).map(([key, value]) => ({
-      key,
-      localValue: value || "",
-      isSecret: isSensitiveKey(key),
-      // TODO: Add CrunchyCone remote values when implemented
-      crunchyconeValue: undefined,
-      isRemoteSecret: false,
-    }));
-
-    // Check CrunchyCone authentication if needed
+    // Check CrunchyCone authentication
     let crunchyConeAuth: { isAuthenticated: boolean; source: "api" | "cli" | "unknown" } = { 
       isAuthenticated: false, 
       source: "unknown"
@@ -80,14 +68,82 @@ export async function GET() {
       // Auth check failed, keep defaults
     }
 
+    let variables: Array<{
+      key: string;
+      localValue: string;
+      isSecret: boolean;
+      crunchyconeValue?: string;
+      isRemoteSecret?: boolean;
+    }> = [];
+
+    // If on CrunchyCone platform, get variables from CrunchyCone API
+    if (isOnCrunchyConePlatform() && crunchyConeAuth.isAuthenticated) {
+      try {
+        const envService = getEnvironmentService();
+        
+        // Get environment variables from CrunchyCone
+        const envVars = await envService.listEnvVars();
+        const secretNames = await envService.listSecretNames();
+        
+        // Convert environment variables to array format
+        const envEntries = Object.entries(envVars).map(([key, value]) => ({
+          key,
+          localValue: "",  // No local values on platform
+          crunchyconeValue: value || "",
+          isSecret: false,
+          isRemoteSecret: false,
+        }));
+
+        // Convert secrets to array format (values are hidden)
+        const secretEntries = secretNames.map((key) => ({
+          key,
+          localValue: "",  // No local values on platform
+          crunchyconeValue: "••••••••",  // Masked value for secrets
+          isSecret: true,
+          isRemoteSecret: true,
+        }));
+
+        // Combine environment variables and secrets
+        variables = [...envEntries, ...secretEntries];
+        
+        // Sort alphabetically by key
+        variables.sort((a, b) => a.key.localeCompare(b.key));
+        
+      } catch (error) {
+        console.error("Failed to fetch CrunchyCone variables:", error);
+        // Fall back to local environment on error
+        const variablesObject = await getAllEnvironmentVariables();
+        variables = Object.entries(variablesObject).map(([key, value]) => ({
+          key,
+          localValue: value || "",
+          isSecret: isSensitiveKey(key),
+          crunchyconeValue: undefined,
+          isRemoteSecret: false,
+        }));
+      }
+    } else {
+      // Use local environment variables (.env file)
+      const variablesObject = await getAllEnvironmentVariables();
+      variables = Object.entries(variablesObject).map(([key, value]) => ({
+        key,
+        localValue: value || "",
+        isSecret: isSensitiveKey(key),
+        crunchyconeValue: undefined,
+        isRemoteSecret: false,
+      }));
+    }
+
     return NextResponse.json({
       variables,
       platform: {
         type: platformInfo.type,
         isPlatformEnvironment: platformInfo.isPlatformEnvironment,
         supportsSecrets: platformInfo.supportsSecrets,
+        isUsingPlatformAPI: isOnCrunchyConePlatform() && crunchyConeAuth.isAuthenticated,
       },
       crunchyConeAuth,
+      hasCrunchyConeConfig: crunchyConeAuth.isAuthenticated,
+      isAuthenticated: crunchyConeAuth.isAuthenticated,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

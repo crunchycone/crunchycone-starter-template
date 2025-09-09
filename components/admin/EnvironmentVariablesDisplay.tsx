@@ -67,6 +67,7 @@ export function EnvironmentVariablesDisplay() {
   const [error, setError] = useState<string | null>(null);
   const [hasCrunchyConeConfig, setHasCrunchyConeConfig] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isUsingPlatformAPI, setIsUsingPlatformAPI] = useState(false);
   const [crunchyConeStats, setCrunchyConeStats] = useState<{
     envCount: number;
     secretCount: number;
@@ -147,6 +148,7 @@ export function EnvironmentVariablesDisplay() {
       setEnvVars(data.variables);
       setHasCrunchyConeConfig(data.hasCrunchyConeConfig);
       setIsAuthenticated(data.isAuthenticated || false);
+      setIsUsingPlatformAPI(data.platform?.isUsingPlatformAPI || false);
 
       // Calculate CrunchyCone stats
       if (data.isAuthenticated && data.variables) {
@@ -567,17 +569,28 @@ export function EnvironmentVariablesDisplay() {
           <div>
             <CardTitle>Environment Variables</CardTitle>
             <div className="text-sm text-muted-foreground">
-              {envVars.length} variables from .env file
-              {hasCrunchyConeConfig &&
-                (isAuthenticated
-                  ? ` • CrunchyCone: ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`
-                  : " • CrunchyCone project (not authenticated)")}
+              {isUsingPlatformAPI ? (
+                <>
+                  {envVars.length} variables from CrunchyCone Platform
+                  {` • ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`}
+                </>
+              ) : (
+                <>
+                  {envVars.length} variables from .env file
+                  {hasCrunchyConeConfig &&
+                    (isAuthenticated
+                      ? ` • CrunchyCone: ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`
+                      : " • CrunchyCone project (not authenticated)")}
+                </>
+              )}
             </div>
           </div>
-          <Button onClick={openAddDialog} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Variable
-          </Button>
+          {!isUsingPlatformAPI && (
+            <Button onClick={openAddDialog} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Variable
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -585,8 +598,14 @@ export function EnvironmentVariablesDisplay() {
           <TableHeader>
             <TableRow>
               <TableHead>Variable Name</TableHead>
-              <TableHead>Local Value</TableHead>
-              {hasCrunchyConeConfig && isAuthenticated && <TableHead>Remote Value</TableHead>}
+              {isUsingPlatformAPI ? (
+                <TableHead>Platform Value</TableHead>
+              ) : (
+                <>
+                  <TableHead>Local Value</TableHead>
+                  {!isUsingPlatformAPI && hasCrunchyConeConfig && isAuthenticated && <TableHead>Remote Value</TableHead>}
+                </>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -638,85 +657,102 @@ export function EnvironmentVariablesDisplay() {
                     </Button>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    {isSensitiveLocalValue(envVar.key) ? (
-                      <div className="relative flex-1 max-w-xs">
-                        <Input
-                          type={visibleLocalValues.has(envVar.key) ? "text" : "password"}
-                          value={envVar.localValue || ""}
-                          readOnly
-                          className="h-8 font-mono text-sm pr-8"
-                          placeholder={envVar.localValue ? undefined : "(empty)"}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-1 top-0 h-8 w-8 p-0 hover:bg-transparent"
-                          onClick={() => toggleLocalValueVisibility(envVar.key)}
-                        >
-                          {visibleLocalValues.has(envVar.key) ? (
-                            <EyeOff className="h-3 w-3" />
-                          ) : (
-                            <Eye className="h-3 w-3" />
-                          )}
-                        </Button>
-                      </div>
-                    ) : (
+                {isUsingPlatformAPI ? (
+                  <TableCell>
+                    <div className="flex items-center gap-1">
                       <div className="flex-1 max-w-xs">
                         <Input
-                          type="text"
-                          value={envVar.localValue || ""}
+                          type={envVar.isRemoteSecret ? "password" : "text"}
+                          value={envVar.crunchyconeValue || ""}
                           readOnly
-                          className="h-8 font-mono text-sm"
-                          placeholder={envVar.localValue ? undefined : "(empty)"}
+                          className="h-8 font-mono text-sm bg-muted"
+                          placeholder={envVar.crunchyconeValue ? undefined : "(not set)"}
                         />
                       </div>
-                    )}
+                      {/* Platform variables are read-only, no edit/delete buttons */}
+                    </div>
+                  </TableCell>
+                ) : (
+                  <TableCell>
                     <div className="flex items-center gap-1">
-                      {hasCrunchyConeConfig &&
-                        isAuthenticated &&
-                        envVar.crunchyconeValue &&
-                        !envVar.isRemoteSecret && (
+                      {isSensitiveLocalValue(envVar.key) ? (
+                        <div className="relative flex-1 max-w-xs">
+                          <Input
+                            type={visibleLocalValues.has(envVar.key) ? "text" : "password"}
+                            value={envVar.localValue || ""}
+                            readOnly
+                            className="h-8 font-mono text-sm pr-8"
+                            placeholder={envVar.localValue ? undefined : "(empty)"}
+                          />
                           <Button
+                            type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
-                            onClick={() =>
-                              openPullDialog(
-                                envVar.key,
-                                envVar.localValue,
-                                envVar.crunchyconeValue!
-                              )
-                            }
-                            title="Pull value from CrunchyCone"
+                            className="absolute right-1 top-0 h-8 w-8 p-0 hover:bg-transparent"
+                            onClick={() => toggleLocalValueVisibility(envVar.key)}
                           >
-                            <RefreshCw className="h-3 w-3" />
+                            {visibleLocalValues.has(envVar.key) ? (
+                              <EyeOff className="h-3 w-3" />
+                            ) : (
+                              <Eye className="h-3 w-3" />
+                            )}
                           </Button>
-                        )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => openEditDialog(envVar.key, envVar.localValue)}
-                        title="Edit variable"
-                      >
-                        <Edit2 className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        onClick={() => openDeleteDialog(envVar.key)}
-                        title="Delete variable"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                        </div>
+                      ) : (
+                        <div className="flex-1 max-w-xs">
+                          <Input
+                            type="text"
+                            value={envVar.localValue || ""}
+                            readOnly
+                            className="h-8 font-mono text-sm"
+                            placeholder={envVar.localValue ? undefined : "(empty)"}
+                          />
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        {hasCrunchyConeConfig &&
+                          isAuthenticated &&
+                          envVar.crunchyconeValue &&
+                          !envVar.isRemoteSecret && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                              onClick={() =>
+                                openPullDialog(
+                                  envVar.key,
+                                  envVar.localValue,
+                                  envVar.crunchyconeValue!
+                                )
+                              }
+                              title="Pull value from CrunchyCone"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => openEditDialog(envVar.key, envVar.localValue)}
+                          title="Edit variable"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          onClick={() => openDeleteDialog(envVar.key)}
+                          title="Delete variable"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </TableCell>
-                {hasCrunchyConeConfig && isAuthenticated && (
+                  </TableCell>
+                )}
+                {!isUsingPlatformAPI && hasCrunchyConeConfig && isAuthenticated && (
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <div className="font-mono text-sm max-w-xs flex-1">

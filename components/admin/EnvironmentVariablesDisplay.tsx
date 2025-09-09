@@ -14,6 +14,7 @@ import {
   Plus,
   Loader2,
   RefreshCw,
+  Cloud,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,6 +46,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface EnvironmentVariable {
   key: string;
@@ -66,6 +73,7 @@ export function EnvironmentVariablesDisplay() {
   }>({ envCount: 0, secretCount: 0 });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [visibleLocalValues, setVisibleLocalValues] = useState<Set<string>>(new Set());
+  const [clickedTooltips, setClickedTooltips] = useState<Set<string>>(new Set());
 
   // Edit dialog state
   const [editDialog, setEditDialog] = useState<{
@@ -181,6 +189,18 @@ export function EnvironmentVariablesDisplay() {
     });
   };
 
+  const toggleTooltipVisibility = (key: string) => {
+    setClickedTooltips((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
+  };
+
   const isSensitiveLocalValue = (key: string) => {
     const upperKey = key.toUpperCase();
     return (
@@ -229,6 +249,51 @@ export function EnvironmentVariablesDisplay() {
     ];
     const lowerKey = key.toLowerCase();
     return sensitiveKeywords.some((keyword) => lowerKey.includes(keyword));
+  };
+
+  const isDeploymentSpecific = (key: string) => {
+    const deploymentSpecificKeys = [
+      "DATABASE_URL",
+      "TURSO_AUTH_TOKEN", 
+      "TURSO_DATABASE_URL",
+      "POSTGRES_URL",
+      "MYSQL_URL",
+      "REDIS_URL",
+      "MONGODB_URL",
+      "AUTH_URL",
+      "NEXT_PUBLIC_APP_URL",
+      "PORT",
+      "HOST",
+      "NODE_ENV"
+    ];
+    return deploymentSpecificKeys.includes(key.toUpperCase());
+  };
+
+  const getDeploymentMessage = (key: string) => {
+    const upperKey = key.toUpperCase();
+    switch (upperKey) {
+      case "DATABASE_URL":
+      case "TURSO_DATABASE_URL":
+      case "POSTGRES_URL":
+      case "MYSQL_URL":
+      case "MONGODB_URL":
+        return "In production, this will point to a remote database service rather than local files";
+      case "TURSO_AUTH_TOKEN":
+        return "In production, this will use the deployment platform's Turso authentication token";
+      case "REDIS_URL":
+        return "In production, this will connect to a hosted Redis service";
+      case "AUTH_URL":
+      case "NEXT_PUBLIC_APP_URL":
+        return "In production, this will use your actual domain instead of localhost";
+      case "PORT":
+        return "In production, this will be set by the deployment platform";
+      case "HOST":
+        return "In production, this will be set to 0.0.0.0 or managed by the platform";
+      case "NODE_ENV":
+        return "In production, this will be automatically set to 'production'";
+      default:
+        return "This value may differ in production environments";
+    }
   };
 
   const openEditDialog = (variableKey: string, currentValue: string) => {
@@ -530,6 +595,36 @@ export function EnvironmentVariablesDisplay() {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <code className="font-mono text-sm">{envVar.key}</code>
+                    {isDeploymentSpecific(envVar.key) && (
+                      <TooltipProvider>
+                        <Tooltip 
+                          open={clickedTooltips.has(envVar.key) ? true : undefined}
+                          onOpenChange={(open) => {
+                            if (!open && clickedTooltips.has(envVar.key)) {
+                              setClickedTooltips(prev => {
+                                const newSet = new Set(prev);
+                                newSet.delete(envVar.key);
+                                return newSet;
+                              });
+                            }
+                          }}
+                        >
+                          <TooltipTrigger asChild>
+                            <div 
+                              className="relative flex items-center justify-center w-4 h-4 rounded-full border border-blue-500 bg-blue-50 hover:bg-blue-100 cursor-help transition-colors"
+                              onClick={() => toggleTooltipVisibility(envVar.key)}
+                            >
+                              <Cloud className="h-2.5 w-2.5 text-blue-500" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-sm">
+                              {getDeploymentMessage(envVar.key)}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"

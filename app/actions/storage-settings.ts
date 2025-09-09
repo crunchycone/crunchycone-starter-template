@@ -178,19 +178,31 @@ export async function testStorageConnection(
       return { success: false, error: "Unauthorized" };
     }
 
-    // For CrunchyCone provider, check authentication first
+    // For CrunchyCone provider, check authentication based on environment
     if (settings.provider === "crunchycone") {
-      const authService = getCrunchyConeAuthService();
-      const authResult = await authService.checkAuthentication();
+      if (process.env.CRUNCHYCONE_PLATFORM === "1") {
+        // For platform environments, check if API key is available
+        if (!process.env.CRUNCHYCONE_API_KEY) {
+          return {
+            success: false,
+            error: "CrunchyCone API key is required for platform environment",
+            details: "CRUNCHYCONE_API_KEY environment variable is not set",
+          };
+        }
+      } else {
+        // For local environments, check CLI authentication
+        const authService = getCrunchyConeAuthService();
+        const authResult = await authService.checkAuthentication();
 
-      if (!authResult.success) {
-        return {
-          success: false,
-          error: "CrunchyCone authentication failed",
-          details:
-            authResult.error ||
-            "Not authenticated with CrunchyCone services. Please check your API key or CLI authentication.",
-        };
+        if (!authResult.success) {
+          return {
+            success: false,
+            error: "CrunchyCone authentication failed",
+            details:
+              authResult.error ||
+              "Not authenticated with CrunchyCone services. Please check your CLI authentication.",
+          };
+        }
       }
     }
 

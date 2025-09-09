@@ -482,18 +482,29 @@ export async function testEmailConfiguration(settings: EmailSettings, customTo?:
         break;
 
       case "crunchycone":
-        // Check CrunchyCone authentication
-        const authService = getCrunchyConeAuthService();
-        const authResult = await authService.checkAuthentication();
+        // Only check CrunchyCone authentication if we're on the platform
+        if (process.env.CRUNCHYCONE_PLATFORM === "1") {
+          // Check if API key is available for platform environments
+          if (!settings.crunchyconeApiKey && !process.env.CRUNCHYCONE_API_KEY) {
+            return {
+              success: false,
+              message: "CrunchyCone API key is required for platform environment",
+            };
+          }
+        } else {
+          // For local environments, check CLI authentication
+          const authService = getCrunchyConeAuthService();
+          const authResult = await authService.checkAuthentication();
 
-        if (!authResult.success) {
-          return {
-            success: false,
-            message: "CrunchyCone authentication failed",
-            details:
-              authResult.error ||
-              "Not authenticated with CrunchyCone services. Please check your API key or CLI authentication.",
-          };
+          if (!authResult.success) {
+            return {
+              success: false,
+              message: "CrunchyCone authentication failed",
+              details:
+                authResult.error ||
+                "Not authenticated with CrunchyCone services. Please check your CLI authentication.",
+            };
+          }
         }
         break;
 
@@ -661,6 +672,21 @@ export async function checkCrunchyConeAuth() {
   await requireRole("admin");
 
   try {
+    // If we're on the platform, check for API key instead of CLI auth
+    if (process.env.CRUNCHYCONE_PLATFORM === "1") {
+      const hasApiKey = !!(process.env.CRUNCHYCONE_API_KEY || (await getCurrentEmailSettings()).crunchyconeApiKey);
+      
+      return {
+        success: true,
+        authenticated: hasApiKey,
+        user: null,
+        message: hasApiKey
+          ? "CrunchyCone API key is configured for platform environment"
+          : "CrunchyCone API key not found for platform environment",
+      };
+    }
+
+    // For local environments, use CLI authentication
     const { stdout, stderr } = await execAsync("npx --yes crunchycone-cli auth check -j");
 
     if (stderr) {

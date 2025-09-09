@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/permissions";
-import {
-  getAllEnvironmentVariables,
-  updateEnvironmentVariables,
-  getEnvironmentServiceInfo,
-  isOnCrunchyConePlatform,
-  getEnvironmentService,
-} from "@/lib/environment-service";
+import { getEnvironmentService } from "@/lib/environment-service";
 import { getCrunchyConeAuthService } from "@/lib/crunchycone-auth-service";
 
 // Force dynamic rendering
@@ -39,33 +33,48 @@ export async function GET() {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    // Check platform and provide appropriate access
-    const platformInfo = getEnvironmentServiceInfo();
-    const isProduction = process.env.NODE_ENV === "production";
+    // Get the unified environment service (automatically detects platform vs local)
+    const envService = getEnvironmentService();
+    const providerInfo = envService.getProviderInfo();
 
-    // On platform, always allow access (managed environment)
-    // In local production, restrict for security
-    if (isProduction && !isOnCrunchyConePlatform()) {
+    // On production local (not platform), restrict access for security
+    const isProduction = process.env.NODE_ENV === "production";
+    if (isProduction && !providerInfo.isPlatformEnvironment) {
       return NextResponse.json(
         { error: "Environment variables are not available in local production mode" },
         { status: 403 }
       );
     }
 
-    // Check CrunchyCone authentication
+    // Check CrunchyCone authentication for platform environments
     let crunchyConeAuth: { isAuthenticated: boolean; source: "api" | "cli" | "unknown" } = { 
       isAuthenticated: false, 
       source: "unknown"
     };
-    try {
-      const authService = getCrunchyConeAuthService();
-      const authResult = await authService.checkAuthentication();
-      crunchyConeAuth = {
-        isAuthenticated: authResult.success,
-        source: authResult.source || "unknown",
-      };
-    } catch {
-      // Auth check failed, keep defaults
+
+    // Only check auth if we're using remote provider (platform environment)
+    if (providerInfo.type === "remote") {
+      try {
+        const authService = getCrunchyConeAuthService();
+        const authResult = await authService.checkAuthentication();
+        crunchyConeAuth = {
+          isAuthenticated: authResult.success,
+          source: authResult.source || "unknown",
+        };
+      } catch {
+        // Auth check failed, return error for platform environments
+        return NextResponse.json(
+          { error: "CrunchyCone authentication required for platform environment" },
+          { status: 401 }
+        );
+      }
+
+      if (!crunchyConeAuth.isAuthenticated) {
+        return NextResponse.json(
+          { error: "Not authenticated with CrunchyCone platform" },
+          { status: 401 }
+        );
+      }
     }
 
     let variables: Array<{
@@ -76,74 +85,59 @@ export async function GET() {
       isRemoteSecret?: boolean;
     }> = [];
 
-    // If on CrunchyCone platform, get variables from CrunchyCone API
-    if (isOnCrunchyConePlatform() && crunchyConeAuth.isAuthenticated) {
-      try {
-        const envService = getEnvironmentService();
-        
-        // Get environment variables from CrunchyCone
-        const envVars = await envService.listEnvVars();
-        const secretNames = await envService.listSecretNames();
-        
-        // Convert environment variables to array format
-        const envEntries = Object.entries(envVars).map(([key, value]) => ({
-          key,
-          localValue: "",  // No local values on platform
-          crunchyconeValue: value || "",
-          isSecret: false,
-          isRemoteSecret: false,
-        }));
-
-        // Convert secrets to array format (values are hidden)
-        const secretEntries = secretNames.map((key) => ({
-          key,
-          localValue: "",  // No local values on platform
-          crunchyconeValue: "••••••••",  // Masked value for secrets
-          isSecret: true,
-          isRemoteSecret: true,
-        }));
-
-        // Combine environment variables and secrets
-        variables = [...envEntries, ...secretEntries];
-        
-        // Sort alphabetically by key
-        variables.sort((a, b) => a.key.localeCompare(b.key));
-        
-      } catch (error) {
-        console.error("Failed to fetch CrunchyCone variables:", error);
-        // Fall back to local environment on error
-        const variablesObject = await getAllEnvironmentVariables();
-        variables = Object.entries(variablesObject).map(([key, value]) => ({
-          key,
-          localValue: value || "",
-          isSecret: isSensitiveKey(key),
-          crunchyconeValue: undefined,
-          isRemoteSecret: false,
-        }));
+    try {
+      // Get environment variables using the unified service
+      const envVars = await envService.listEnvVars();
+      
+      // If platform environment and supports secrets, also get secrets
+      let secretNames: string[] = [];
+      if (providerInfo.isPlatformEnvironment && providerInfo.supportsSecrets) {
+        secretNames = await envService.listSecretNames();
       }
-    } else {
-      // Use local environment variables (.env file)
-      const variablesObject = await getAllEnvironmentVariables();
-      variables = Object.entries(variablesObject).map(([key, value]) => ({
+
+      // Convert environment variables to array format
+      const envEntries = Object.entries(envVars).map(([key, value]) => ({
         key,
-        localValue: value || "",
-        isSecret: isSensitiveKey(key),
-        crunchyconeValue: undefined,
+        localValue: providerInfo.isPlatformEnvironment ? "" : (value || ""), // Local value only for local provider
+        crunchyconeValue: providerInfo.isPlatformEnvironment ? (value || "") : undefined, // Platform value only for platform provider
+        isSecret: !providerInfo.isPlatformEnvironment && isSensitiveKey(key), // Local sensitive detection
         isRemoteSecret: false,
       }));
+
+      // Convert secrets to array format (values are hidden)
+      const secretEntries = secretNames.map((key) => ({
+        key,
+        localValue: "",
+        crunchyconeValue: "••••••••", // Masked value for secrets
+        isSecret: true,
+        isRemoteSecret: true,
+      }));
+
+      // Combine environment variables and secrets
+      variables = [...envEntries, ...secretEntries];
+      
+      // Sort alphabetically by key
+      variables.sort((a, b) => a.key.localeCompare(b.key));
+      
+    } catch (error) {
+      console.error("Failed to fetch environment variables:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch environment variables" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       variables,
       platform: {
-        type: platformInfo.type,
-        isPlatformEnvironment: platformInfo.isPlatformEnvironment,
-        supportsSecrets: platformInfo.supportsSecrets,
-        isUsingPlatformAPI: isOnCrunchyConePlatform() && crunchyConeAuth.isAuthenticated,
+        type: providerInfo.type,
+        isPlatformEnvironment: providerInfo.isPlatformEnvironment,
+        supportsSecrets: providerInfo.supportsSecrets,
+        isUsingPlatformAPI: providerInfo.isPlatformEnvironment,
       },
       crunchyConeAuth,
-      hasCrunchyConeConfig: crunchyConeAuth.isAuthenticated,
-      isAuthenticated: crunchyConeAuth.isAuthenticated,
+      hasCrunchyConeConfig: providerInfo.type === "remote" || crunchyConeAuth.isAuthenticated,
+      isAuthenticated: providerInfo.type === "local" || crunchyConeAuth.isAuthenticated,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -165,16 +159,36 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    // Check platform and provide appropriate access
-    const isProduction = process.env.NODE_ENV === "production";
+    // Get the unified environment service
+    const envService = getEnvironmentService();
+    const providerInfo = envService.getProviderInfo();
 
-    // On platform, always allow access (managed environment)
-    // In local production, restrict for security
-    if (isProduction && !isOnCrunchyConePlatform()) {
+    // On production local (not platform), restrict access for security
+    const isProduction = process.env.NODE_ENV === "production";
+    if (isProduction && !providerInfo.isPlatformEnvironment) {
       return NextResponse.json(
         { error: "Environment variable editing is not available in local production mode" },
         { status: 403 }
       );
+    }
+
+    // Check CrunchyCone authentication for platform environments
+    if (providerInfo.type === "remote") {
+      try {
+        const authService = getCrunchyConeAuthService();
+        const authResult = await authService.checkAuthentication();
+        if (!authResult.success) {
+          return NextResponse.json(
+            { error: "Not authenticated with CrunchyCone platform" },
+            { status: 401 }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "CrunchyCone authentication required for platform environment" },
+          { status: 401 }
+        );
+      }
     }
 
     const { key, value } = await request.json();
@@ -184,14 +198,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update environment variable using unified service
-    const result = await updateEnvironmentVariables({ [key]: value });
-
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to update environment variable" },
-        { status: 500 }
-      );
-    }
+    await envService.setEnvVar(key, value);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -213,16 +220,36 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    // Check platform and provide appropriate access
-    const isProduction = process.env.NODE_ENV === "production";
+    // Get the unified environment service
+    const envService = getEnvironmentService();
+    const providerInfo = envService.getProviderInfo();
 
-    // On platform, always allow access (managed environment)
-    // In local production, restrict for security
-    if (isProduction && !isOnCrunchyConePlatform()) {
+    // On production local (not platform), restrict access for security
+    const isProduction = process.env.NODE_ENV === "production";
+    if (isProduction && !providerInfo.isPlatformEnvironment) {
       return NextResponse.json(
         { error: "Environment variable deletion is not available in local production mode" },
         { status: 403 }
       );
+    }
+
+    // Check CrunchyCone authentication for platform environments
+    if (providerInfo.type === "remote") {
+      try {
+        const authService = getCrunchyConeAuthService();
+        const authResult = await authService.checkAuthentication();
+        if (!authResult.success) {
+          return NextResponse.json(
+            { error: "Not authenticated with CrunchyCone platform" },
+            { status: 401 }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "CrunchyCone authentication required for platform environment" },
+          { status: 401 }
+        );
+      }
     }
 
     const { key } = await request.json();
@@ -232,14 +259,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete environment variable using unified service
-    const result = await updateEnvironmentVariables({ [key]: undefined });
-
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || "Failed to delete environment variable" },
-        { status: 500 }
-      );
-    }
+    await envService.deleteEnvVar(key);
 
     return NextResponse.json({ success: true });
   } catch (error) {

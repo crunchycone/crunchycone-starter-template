@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { triggerDatabaseUpload } from "@/app/actions/database-upload";
 
 const setupSchema = z.object({
   email: z.string().email(),
@@ -81,10 +82,25 @@ export async function POST(request: NextRequest) {
       return newUser;
     });
 
+    // Trigger database upload in background (only for local environments)
+    let uploadMessage = "";
+    try {
+      const uploadResult = await triggerDatabaseUpload();
+      if (uploadResult.success) {
+        uploadMessage = " Database upload started in background.";
+      } else {
+        // Log but don't fail the admin setup
+        console.log("Database upload not triggered:", uploadResult.message);
+      }
+    } catch (error) {
+      // Log but don't fail the admin setup
+      console.error("Failed to trigger database upload:", error);
+    }
+
     // Note: Session creation will be handled by Auth.js after signup
     return NextResponse.json({
       success: true,
-      message: "Admin user created successfully",
+      message: `Admin user created successfully.${uploadMessage}`,
       user: {
         id: user.id,
         email: user.email,

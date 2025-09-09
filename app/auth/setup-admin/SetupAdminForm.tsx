@@ -37,6 +37,7 @@ export function SetupAdminForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const form = useForm<SetupFormData>({
     resolver: zodResolver(setupSchema),
@@ -51,6 +52,7 @@ export function SetupAdminForm() {
     try {
       setIsLoading(true);
       setError(null);
+      setSuccessMessage(null);
 
       const response = await fetch("/api/auth/setup-admin", {
         method: "POST",
@@ -68,6 +70,12 @@ export function SetupAdminForm() {
       if (!response.ok) {
         throw new Error(result.error || "Failed to create admin user");
       }
+
+      // Show success message (may include database upload info)
+      setSuccessMessage(result.message);
+
+      // Short delay to show the success message
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Automatically sign in the user after successful admin setup
       const signInResult = await signIn("credentials", {
@@ -142,6 +150,11 @@ export function SetupAdminForm() {
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {successMessage && (
+              <Alert>
+                <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>

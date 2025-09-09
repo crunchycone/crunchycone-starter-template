@@ -3,8 +3,8 @@
 import { auth } from "@/lib/auth";
 import { hasRole } from "@/lib/auth/permissions";
 import { revalidatePath } from "next/cache";
-import fs from "fs";
-import path from "path";
+import { updateEnvironmentVariables, getEnvironmentVariables } from "@/lib/environment-service";
+import { getCrunchyConeAuthService } from "@/lib/crunchycone-auth-service";
 
 interface StorageSettings {
   provider: string;
@@ -55,36 +55,63 @@ export async function getStorageSettings(): Promise<{
       return { success: false, error: "Unauthorized" };
     }
 
-    // Read current environment variables
+    // Get environment variables using the unified service
+    const envVars = await getEnvironmentVariables([
+      "CRUNCHYCONE_STORAGE_PROVIDER",
+      "CRUNCHYCONE_LOCALSTORAGE_PATH",
+      "CRUNCHYCONE_LOCALSTORAGE_BASE_URL",
+      "CRUNCHYCONE_AWS_ACCESS_KEY_ID",
+      "CRUNCHYCONE_AWS_SECRET_ACCESS_KEY",
+      "CRUNCHYCONE_AWS_REGION",
+      "CRUNCHYCONE_AWS_BUCKET",
+      "CRUNCHYCONE_AWS_CLOUDFRONT_DOMAIN",
+      "CRUNCHYCONE_DO_ACCESS_KEY_ID",
+      "CRUNCHYCONE_DO_SECRET_ACCESS_KEY",
+      "CRUNCHYCONE_DO_REGION",
+      "CRUNCHYCONE_DO_BUCKET",
+      "CRUNCHYCONE_DO_CDN_ENDPOINT",
+      "CRUNCHYCONE_AZURE_ACCOUNT_NAME",
+      "CRUNCHYCONE_AZURE_ACCOUNT_KEY",
+      "CRUNCHYCONE_AZURE_SAS_TOKEN",
+      "CRUNCHYCONE_AZURE_CONNECTION_STRING",
+      "CRUNCHYCONE_AZURE_CONTAINER_NAME",
+      "CRUNCHYCONE_AZURE_CDN_URL",
+      "CRUNCHYCONE_GCP_PROJECT_ID",
+      "CRUNCHYCONE_GCP_KEY_FILE",
+      "CRUNCHYCONE_GCS_BUCKET",
+      "CRUNCHYCONE_GCP_CDN_URL",
+    ]);
+
     const settings: StorageSettings = {
-      provider: process.env.CRUNCHYCONE_STORAGE_PROVIDER || "localstorage",
-      localStoragePath: process.env.CRUNCHYCONE_LOCALSTORAGE_PATH,
-      localStorageBaseUrl: process.env.CRUNCHYCONE_LOCALSTORAGE_BASE_URL,
-      awsAccessKeyId: process.env.CRUNCHYCONE_AWS_ACCESS_KEY_ID,
-      awsSecretAccessKey: process.env.CRUNCHYCONE_AWS_SECRET_ACCESS_KEY,
-      awsRegion: process.env.CRUNCHYCONE_AWS_REGION,
-      awsBucket: process.env.CRUNCHYCONE_AWS_BUCKET,
-      awsCloudFrontDomain: process.env.CRUNCHYCONE_AWS_CLOUDFRONT_DOMAIN,
-      doAccessKeyId: process.env.CRUNCHYCONE_DO_ACCESS_KEY_ID,
-      doSecretAccessKey: process.env.CRUNCHYCONE_DO_SECRET_ACCESS_KEY,
-      doRegion: process.env.CRUNCHYCONE_DO_REGION,
-      doBucket: process.env.CRUNCHYCONE_DO_BUCKET,
-      doCdnEndpoint: process.env.CRUNCHYCONE_DO_CDN_ENDPOINT,
-      azureAccountName: process.env.CRUNCHYCONE_AZURE_ACCOUNT_NAME,
-      azureAccountKey: process.env.CRUNCHYCONE_AZURE_ACCOUNT_KEY,
-      azureSasToken: process.env.CRUNCHYCONE_AZURE_SAS_TOKEN,
-      azureConnectionString: process.env.CRUNCHYCONE_AZURE_CONNECTION_STRING,
-      azureContainerName: process.env.CRUNCHYCONE_AZURE_CONTAINER_NAME,
-      azureCdnUrl: process.env.CRUNCHYCONE_AZURE_CDN_URL,
-      gcpProjectId: process.env.CRUNCHYCONE_GCP_PROJECT_ID,
-      gcpKeyFile: process.env.CRUNCHYCONE_GCP_KEY_FILE,
-      gcsBucket: process.env.CRUNCHYCONE_GCS_BUCKET,
-      gcpCdnUrl: process.env.CRUNCHYCONE_GCP_CDN_URL,
+      provider: envVars.CRUNCHYCONE_STORAGE_PROVIDER || "localstorage",
+      localStoragePath: envVars.CRUNCHYCONE_LOCALSTORAGE_PATH,
+      localStorageBaseUrl: envVars.CRUNCHYCONE_LOCALSTORAGE_BASE_URL,
+      awsAccessKeyId: envVars.CRUNCHYCONE_AWS_ACCESS_KEY_ID,
+      awsSecretAccessKey: envVars.CRUNCHYCONE_AWS_SECRET_ACCESS_KEY,
+      awsRegion: envVars.CRUNCHYCONE_AWS_REGION,
+      awsBucket: envVars.CRUNCHYCONE_AWS_BUCKET,
+      awsCloudFrontDomain: envVars.CRUNCHYCONE_AWS_CLOUDFRONT_DOMAIN,
+      doAccessKeyId: envVars.CRUNCHYCONE_DO_ACCESS_KEY_ID,
+      doSecretAccessKey: envVars.CRUNCHYCONE_DO_SECRET_ACCESS_KEY,
+      doRegion: envVars.CRUNCHYCONE_DO_REGION,
+      doBucket: envVars.CRUNCHYCONE_DO_BUCKET,
+      doCdnEndpoint: envVars.CRUNCHYCONE_DO_CDN_ENDPOINT,
+      azureAccountName: envVars.CRUNCHYCONE_AZURE_ACCOUNT_NAME,
+      azureAccountKey: envVars.CRUNCHYCONE_AZURE_ACCOUNT_KEY,
+      azureSasToken: envVars.CRUNCHYCONE_AZURE_SAS_TOKEN,
+      azureConnectionString: envVars.CRUNCHYCONE_AZURE_CONNECTION_STRING,
+      azureContainerName: envVars.CRUNCHYCONE_AZURE_CONTAINER_NAME,
+      azureCdnUrl: envVars.CRUNCHYCONE_AZURE_CDN_URL,
+      gcpProjectId: envVars.CRUNCHYCONE_GCP_PROJECT_ID,
+      gcpKeyFile: envVars.CRUNCHYCONE_GCP_KEY_FILE,
+      gcsBucket: envVars.CRUNCHYCONE_GCS_BUCKET,
+      gcpCdnUrl: envVars.CRUNCHYCONE_GCP_CDN_URL,
     };
 
     return { success: true, settings };
-  } catch {
-    return { success: false, error: "Failed to load storage settings" };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: `Failed to load storage settings: ${errorMessage}` };
   }
 }
 
@@ -97,17 +124,7 @@ export async function updateStorageSettings(
       return { success: false, error: "Unauthorized" };
     }
 
-    // Read current .env file
-    const envPath = path.join(process.cwd(), ".env");
-    let envContent = "";
-
-    try {
-      envContent = fs.readFileSync(envPath, "utf-8");
-    } catch {
-      // If .env doesn't exist, start with empty content
-    }
-
-    // Update storage environment variables
+    // Prepare environment variable updates
     const updates: Record<string, string | undefined> = {
       CRUNCHYCONE_STORAGE_PROVIDER: settings.provider,
       CRUNCHYCONE_LOCALSTORAGE_PATH: settings.localStoragePath,
@@ -134,73 +151,21 @@ export async function updateStorageSettings(
       CRUNCHYCONE_GCP_CDN_URL: settings.gcpCdnUrl,
     };
 
-    // Parse existing .env content
-    const envLines = envContent.split("\n");
-    const envMap = new Map<string, string>();
-    const commentLines: string[] = [];
+    // Use the unified environment service to update variables
+    const result = await updateEnvironmentVariables(updates, {
+      removeEmpty: true, // Remove variables with empty values
+    });
 
-    for (const line of envLines) {
-      if (line.trim().startsWith("#") || line.trim() === "") {
-        commentLines.push(line);
-      } else if (line.includes("=")) {
-        const [key, ...valueParts] = line.split("=");
-        envMap.set(key.trim(), valueParts.join("="));
-      } else {
-        commentLines.push(line);
-      }
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
-
-    // Update with new values
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined && value !== "") {
-        envMap.set(key, value);
-      } else {
-        envMap.delete(key);
-      }
-    }
-
-    // Rebuild .env content
-    const newEnvLines: string[] = [];
-
-    // Add comments and non-storage variables first
-    for (const line of envLines) {
-      if (line.trim().startsWith("#") || line.trim() === "") {
-        newEnvLines.push(line);
-      } else if (line.includes("=")) {
-        const [key] = line.split("=");
-        if (
-          !key.trim().startsWith("CRUNCHYCONE_STORAGE") &&
-          !key.trim().startsWith("CRUNCHYCONE_LOCALSTORAGE") &&
-          !key.trim().startsWith("CRUNCHYCONE_AWS") &&
-          !key.trim().startsWith("CRUNCHYCONE_DO") &&
-          !key.trim().startsWith("CRUNCHYCONE_AZURE") &&
-          !key.trim().startsWith("CRUNCHYCONE_GCP") &&
-          !key.trim().startsWith("CRUNCHYCONE_GCS")
-        ) {
-          newEnvLines.push(line);
-        }
-      } else {
-        newEnvLines.push(line);
-      }
-    }
-
-    // Add storage configuration section
-    newEnvLines.push("");
-    newEnvLines.push("# Storage Configuration");
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined && value !== "") {
-        newEnvLines.push(`${key}="${value}"`);
-      }
-    }
-
-    // Write updated .env file
-    fs.writeFileSync(envPath, newEnvLines.join("\n"));
 
     revalidatePath("/admin/settings");
     return { success: true };
   } catch (error) {
     console.error("Error updating storage settings:", error);
-    return { success: false, error: "Failed to update storage settings" };
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: `Failed to update storage settings: ${errorMessage}` };
   }
 }
 
@@ -213,9 +178,25 @@ export async function testStorageConnection(
       return { success: false, error: "Unauthorized" };
     }
 
+    // For CrunchyCone provider, check authentication first
+    if (settings.provider === "crunchycone") {
+      const authService = getCrunchyConeAuthService();
+      const authResult = await authService.checkAuthentication();
+
+      if (!authResult.success) {
+        return {
+          success: false,
+          error: "CrunchyCone authentication failed",
+          details:
+            authResult.error ||
+            "Not authenticated with CrunchyCone services. Please check your API key or CLI authentication.",
+        };
+      }
+    }
+
     // Import crunchycone-lib storage classes
     const { initializeStorageProvider, getStorageProvider } = await import(
-      "crunchycone-lib/services/storage"
+      "crunchycone-lib/storage"
     );
 
     // Temporarily set environment variables for testing
@@ -272,7 +253,7 @@ export async function testStorageConnection(
         if (settings.gcpCdnUrl) testEnvVars.CRUNCHYCONE_GCP_CDN_URL = settings.gcpCdnUrl;
         break;
       case "crunchycone":
-        // CrunchyCone uses CLI authentication and crunchycone.toml project config
+        // CrunchyCone provider will use the auth service for credentials
         // No additional environment variables needed for testing
         break;
     }

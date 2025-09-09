@@ -175,3 +175,6 @@ playwright/.cache/
 
 # Local uploads folder - mostly for dev
 uploads/*
+
+# CrunchyCone database upload status file
+.crunchycone-upload-status

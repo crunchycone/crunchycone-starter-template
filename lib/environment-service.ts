@@ -25,18 +25,58 @@ let globalEnvironmentService: CrunchyConeEnvironmentService | null = null;
 export function getEnvironmentService(
   config?: EnvironmentServiceConfig
 ): CrunchyConeEnvironmentService {
+  // Force recreation to apply new config (remove for production)
+  globalEnvironmentService = null;
+  
   if (!globalEnvironmentService) {
-    globalEnvironmentService = getCrunchyConeEnvironmentService(config);
+    // Try to read project ID from crunchycone.toml if not in environment
+    let projectIdFromToml: string | undefined;
+    try {
+      if (!process.env.CRUNCHYCONE_PROJECT_ID && !isPlatformEnvironment()) {
+        // In local mode, try to read from crunchycone.toml
+        const fs = require('fs');
+        const path = require('path');
+        const tomlPath = path.join(process.cwd(), 'crunchycone.toml');
+        if (fs.existsSync(tomlPath)) {
+          const tomlContent = fs.readFileSync(tomlPath, 'utf8');
+          const match = tomlContent.match(/id\s*=\s*"([^"]+)"/);
+          if (match) {
+            projectIdFromToml = match[1];
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to read crunchycone.toml:', error);
+    }
+
+    // Ensure API key is passed for platform environments
+    const defaultConfig: EnvironmentServiceConfig = {
+      apiKey: process.env.CRUNCHYCONE_API_KEY,
+      projectId: process.env.CRUNCHYCONE_PROJECT_ID || projectIdFromToml,
+      apiUrl: process.env.CRUNCHYCONE_API_URL || "https://api.crunchycone.dev",
+      ...config,
+    };
+    
+    console.log("Creating environment service with config:", {
+      hasApiKey: !!defaultConfig.apiKey,
+      apiKeyLength: defaultConfig.apiKey?.length,
+      projectId: defaultConfig.projectId,
+      apiUrl: defaultConfig.apiUrl,
+    });
+    
+    try {
+      globalEnvironmentService = getCrunchyConeEnvironmentService(defaultConfig);
+      console.log("Environment service created successfully");
+    } catch (error) {
+      console.error("Failed to create environment service:", error);
+      throw error;
+    }
   }
   return globalEnvironmentService;
 }
 
-/**
- * Check if running on CrunchyCone platform
- */
-export function isOnCrunchyConePlatform(): boolean {
-  return isPlatformEnvironment();
-}
+// Re-export platform detection from crunchycone-lib for convenience
+export { isPlatformEnvironment } from "crunchycone-lib/environment";
 
 /**
  * Helper function to bulk update environment variables
@@ -156,6 +196,226 @@ export async function updateEnvironmentSection(
 
   // In the new approach, we don't have sections - just set all variables
   return await updateEnvironmentVariables(variables);
+}
+
+/**
+ * Get separate local and remote environment services for dual-mode operation
+ * This allows us to work with both .env and CrunchyCone simultaneously in local mode
+ */
+export function getDualEnvironmentServices(): {
+  local: CrunchyConeEnvironmentService;
+  remote: CrunchyConeEnvironmentService;
+} {
+  // Force local provider (for .env files)
+  const localService = getCrunchyConeEnvironmentService({
+    forcePlatform: false,
+  });
+
+  // Force remote provider (for CrunchyCone API)
+  const remoteService = getCrunchyConeEnvironmentService({
+    forcePlatform: true,
+  });
+
+  return { local: localService, remote: remoteService };
+}
+
+/**
+ * Get merged environment variables from both local (.env) and remote (CrunchyCone)
+ * Only used in local mode for unified view
+ */
+export async function getMergedEnvironmentVariables(): Promise<{
+  variables: Array<{
+    key: string;
+    localValue: string;
+    remoteValue?: string;
+    isSecret: boolean;
+    isRemoteSecret?: boolean;
+    hasConflict: boolean;
+  }>;
+  supportsRemoteSecrets: boolean;
+}> {
+  try {
+    console.log("getMergedEnvironmentVariables: Starting dual environment services");
+    const { local, remote } = getDualEnvironmentServices();
+    console.log("getMergedEnvironmentVariables: Dual services created");
+    
+    // Get local environment variables
+    console.log("getMergedEnvironmentVariables: Fetching local vars");
+    const localVars = await local.listEnvVars();
+    console.log("getMergedEnvironmentVariables: Local vars fetched:", Object.keys(localVars).length, "variables");
+    
+    // Get remote environment variables and secrets
+    let remoteVars: Record<string, string> = {};
+    let remoteSecrets: string[] = [];
+    let supportsRemoteSecrets = false;
+
+    try {
+      console.log("getMergedEnvironmentVariables: Fetching remote vars");
+      remoteVars = await remote.listEnvVars();
+      console.log("getMergedEnvironmentVariables: Remote vars fetched:", Object.keys(remoteVars).length, "variables");
+      
+      if (remote.supportsSecrets()) {
+        supportsRemoteSecrets = true;
+        console.log("getMergedEnvironmentVariables: Fetching remote secrets");
+        remoteSecrets = await remote.listSecretNames();
+        console.log("getMergedEnvironmentVariables: Remote secrets fetched:", remoteSecrets.length, "secrets");
+      }
+    } catch (error) {
+      // Remote access may fail, continue with local only
+      console.warn("getMergedEnvironmentVariables: Failed to fetch remote environment variables:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes("not authenticated")) {
+        console.warn("This appears to be a CrunchyCone authentication error from crunchycone-lib");
+      }
+    }
+
+    // Create unified list of all keys
+    const allKeys = new Set([
+      ...Object.keys(localVars),
+      ...Object.keys(remoteVars),
+      ...remoteSecrets
+    ]);
+
+    console.log("getMergedEnvironmentVariables: All keys count:", allKeys.size);
+    console.log("getMergedEnvironmentVariables: Remote vars keys:", Object.keys(remoteVars).slice(0, 5), "...");
+    console.log("getMergedEnvironmentVariables: Remote secrets:", remoteSecrets.length, "secrets");
+
+    // Helper function to determine if a key is sensitive
+    const isSensitiveKey = (key: string): boolean => {
+      const sensitiveKeywords = [
+        "secret", "key", "password", "token", "auth", "api", "private", 
+        "credential", "pass", "jwt", "oauth", "github", "google", "aws", 
+        "azure", "gcp", "stripe", "paypal", "database", "db", "redis", 
+        "session", "cookie", "smtp", "email", "twilio", "sendgrid", 
+        "crunchycone", "do", "spaces", "bucket", "access", "client"
+      ];
+      const lowerKey = key.toLowerCase();
+      return sensitiveKeywords.some(keyword => lowerKey.includes(keyword));
+    };
+
+    const variables = Array.from(allKeys).map(key => {
+      const localValue = localVars[key] || "";
+      const remoteValue = remoteVars[key];
+      const isRemoteSecret = remoteSecrets.includes(key);
+      const isSecret = isSensitiveKey(key);
+      const hasConflict = localValue !== "" && remoteValue !== undefined && localValue !== remoteValue;
+
+      return {
+        key,
+        localValue,
+        remoteValue: isRemoteSecret ? "••••••••" : remoteValue,
+        isSecret,
+        isRemoteSecret,
+        hasConflict,
+      };
+    });
+
+    // Sort alphabetically by key
+    variables.sort((a, b) => a.key.localeCompare(b.key));
+    
+    console.log("getMergedEnvironmentVariables: Final variables count:", variables.length);
+    console.log("getMergedEnvironmentVariables: Sample variables:", variables.slice(0, 3).map(v => ({
+      key: v.key,
+      hasLocal: !!v.localValue,
+      hasRemote: !!v.remoteValue,
+      isRemoteSecret: v.isRemoteSecret
+    })));
+
+    return {
+      variables,
+      supportsRemoteSecrets,
+    };
+  } catch (error) {
+    console.error("Failed to get merged environment variables:", error);
+    return {
+      variables: [],
+      supportsRemoteSecrets: false,
+    };
+  }
+}
+
+/**
+ * Push local environment variables to remote CrunchyCone
+ */
+export async function pushToRemote(keys?: string[]): Promise<{ success: boolean; error?: string; pushedCount?: number }> {
+  try {
+    const { local, remote } = getDualEnvironmentServices();
+    const localVars = await local.listEnvVars();
+    
+    let varsToPush: Record<string, string> = {};
+    
+    if (keys && keys.length > 0) {
+      // Push only specified keys
+      for (const key of keys) {
+        if (localVars[key] !== undefined) {
+          varsToPush[key] = localVars[key];
+        }
+      }
+    } else {
+      // Push all local variables
+      varsToPush = localVars;
+    }
+    
+    if (Object.keys(varsToPush).length === 0) {
+      return { success: false, error: "No variables to push" };
+    }
+    
+    await remote.setEnvVars(varsToPush);
+    
+    return { 
+      success: true, 
+      pushedCount: Object.keys(varsToPush).length 
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to push to remote:", error);
+    return {
+      success: false,
+      error: `Failed to push variables to remote: ${errorMessage}`,
+    };
+  }
+}
+
+/**
+ * Pull remote environment variables to local .env
+ */
+export async function pullFromRemote(keys?: string[]): Promise<{ success: boolean; error?: string; pulledCount?: number }> {
+  try {
+    const { local, remote } = getDualEnvironmentServices();
+    const remoteVars = await remote.listEnvVars();
+    
+    let varsToPull: Record<string, string> = {};
+    
+    if (keys && keys.length > 0) {
+      // Pull only specified keys
+      for (const key of keys) {
+        if (remoteVars[key] !== undefined) {
+          varsToPull[key] = remoteVars[key];
+        }
+      }
+    } else {
+      // Pull all remote variables (excluding secrets since they can't be read)
+      varsToPull = remoteVars;
+    }
+    
+    if (Object.keys(varsToPull).length === 0) {
+      return { success: false, error: "No variables to pull" };
+    }
+    
+    await local.setEnvVars(varsToPull);
+    
+    return { 
+      success: true, 
+      pulledCount: Object.keys(varsToPull).length 
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to pull from remote:", error);
+    return {
+      success: false,
+      error: `Failed to pull variables from remote: ${errorMessage}`,
+    };
+  }
 }
 
 // Re-export types for convenience

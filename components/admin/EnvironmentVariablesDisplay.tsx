@@ -55,25 +55,37 @@ import {
 
 interface EnvironmentVariable {
   key: string;
-  localValue: string;
-  crunchyconeValue?: string;
+  localValue?: string;
+  remoteValue?: string;
   isSecret: boolean;
   isRemoteSecret?: boolean;
+  hasConflict?: boolean;
 }
 
 export function EnvironmentVariablesDisplay() {
   const [envVars, setEnvVars] = useState<EnvironmentVariable[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasCrunchyConeConfig, setHasCrunchyConeConfig] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isUsingPlatformAPI, setIsUsingPlatformAPI] = useState(false);
+  const [platform, setPlatform] = useState<{
+    isPlatformEnvironment: boolean;
+    supportsSecrets: boolean;
+    supportsLocalRemoteSync: boolean;
+  }>({
+    isPlatformEnvironment: false,
+    supportsSecrets: false,
+    supportsLocalRemoteSync: false,
+  });
+  const [crunchyConeAuth, setCrunchyConeAuth] = useState<{
+    isAuthenticated: boolean;
+    source: string;
+  }>({ isAuthenticated: false, source: "unknown" });
   const [crunchyConeStats, setCrunchyConeStats] = useState<{
     envCount: number;
     secretCount: number;
   }>({ envCount: 0, secretCount: 0 });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [visibleLocalValues, setVisibleLocalValues] = useState<Set<string>>(new Set());
+  const [visibleRemoteValues, setVisibleRemoteValues] = useState<Set<string>>(new Set());
   const [clickedTooltips, setClickedTooltips] = useState<Set<string>>(new Set());
 
   // Edit dialog state
@@ -93,9 +105,11 @@ export function EnvironmentVariablesDisplay() {
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     variableKey: string;
+    isSecret: boolean;
   }>({
     isOpen: false,
     variableKey: "",
+    isSecret: false,
   });
 
   // Add dialog state
@@ -103,10 +117,12 @@ export function EnvironmentVariablesDisplay() {
     isOpen: boolean;
     name: string;
     value: string;
+    isSecret: boolean;
   }>({
     isOpen: false,
     name: "",
     value: "",
+    isSecret: false,
   });
 
   // Sync dialog state
@@ -127,6 +143,10 @@ export function EnvironmentVariablesDisplay() {
   });
 
   const [syncLoading, setSyncLoading] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [addValueVisible, setAddValueVisible] = useState(false);
 
   useEffect(() => {
     fetchEnvironmentVariables();
@@ -138,6 +158,12 @@ export function EnvironmentVariablesDisplay() {
       if (!response.ok) {
         if (response.status === 403) {
           setError("Environment variables are only available in development mode");
+        } else if (response.status === 502) {
+          // CrunchyCone API authentication failure
+          const errorData = await response.json().catch(() => ({}));
+          setError(errorData.error || "CrunchyCone API authentication failed. Please check your API key and permissions.");
+        } else if (response.status === 401) {
+          setError("You must be logged in as an admin to view environment variables");
         } else {
           setError("Failed to fetch environment variables");
         }
@@ -146,17 +172,16 @@ export function EnvironmentVariablesDisplay() {
 
       const data = await response.json();
       setEnvVars(data.variables);
-      setHasCrunchyConeConfig(data.hasCrunchyConeConfig);
-      setIsAuthenticated(data.isAuthenticated || false);
-      setIsUsingPlatformAPI(data.platform?.isUsingPlatformAPI || false);
+      setPlatform(data.platform);
+      setCrunchyConeAuth(data.crunchyConeAuth || { isAuthenticated: false, source: "unknown" });
 
       // Calculate CrunchyCone stats
-      if (data.isAuthenticated && data.variables) {
+      if (data.crunchyConeAuth?.isAuthenticated && data.variables) {
         const envCount = data.variables.filter(
-          (v: EnvironmentVariable) => v.crunchyconeValue && !v.isRemoteSecret
+          (v: EnvironmentVariable) => v.remoteValue && !v.isRemoteSecret
         ).length;
         const secretCount = data.variables.filter(
-          (v: EnvironmentVariable) => v.crunchyconeValue && v.isRemoteSecret
+          (v: EnvironmentVariable) => v.remoteValue && v.isRemoteSecret
         ).length;
         setCrunchyConeStats({ envCount, secretCount });
       } else {
@@ -181,6 +206,18 @@ export function EnvironmentVariablesDisplay() {
 
   const toggleLocalValueVisibility = (key: string) => {
     setVisibleLocalValues((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleRemoteValueVisibility = (key: string) => {
+    setVisibleRemoteValues((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(key)) {
         newSet.delete(key);
@@ -308,26 +345,32 @@ export function EnvironmentVariablesDisplay() {
   };
 
   const closeEditDialog = () => {
-    setEditDialog({
-      isOpen: false,
-      variableKey: "",
-      currentValue: "",
-      editValue: "",
-    });
+    if (!editLoading) {
+      setEditDialog({
+        isOpen: false,
+        variableKey: "",
+        currentValue: "",
+        editValue: "",
+      });
+    }
   };
 
-  const openDeleteDialog = (variableKey: string) => {
+  const openDeleteDialog = (variableKey: string, isSecret: boolean = false) => {
     setDeleteDialog({
       isOpen: true,
       variableKey,
+      isSecret,
     });
   };
 
   const closeDeleteDialog = () => {
-    setDeleteDialog({
-      isOpen: false,
-      variableKey: "",
-    });
+    if (!deleteLoading) {
+      setDeleteDialog({
+        isOpen: false,
+        variableKey: "",
+        isSecret: false,
+      });
+    }
   };
 
   const openAddDialog = () => {
@@ -335,15 +378,20 @@ export function EnvironmentVariablesDisplay() {
       isOpen: true,
       name: "",
       value: "",
+      isSecret: false,
     });
   };
 
   const closeAddDialog = () => {
-    setAddDialog({
-      isOpen: false,
-      name: "",
-      value: "",
-    });
+    if (!addLoading) {
+      setAddDialog({
+        isOpen: false,
+        name: "",
+        value: "",
+        isSecret: false,
+      });
+      setAddValueVisible(false);
+    }
   };
 
   const openPullDialog = (variableKey: string, localValue: string, remoteValue: string) => {
@@ -391,6 +439,7 @@ export function EnvironmentVariablesDisplay() {
 
   const handleSaveEdit = async () => {
     try {
+      setEditLoading(true);
       const response = await fetch("/api/admin/environment", {
         method: "PUT",
         headers: {
@@ -410,7 +459,9 @@ export function EnvironmentVariablesDisplay() {
       setEnvVars((prev) =>
         prev.map((envVar) =>
           envVar.key === editDialog.variableKey
-            ? { ...envVar, localValue: editDialog.editValue }
+            ? platform.isPlatformEnvironment 
+              ? { ...envVar, remoteValue: editDialog.editValue }
+              : { ...envVar, localValue: editDialog.editValue }
             : envVar
         )
       );
@@ -419,11 +470,14 @@ export function EnvironmentVariablesDisplay() {
     } catch (err) {
       console.error("Error updating environment variable:", err);
       // Could add toast notification here
+    } finally {
+      setEditLoading(false);
     }
   };
 
   const handleDelete = async () => {
     try {
+      setDeleteLoading(true);
       const response = await fetch("/api/admin/environment", {
         method: "DELETE",
         headers: {
@@ -431,6 +485,7 @@ export function EnvironmentVariablesDisplay() {
         },
         body: JSON.stringify({
           key: deleteDialog.variableKey,
+          isSecret: deleteDialog.isSecret,
         }),
       });
 
@@ -441,10 +496,12 @@ export function EnvironmentVariablesDisplay() {
       // Update local state
       setEnvVars((prev) => prev.filter((envVar) => envVar.key !== deleteDialog.variableKey));
 
-      closeDeleteDialog();
     } catch (err) {
       console.error("Error deleting environment variable:", err);
       // Could add toast notification here
+    } finally {
+      setDeleteLoading(false);
+      closeDeleteDialog();
     }
   };
 
@@ -454,6 +511,7 @@ export function EnvironmentVariablesDisplay() {
         return; // Don't add empty names
       }
 
+      setAddLoading(true);
       const response = await fetch("/api/admin/environment", {
         method: "PUT",
         headers: {
@@ -462,6 +520,7 @@ export function EnvironmentVariablesDisplay() {
         body: JSON.stringify({
           key: addDialog.name,
           value: addDialog.value,
+          isSecret: platform.isPlatformEnvironment ? addDialog.isSecret : undefined,
         }),
       });
 
@@ -470,11 +529,18 @@ export function EnvironmentVariablesDisplay() {
       }
 
       // Add to local state
-      const newVar: EnvironmentVariable = {
-        key: addDialog.name,
-        localValue: addDialog.value,
-        isSecret: isSensitiveKey(addDialog.name),
-      };
+      const newVar: EnvironmentVariable = platform.isPlatformEnvironment
+        ? {
+            key: addDialog.name,
+            remoteValue: addDialog.isSecret ? "••••••••" : addDialog.value,
+            isSecret: addDialog.isSecret,
+            isRemoteSecret: addDialog.isSecret,
+          }
+        : {
+            key: addDialog.name,
+            localValue: addDialog.value,
+            isSecret: isSensitiveKey(addDialog.name),
+          };
 
       setEnvVars((prev) => {
         const updated = [...prev, newVar];
@@ -486,6 +552,8 @@ export function EnvironmentVariablesDisplay() {
     } catch (err) {
       console.error("Error adding environment variable:", err);
       // Could add toast notification here
+    } finally {
+      setAddLoading(false);
     }
   };
 
@@ -569,28 +637,25 @@ export function EnvironmentVariablesDisplay() {
           <div>
             <CardTitle>Environment Variables</CardTitle>
             <div className="text-sm text-muted-foreground">
-              {isUsingPlatformAPI ? (
+              {platform.isPlatformEnvironment ? (
                 <>
                   {envVars.length} variables from CrunchyCone Platform
-                  {` • ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`}
                 </>
               ) : (
                 <>
                   {envVars.length} variables from .env file
-                  {hasCrunchyConeConfig &&
-                    (isAuthenticated
+                  {platform.supportsLocalRemoteSync &&
+                    (crunchyConeAuth.isAuthenticated
                       ? ` • CrunchyCone: ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`
                       : " • CrunchyCone project (not authenticated)")}
                 </>
               )}
             </div>
           </div>
-          {!isUsingPlatformAPI && (
-            <Button onClick={openAddDialog} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Variable
-            </Button>
-          )}
+          <Button onClick={openAddDialog} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Variable
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -598,12 +663,12 @@ export function EnvironmentVariablesDisplay() {
           <TableHeader>
             <TableRow>
               <TableHead>Variable Name</TableHead>
-              {isUsingPlatformAPI ? (
+              {platform.isPlatformEnvironment ? (
                 <TableHead>Platform Value</TableHead>
               ) : (
                 <>
                   <TableHead>Local Value</TableHead>
-                  {!isUsingPlatformAPI && hasCrunchyConeConfig && isAuthenticated && <TableHead>Remote Value</TableHead>}
+                  {platform.supportsLocalRemoteSync && crunchyConeAuth.isAuthenticated && <TableHead>Remote Value</TableHead>}
                 </>
               )}
             </TableRow>
@@ -657,19 +722,73 @@ export function EnvironmentVariablesDisplay() {
                     </Button>
                   </div>
                 </TableCell>
-                {isUsingPlatformAPI ? (
+                {platform.isPlatformEnvironment ? (
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <div className="flex-1 max-w-xs">
-                        <Input
-                          type={envVar.isRemoteSecret ? "password" : "text"}
-                          value={envVar.crunchyconeValue || ""}
-                          readOnly
-                          className="h-8 font-mono text-sm bg-muted"
-                          placeholder={envVar.crunchyconeValue ? undefined : "(not set)"}
-                        />
-                      </div>
-                      {/* Platform variables are read-only, no edit/delete buttons */}
+                      {/* Use same sensitive value logic as local values OR isRemoteSecret flag */}
+                      {(isSensitiveLocalValue(envVar.key) || envVar.isRemoteSecret) ? (
+                        <div className="relative flex-1 max-w-xs">
+                          <Input
+                            type={visibleRemoteValues.has(envVar.key) ? "text" : "password"}
+                            value={envVar.remoteValue || ""}
+                            readOnly
+                            className="h-8 font-mono text-sm pr-8 bg-muted"
+                            placeholder={envVar.remoteValue ? undefined : "(not set)"}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-1 top-0 h-8 w-8 p-0 hover:bg-transparent"
+                            onClick={() => toggleRemoteValueVisibility(envVar.key)}
+                          >
+                            {visibleRemoteValues.has(envVar.key) ? (
+                              <EyeOff className="h-3 w-3" />
+                            ) : (
+                              <Eye className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex-1 max-w-xs">
+                          <Input
+                            type="text"
+                            value={envVar.remoteValue || ""}
+                            readOnly
+                            className="h-8 font-mono text-sm bg-muted"
+                            placeholder={envVar.remoteValue ? undefined : "(not set)"}
+                          />
+                        </div>
+                      )}
+                      {/* Allow editing and deleting non-deployment-specific variables */}
+                      {!isDeploymentSpecific(envVar.key) && (
+                        <div className="flex items-center gap-1">
+                          {/* Edit button for non-secrets, invisible spacer for secrets */}
+                          {!envVar.isRemoteSecret ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => openEditDialog(envVar.key, envVar.remoteValue || "")}
+                              title="Edit variable"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                          ) : (
+                            <div className="h-8 w-8" />
+                          )}
+                          {/* Delete button in consistent position for both secrets and regular variables */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            onClick={() => openDeleteDialog(envVar.key, envVar.isRemoteSecret)}
+                            title="Delete variable"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                 ) : (
@@ -710,9 +829,9 @@ export function EnvironmentVariablesDisplay() {
                         </div>
                       )}
                       <div className="flex items-center gap-1">
-                        {hasCrunchyConeConfig &&
-                          isAuthenticated &&
-                          envVar.crunchyconeValue &&
+                        {platform.supportsLocalRemoteSync &&
+                          crunchyConeAuth.isAuthenticated &&
+                          envVar.remoteValue &&
                           !envVar.isRemoteSecret && (
                             <Button
                               variant="ghost"
@@ -721,8 +840,8 @@ export function EnvironmentVariablesDisplay() {
                               onClick={() =>
                                 openPullDialog(
                                   envVar.key,
-                                  envVar.localValue,
-                                  envVar.crunchyconeValue!
+                                  envVar.localValue || "",
+                                  envVar.remoteValue!
                                 )
                               }
                               title="Pull value from CrunchyCone"
@@ -734,7 +853,7 @@ export function EnvironmentVariablesDisplay() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => openEditDialog(envVar.key, envVar.localValue)}
+                          onClick={() => openEditDialog(envVar.key, envVar.localValue || "")}
                           title="Edit variable"
                         >
                           <Edit2 className="h-3 w-3" />
@@ -743,7 +862,7 @@ export function EnvironmentVariablesDisplay() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          onClick={() => openDeleteDialog(envVar.key)}
+                          onClick={() => openDeleteDialog(envVar.key, envVar.isRemoteSecret)}
                           title="Delete variable"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -752,28 +871,44 @@ export function EnvironmentVariablesDisplay() {
                     </div>
                   </TableCell>
                 )}
-                {!isUsingPlatformAPI && hasCrunchyConeConfig && isAuthenticated && (
+                {platform.supportsLocalRemoteSync && crunchyConeAuth.isAuthenticated && (
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <div className="font-mono text-sm max-w-xs flex-1">
-                        {envVar.isRemoteSecret ? (
-                          envVar.crunchyconeValue ? (
-                            <Input
-                              type="password"
-                              value={envVar.crunchyconeValue}
-                              readOnly
-                              className="h-8 bg-muted"
-                              placeholder="••••••••"
-                            />
-                          ) : (
-                            <span className="text-muted-foreground italic">(not set)</span>
-                          )
-                        ) : (
-                          envVar.crunchyconeValue || (
-                            <span className="text-muted-foreground italic">(not set)</span>
-                          )
-                        )}
-                      </div>
+                      {/* Use same sensitive value logic as local values OR isRemoteSecret flag */}
+                      {(isSensitiveLocalValue(envVar.key) || envVar.isRemoteSecret) ? (
+                        <div className="relative flex-1 max-w-xs">
+                          <Input
+                            type={visibleRemoteValues.has(envVar.key) ? "text" : "password"}
+                            value={envVar.remoteValue || ""}
+                            readOnly
+                            className="h-8 font-mono text-sm pr-8 bg-muted"
+                            placeholder={envVar.remoteValue ? undefined : "(not set)"}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-1 top-0 h-8 w-8 p-0 hover:bg-transparent"
+                            onClick={() => toggleRemoteValueVisibility(envVar.key)}
+                          >
+                            {visibleRemoteValues.has(envVar.key) ? (
+                              <EyeOff className="h-3 w-3" />
+                            ) : (
+                              <Eye className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex-1 max-w-xs">
+                          <Input
+                            type="text"
+                            value={envVar.remoteValue || ""}
+                            readOnly
+                            className="h-8 font-mono text-sm bg-muted"
+                            placeholder={envVar.remoteValue ? undefined : "(not set)"}
+                          />
+                        </div>
+                      )}
                       {envVar.localValue && (
                         <Button
                           variant="ghost"
@@ -783,7 +918,7 @@ export function EnvironmentVariablesDisplay() {
                             openPushDialog(
                               envVar.key,
                               envVar.localValue,
-                              envVar.crunchyconeValue || ""
+                              envVar.remoteValue || ""
                             )
                           }
                           title="Push value to CrunchyCone"
@@ -801,7 +936,14 @@ export function EnvironmentVariablesDisplay() {
       </CardContent>
 
       {/* Edit Dialog */}
-      <Dialog open={editDialog.isOpen} onOpenChange={closeEditDialog}>
+      <Dialog 
+        open={editDialog.isOpen} 
+        onOpenChange={(open) => {
+          if (!open && !editLoading) {
+            closeEditDialog();
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Environment Variable</DialogTitle>
@@ -824,43 +966,76 @@ export function EnvironmentVariablesDisplay() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeEditDialog}>
+            <Button variant="outline" onClick={closeEditDialog} disabled={editLoading}>
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit}>Save</Button>
+            <Button onClick={handleSaveEdit} disabled={editLoading}>
+              {editLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialog.isOpen} onOpenChange={closeDeleteDialog}>
+      <AlertDialog 
+        open={deleteDialog.isOpen} 
+        onOpenChange={(open) => {
+          if (!open && !deleteLoading) {
+            closeDeleteDialog();
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Environment Variable</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete{" "}
               <code className="bg-muted px-1 rounded">{deleteDialog.variableKey}</code>? This will
-              remove it from your .env file and cannot be undone.
+              remove it from {platform.isPlatformEnvironment ? "CrunchyCone Platform" : "your .env file"} and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={closeDeleteDialog}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={closeDeleteDialog} disabled={deleteLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={deleteLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {deleteLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Add Variable Dialog */}
-      <Dialog open={addDialog.isOpen} onOpenChange={closeAddDialog}>
+      <Dialog 
+        open={addDialog.isOpen} 
+        onOpenChange={(open) => {
+          if (!open && !addLoading) {
+            closeAddDialog();
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Environment Variable</DialogTitle>
-            <DialogDescription>Add a new variable to your .env file</DialogDescription>
+            <DialogDescription>
+              Add a new variable to {platform.isPlatformEnvironment ? "CrunchyCone Platform" : "your .env file"}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -874,24 +1049,81 @@ export function EnvironmentVariablesDisplay() {
                 placeholder="VARIABLE_NAME"
               />
             </div>
+            {platform.isPlatformEnvironment && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="add-secret-checkbox"
+                  checked={addDialog.isSecret}
+                  onCheckedChange={(checked) =>
+                    setAddDialog((prev) => ({ ...prev, isSecret: !!checked }))
+                  }
+                />
+                <Label htmlFor="add-secret-checkbox" className="text-sm font-medium">
+                  Store as secret
+                </Label>
+              </div>
+            )}
             <div>
               <Label htmlFor="variable-value">Value</Label>
-              <Input
-                id="variable-value"
-                type={isSensitiveLocalValue(addDialog.name) ? "password" : "text"}
-                value={addDialog.value}
-                onChange={(e) => setAddDialog((prev) => ({ ...prev, value: e.target.value }))}
-                className="font-mono"
-                placeholder="Enter value..."
-              />
+              {platform.isPlatformEnvironment && addDialog.isSecret ? (
+                <div className="relative">
+                  <Input
+                    id="variable-value"
+                    type={addValueVisible ? "text" : "password"}
+                    value={addDialog.value}
+                    onChange={(e) => setAddDialog((prev) => ({ ...prev, value: e.target.value }))}
+                    className="font-mono pr-10"
+                    placeholder="Enter value..."
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-0 h-full w-8 px-0 hover:bg-transparent"
+                    onClick={() => setAddValueVisible(!addValueVisible)}
+                  >
+                    {addValueVisible ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <Input
+                  id="variable-value"
+                  type="text"
+                  value={addDialog.value}
+                  onChange={(e) => setAddDialog((prev) => ({ ...prev, value: e.target.value }))}
+                  className="font-mono"
+                  placeholder="Enter value..."
+                />
+              )}
             </div>
+            {platform.isPlatformEnvironment && addDialog.isSecret && (
+              <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-amber-800">
+                  <strong>Secret Warning:</strong> This value will be stored as a secret in
+                  CrunchyCone. Once saved, you won&apos;t be able to view its value again - it
+                  will only display as &quot;••••••••&quot;.
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeAddDialog}>
+            <Button variant="outline" onClick={closeAddDialog} disabled={addLoading}>
               Cancel
             </Button>
-            <Button onClick={handleAddVariable} disabled={!addDialog.name.trim()}>
-              Add Variable
+            <Button onClick={handleAddVariable} disabled={!addDialog.name.trim() || addLoading}>
+              {addLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Variable"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

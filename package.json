@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "NODE_ENV=development NODE_OPTIONS=\"--no-deprecation\" next dev --turbopack",
+    "dev:platform": "node scripts/dev-platform.js",
     "dev:open": "node scripts/dev-open.js ${npm_config_port}",
     "build": "next build",
     "start": "next start",
@@ -40,7 +41,7 @@
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "crunchycone-lib": "^0.1.15",
+    "crunchycone-lib": "^0.1.18",
     "jose": "^6.0.12",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.539.0",

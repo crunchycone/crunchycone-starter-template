@@ -112,8 +112,9 @@ export function StorageConfigForm() {
     error?: string;
   } | null>(null);
   const [isCheckingCrunchyCone, setIsCheckingCrunchyCone] = useState(false);
+  const [isPlatformMode, setIsPlatformMode] = useState(false);
 
-  // Load current settings
+  // Load current settings and check platform mode
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -130,7 +131,25 @@ export function StorageConfigForm() {
       }
     };
 
+    const checkPlatformMode = async () => {
+      try {
+        // Use the environment API to check if we're in platform mode
+        const response = await fetch("/api/admin/environment");
+        if (response.ok) {
+          const data = await response.json();
+          // If the API has isPlatformEnvironment field, use it to detect platform mode
+          if (data.isPlatformEnvironment !== undefined) {
+            setIsPlatformMode(data.isPlatformEnvironment);
+          }
+        }
+      } catch {
+        // Silently fail - default to false
+        setIsPlatformMode(false);
+      }
+    };
+
     loadSettings();
+    checkPlatformMode();
   }, []);
 
   // Check CrunchyCone status when provider changes to crunchycone
@@ -514,6 +533,22 @@ export function StorageConfigForm() {
           <Tabs value={settings.provider} className="w-full">
             {/* LocalStorage Configuration */}
             <TabsContent value="localstorage" className="space-y-4">
+              {/* Platform Mode Warning */}
+              {isPlatformMode && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p className="font-medium">⚠️ LocalStorage Not Available in Platform Mode</p>
+                      <p className="text-sm">
+                        LocalStorage requires file system access which is not available when running in CrunchyCone platform mode. 
+                        Please select a cloud storage provider instead.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="localStoragePath">Storage Path</Label>
@@ -880,7 +915,7 @@ export function StorageConfigForm() {
                           <p className="font-medium">
                             {crunchyConeStatus.hasProject
                               ? "✅ Project Configured"
-                              : "❌ No Project Linked"}
+                              : "❌ This project is not available in CrunchyCone"}
                           </p>
                           {crunchyConeStatus.hasProject && crunchyConeStatus.projectDetails ? (
                             <p className="text-sm">

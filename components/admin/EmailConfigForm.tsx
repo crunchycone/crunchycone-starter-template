@@ -48,6 +48,7 @@ export function EmailConfigForm() {
   const [crunchyConeAuthStatus, setCrunchyConeAuthStatus] = useState<{
     authenticated: boolean;
     user?: { email?: string; name?: string } | null;
+    source?: string;
   } | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [smtpProvider, setSmtpProvider] = useState<string>("google");
@@ -103,6 +104,7 @@ export function EmailConfigForm() {
         setCrunchyConeAuthStatus({
           authenticated: result.authenticated,
           user: result.user,
+          source: result.source,
         });
       } else {
         setCrunchyConeAuthStatus({ authenticated: false });
@@ -741,6 +743,8 @@ export function EmailConfigForm() {
                   <AlertDescription>
                     {crunchyConeAuthStatus.authenticated ? (
                       "Successfully authenticated with CrunchyCone"
+                    ) : crunchyConeAuthStatus.source === "project_not_available" ? (
+                      "This project is not available in CrunchyCone"
                     ) : (
                       <>
                         You need to be signed into your CrunchyCone account.

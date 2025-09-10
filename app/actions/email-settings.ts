@@ -672,9 +672,37 @@ export async function checkCrunchyConeAuth() {
   await requireRole("admin");
 
   try {
+    // Check if crunchycone.toml exists in the project root
+    const fs = require('fs');
+    const path = require('path');
+    const crunchyConeTomlPath = path.join(process.cwd(), 'crunchycone.toml');
+    const hasCrunchyConeConfig = fs.existsSync(crunchyConeTomlPath);
+    
+    if (!hasCrunchyConeConfig) {
+      return {
+        success: true,
+        authenticated: false,
+        user: null,
+        message: "This project is not available in CrunchyCone",
+        source: "project_not_available"
+      };
+    }
+
     // If we're on the platform, check for API key instead of CLI auth
     if (process.env.CRUNCHYCONE_PLATFORM === "1") {
       const hasApiKey = !!(process.env.CRUNCHYCONE_API_KEY || (await getCurrentEmailSettings()).crunchyconeApiKey);
+      const hasProjectId = !!(process.env.CRUNCHYCONE_PROJECT_ID);
+      
+      // In platform mode with both API key and project ID, skip auth checks
+      if (hasApiKey && hasProjectId) {
+        return {
+          success: true,
+          authenticated: true,
+          user: null,
+          message: "CrunchyCone configured for platform environment",
+          source: "platform_configured"
+        };
+      }
       
       return {
         success: true,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/permissions";
 import { getCrunchyConeAuthService } from "@/lib/crunchycone-auth-service";
-import { isOnCrunchyConePlatform } from "@/lib/platform-utils";
+import { isPlatformEnvironment } from "@/lib/platform-utils";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -25,8 +25,8 @@ export async function POST(_request: NextRequest) {
         message: authResult.message,
         error: authResult.error,
         platform: {
-          isPlatform: isOnCrunchyConePlatform(),
-          environment: isOnCrunchyConePlatform() ? "platform" : "local",
+          isPlatform: isPlatformEnvironment(),
+          environment: isPlatformEnvironment() ? "platform" : "local",
         },
       },
     });
@@ -42,8 +42,8 @@ export async function POST(_request: NextRequest) {
           success: false,
           error: errorMessage,
           platform: {
-            isPlatform: isOnCrunchyConePlatform(),
-            environment: isOnCrunchyConePlatform() ? "platform" : "local",
+            isPlatform: isPlatformEnvironment(),
+            environment: isPlatformEnvironment() ? "platform" : "local",
           },
         },
       },

@@ -13,7 +13,7 @@ import {
   type CrunchyConeAuthResult,
   type CrunchyConeAuthServiceConfig,
 } from "crunchycone-lib";
-import { isOnCrunchyConePlatform } from "./environment-service";
+import { isPlatformEnvironment } from "crunchycone-lib/environment";
 
 // Global auth service instance
 let globalAuthService: CrunchyConeAuthService | null = null;
@@ -24,8 +24,11 @@ let globalAuthService: CrunchyConeAuthService | null = null;
 export function getCrunchyConeAuthService(
   config?: CrunchyConeAuthServiceConfig
 ): CrunchyConeAuthService {
+  // Force recreation to apply new config (remove for production)
+  globalAuthService = null;
+  
   if (!globalAuthService) {
-    const isPlatform = isOnCrunchyConePlatform();
+    const isPlatform = isPlatformEnvironment();
     
     // Default config optimized for admin settings usage
     const defaultConfig: CrunchyConeAuthServiceConfig = {
@@ -33,8 +36,21 @@ export function getCrunchyConeAuthService(
       preferApi: isPlatform, // On platform, always prefer API; locally, allow CLI fallback
       cliTimeout: isPlatform ? 5000 : 15000, // Shorter timeout on platform where CLI shouldn't be used
       apiOnly: isPlatform, // On platform, only use API key authentication
+      apiKey: process.env.CRUNCHYCONE_API_KEY,
+      projectId: process.env.CRUNCHYCONE_PROJECT_ID,
+      apiUrl: process.env.CRUNCHYCONE_API_URL || "https://api.crunchycone.dev",
       ...config,
     };
+    
+    console.log("Creating CrunchyCone auth service with config:", {
+      hasApiKey: !!defaultConfig.apiKey,
+      apiKeyLength: defaultConfig.apiKey?.length,
+      projectId: defaultConfig.projectId,
+      apiUrl: defaultConfig.apiUrl,
+      isPlatform,
+      preferApi: defaultConfig.preferApi,
+      apiOnly: defaultConfig.apiOnly,
+    });
 
     globalAuthService = new CrunchyConeAuthService(defaultConfig);
   }
@@ -48,7 +64,7 @@ export function getCrunchyConeAuthService(
 export async function checkCrunchyConeAuth(): Promise<CrunchyConeAuthResult> {
   try {
     const authService = getCrunchyConeAuthService();
-    const isPlatform = isOnCrunchyConePlatform();
+    const isPlatform = isPlatformEnvironment();
     
     // Debug logging for platform environment
     if (isPlatform) {
@@ -72,6 +88,14 @@ export async function checkCrunchyConeAuth(): Promise<CrunchyConeAuthResult> {
         console.warn("Platform CRUNCHYCONE_API_KEY seems too short (less than 10 chars)");
       }
     }
+    
+    console.log("About to call authService.checkAuthentication()");
+    console.log("Auth service config:", {
+      timeout: authService.timeout,
+      preferApi: authService.preferApi,
+      cliTimeout: authService.cliTimeout,
+      apiOnly: authService.apiOnly
+    });
     
     const result = await authService.checkAuthentication();
     
@@ -97,7 +121,7 @@ export async function checkCrunchyConeAuth(): Promise<CrunchyConeAuthResult> {
     console.error("Auth check failed with exception:", error);
     
     // Provide more helpful error messages for platform environments
-    const isPlatform = isOnCrunchyConePlatform();
+    const isPlatform = isPlatformEnvironment();
     let enhancedMessage = `Authentication check failed: ${errorMessage}`;
     
     if (isPlatform) {
@@ -158,7 +182,7 @@ export async function getCrunchyConeAuthStatus(): Promise<{
   // Generate helpful error messages based on environment
   let message = "Not authenticated with CrunchyCone services";
 
-  if (isOnCrunchyConePlatform()) {
+  if (isPlatformEnvironment()) {
     message = "CRUNCHYCONE_API_KEY not available. This should be provided by the platform.";
   } else {
     // Local development - provide setup instructions
@@ -233,7 +257,7 @@ export function getCrunchyConeAuthInstructions(): {
   instructions: string;
   commands?: string[];
 } {
-  if (isOnCrunchyConePlatform()) {
+  if (isPlatformEnvironment()) {
     return {
       environment: "platform",
       instructions: "Running on CrunchyCone platform. API key should be provided automatically.",

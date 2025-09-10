@@ -178,8 +178,31 @@ export async function testStorageConnection(
       return { success: false, error: "Unauthorized" };
     }
 
+    // In platform mode, LocalStorage is not available
+    if (settings.provider === "localstorage" && process.env.CRUNCHYCONE_PLATFORM === "1") {
+      return {
+        success: false,
+        error: "LocalStorage is not available when running in CrunchyCone platform mode",
+        details: "LocalStorage requires file system access which is not available in managed platform deployments"
+      };
+    }
+
     // For CrunchyCone provider, check authentication based on environment
     if (settings.provider === "crunchycone") {
+      // First, check if crunchycone.toml exists
+      const fs = require('fs');
+      const path = require('path');
+      const crunchyConeTomlPath = path.join(process.cwd(), 'crunchycone.toml');
+      const hasCrunchyConeConfig = fs.existsSync(crunchyConeTomlPath);
+      
+      if (!hasCrunchyConeConfig) {
+        return {
+          success: false,
+          error: "This project is not available in CrunchyCone",
+          details: "No crunchycone.toml configuration file found in project root",
+        };
+      }
+
       if (process.env.CRUNCHYCONE_PLATFORM === "1") {
         // For platform environments, check if API key is available
         if (!process.env.CRUNCHYCONE_API_KEY) {

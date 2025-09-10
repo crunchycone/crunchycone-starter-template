@@ -647,7 +647,9 @@ export function EnvironmentVariablesDisplay() {
                   {platform.supportsLocalRemoteSync &&
                     (crunchyConeAuth.isAuthenticated
                       ? ` • CrunchyCone: ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`
-                      : " • CrunchyCone project (not authenticated)")}
+                      : crunchyConeAuth.source === "project_not_available" 
+                        ? " • This project is not available in CrunchyCone"
+                        : " • CrunchyCone project (not authenticated)")}
                 </>
               )}
             </div>

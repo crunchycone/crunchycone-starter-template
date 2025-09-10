@@ -5,7 +5,8 @@
  * and generating appropriate UI messages and behaviors.
  */
 
-import { isOnCrunchyConePlatform, getEnvironmentServiceInfo } from "./environment-service";
+import { isPlatformEnvironment } from "crunchycone-lib/environment";
+import { getEnvironmentServiceInfo } from "./environment-service";
 import { getCrunchyConeAuthInstructions } from "./crunchycone-auth-service";
 
 /**
@@ -23,7 +24,7 @@ export interface PlatformInfo {
  * Get comprehensive platform information
  */
 export function getPlatformInfo(): PlatformInfo {
-  const isPlatform = isOnCrunchyConePlatform();
+  const isPlatform = isPlatformEnvironment();
   const envInfo = getEnvironmentServiceInfo();
 
   if (isPlatform) {
@@ -257,4 +258,4 @@ export function shouldShowFeature(feature: string): boolean {
 }
 
 // Re-export platform detection for convenience
-export { isOnCrunchyConePlatform } from "./environment-service";
+export { isPlatformEnvironment } from "crunchycone-lib/environment";

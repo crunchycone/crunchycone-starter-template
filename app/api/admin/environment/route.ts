@@ -5,8 +5,11 @@ import { isAdmin } from "@/lib/auth/permissions";
 import { 
   getEnvironmentService, 
   getMergedEnvironmentVariables,
+  getDualEnvironmentServices,
   isPlatformEnvironment 
 } from "@/lib/environment-service";
+import { existsSync } from "fs";
+import { join } from "path";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -108,17 +111,34 @@ export async function GET(request: NextRequest) {
         variables = [...envEntries, ...secretEntries];
         
       } else {
-        // LOCAL MODE: Merge local (.env) + CrunchyCone providers
-        const mergedResult = await getMergedEnvironmentVariables();
-        variables = mergedResult.variables.map(variable => ({
-          key: variable.key,
-          localValue: variable.localValue,
-          remoteValue: variable.remoteValue,
-          isSecret: variable.isSecret,
-          isRemoteSecret: variable.isRemoteSecret,
-          hasConflict: variable.hasConflict,
-        }));
-        supportsRemoteSecrets = mergedResult.supportsRemoteSecrets;
+        // LOCAL MODE: Check if CrunchyCone project is available
+        const crunchyConeTomlPath = join(process.cwd(), 'crunchycone.toml');
+        const hasCrunchyConeConfig = existsSync(crunchyConeTomlPath);
+        
+        if (hasCrunchyConeConfig) {
+          // Project has CrunchyCone config: Merge local (.env) + CrunchyCone providers
+          const mergedResult = await getMergedEnvironmentVariables();
+          variables = mergedResult.variables.map(variable => ({
+            key: variable.key,
+            localValue: variable.localValue,
+            remoteValue: variable.remoteValue,
+            isSecret: variable.isSecret,
+            isRemoteSecret: variable.isRemoteSecret,
+            hasConflict: variable.hasConflict,
+          }));
+          supportsRemoteSecrets = mergedResult.supportsRemoteSecrets;
+        } else {
+          // No CrunchyCone config: Only show local variables
+          console.log("No crunchycone.toml found - loading only local environment variables");
+          const { local } = getDualEnvironmentServices();
+          const localVars = await local.listEnvVars();
+          
+          variables = Object.entries(localVars).map(([key, localValue]) => ({
+            key,
+            localValue: localValue || "",
+            isSecret: isSensitiveKey(key),
+          }));
+        }
       }
       
       // Sort alphabetically by key
@@ -155,15 +175,27 @@ export async function GET(request: NextRequest) {
     // Check if CrunchyCone is authenticated by testing if we can access remote vars
     let crunchyConeAuth = { isAuthenticated: false, source: "unknown" };
     if (!isInPlatformMode) {
-      try {
-        // In local mode, check if we successfully fetched remote variables
-        const hasRemoteVars = variables.some(v => v.remoteValue !== undefined);
+      // Check if crunchycone.toml exists in the project root
+      const crunchyConeTomlPath = join(process.cwd(), 'crunchycone.toml');
+      const hasCrunchyConeConfig = existsSync(crunchyConeTomlPath);
+      
+      if (!hasCrunchyConeConfig) {
+        console.log("No crunchycone.toml found - project not available in CrunchyCone");
         crunchyConeAuth = { 
-          isAuthenticated: hasRemoteVars, 
-          source: hasRemoteVars ? "keychain" : "not_authenticated" 
+          isAuthenticated: false, 
+          source: "project_not_available" 
         };
-      } catch (error) {
-        console.warn("Failed to determine CrunchyCone auth status:", error);
+      } else {
+        try {
+          // In local mode, check if we successfully fetched remote variables
+          const hasRemoteVars = variables.some(v => v.remoteValue !== undefined);
+          crunchyConeAuth = { 
+            isAuthenticated: hasRemoteVars, 
+            source: hasRemoteVars ? "keychain" : "not_authenticated" 
+          };
+        } catch (error) {
+          console.warn("Failed to determine CrunchyCone auth status:", error);
+        }
       }
     }
 

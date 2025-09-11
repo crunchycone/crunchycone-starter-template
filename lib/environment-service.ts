@@ -18,6 +18,24 @@ import {
 // Global service instance for application-wide use
 let globalEnvironmentService: CrunchyConeEnvironmentService | null = null;
 
+// Simple cache for environment variables to reduce API calls
+interface CacheEntry {
+  data: Record<string, string>;
+  timestamp: number;
+  ttl: number; // Time to live in milliseconds
+}
+
+let envVarsCache: CacheEntry | null = null;
+const CACHE_TTL = 30000; // 30 seconds cache for platform mode
+
+/**
+ * Clear the environment variables cache
+ */
+function clearEnvVarsCache(): void {
+  envVarsCache = null;
+  console.log("Environment variables cache cleared");
+}
+
 /**
  * Get the global environment service instance
  * Automatically detects platform and configures appropriate provider
@@ -25,8 +43,8 @@ let globalEnvironmentService: CrunchyConeEnvironmentService | null = null;
 export function getEnvironmentService(
   config?: EnvironmentServiceConfig
 ): CrunchyConeEnvironmentService {
-  // Force recreation to apply new config (remove for production)
-  globalEnvironmentService = null;
+  // Only recreate if we don't have a global instance (production optimization)
+  // globalEnvironmentService = null; // Removed forced recreation for performance
   
   if (!globalEnvironmentService) {
     // Try to read project ID from crunchycone.toml if not in environment
@@ -120,6 +138,11 @@ export async function updateEnvironmentVariables(
       }
     }
 
+    // Clear cache after successful update
+    if (isPlatformEnvironment()) {
+      clearEnvVarsCache();
+    }
+
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -153,12 +176,41 @@ export async function getEnvironmentVariables(
 }
 
 /**
- * Get all environment variables
+ * Check if cache is valid
+ */
+function isCacheValid(cache: CacheEntry | null): boolean {
+  if (!cache) return false;
+  const now = Date.now();
+  return (now - cache.timestamp) < cache.ttl;
+}
+
+/**
+ * Get all environment variables with caching for platform mode
  */
 export async function getAllEnvironmentVariables(): Promise<Record<string, string>> {
   try {
+    const isPlatform = isPlatformEnvironment();
+    
+    // Use cache in platform mode to reduce API calls
+    if (isPlatform && isCacheValid(envVarsCache)) {
+      console.log("Using cached environment variables");
+      return envVarsCache!.data;
+    }
+    
     const envService = getEnvironmentService();
-    return await envService.listEnvVars();
+    const envVars = await envService.listEnvVars();
+    
+    // Cache the result in platform mode
+    if (isPlatform) {
+      envVarsCache = {
+        data: envVars,
+        timestamp: Date.now(),
+        ttl: CACHE_TTL
+      };
+      console.log("Cached environment variables for", CACHE_TTL / 1000, "seconds");
+    }
+    
+    return envVars;
   } catch (error) {
     console.error("Failed to get all environment variables:", error);
     return {};
@@ -196,7 +248,10 @@ export async function updateEnvironmentSection(
   console.log(`Updating environment section: ${sectionName}`);
 
   // In the new approach, we don't have sections - just set all variables
-  return await updateEnvironmentVariables(variables);
+  const result = await updateEnvironmentVariables(variables);
+  
+  // Cache is cleared in updateEnvironmentVariables, so no need to clear again
+  return result;
 }
 
 /**
@@ -359,6 +414,9 @@ export async function pushToRemote(keys?: string[]): Promise<{ success: boolean;
     
     await remote.setEnvVars(varsToPush);
     
+    // Clear cache after successful push
+    clearEnvVarsCache();
+    
     return { 
       success: true, 
       pushedCount: Object.keys(varsToPush).length 
@@ -400,6 +458,9 @@ export async function pullFromRemote(keys?: string[]): Promise<{ success: boolea
     }
     
     await local.setEnvVars(varsToPull);
+    
+    // Clear cache after successful pull (affects local .env, but clear for consistency)
+    clearEnvVarsCache();
     
     return { 
       success: true, 

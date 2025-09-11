@@ -673,7 +673,9 @@ export async function checkCrunchyConeAuth() {
 
   try {
     // Check if crunchycone.toml exists in the project root
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require("fs");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const path = require("path");
     const crunchyConeTomlPath = path.join(process.cwd(), "crunchycone.toml");
     const hasCrunchyConeConfig = fs.existsSync(crunchyConeTomlPath);

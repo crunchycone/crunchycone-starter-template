@@ -26,7 +26,7 @@ interface CacheEntry {
 }
 
 let envVarsCache: CacheEntry | null = null;
-const CACHE_TTL = 30000; // 30 seconds cache for platform mode
+const CACHE_TTL = 60000; // 60 seconds cache for platform mode (increased from 30)
 
 /**
  * Clear the environment variables cache
@@ -52,7 +52,9 @@ export function getEnvironmentService(
     try {
       if (!process.env.CRUNCHYCONE_PROJECT_ID && !isPlatformEnvironment()) {
         // In local mode, try to read from crunchycone.toml
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const fs = require("fs");
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const path = require("path");
         const tomlPath = path.join(process.cwd(), "crunchycone.toml");
         if (fs.existsSync(tomlPath)) {
@@ -156,11 +158,27 @@ export async function updateEnvironmentVariables(
 
 /**
  * Get multiple environment variables at once
+ * Uses aggressive caching for platform mode to reduce API calls
  */
 export async function getEnvironmentVariables(
   keys: string[]
 ): Promise<Record<string, string | undefined>> {
   try {
+    const isPlatform = isPlatformEnvironment();
+
+    // In platform mode, use the cached getAllEnvironmentVariables for better performance
+    if (isPlatform) {
+      const allVars = await getAllEnvironmentVariables();
+      const result: Record<string, string | undefined> = {};
+
+      for (const key of keys) {
+        result[key] = allVars[key];
+      }
+
+      return result;
+    }
+
+    // In local mode, fetch individually as before
     const envService = getEnvironmentService();
     const result: Record<string, string | undefined> = {};
 

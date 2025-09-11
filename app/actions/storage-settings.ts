@@ -3,7 +3,11 @@
 import { auth } from "@/lib/auth";
 import { hasRole } from "@/lib/auth/permissions";
 import { revalidatePath } from "next/cache";
-import { updateEnvironmentVariables, getEnvironmentVariables } from "@/lib/environment-service";
+import {
+  updateEnvironmentVariables,
+  getEnvironmentVariables,
+  isPlatformEnvironment,
+} from "@/lib/environment-service";
 import { getCrunchyConeAuthService } from "@/lib/crunchycone-auth-service";
 
 interface StorageSettings {
@@ -53,6 +57,7 @@ interface StorageSettings {
 export async function getStorageSettings(): Promise<{
   success: boolean;
   settings?: StorageSettings;
+  isPlatformMode?: boolean;
   error?: string;
 }> {
   try {
@@ -134,7 +139,7 @@ export async function getStorageSettings(): Promise<{
       isEnvCrunchyconeProjectId,
     };
 
-    return { success: true, settings };
+    return { success: true, settings, isPlatformMode: isPlatformEnvironment() };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return { success: false, error: `Failed to load storage settings: ${errorMessage}` };
@@ -228,7 +233,9 @@ export async function testStorageConnection(
     // For CrunchyCone provider, check authentication based on environment
     if (settings.provider === "crunchycone") {
       // First, check if crunchycone.toml exists
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const fs = require("fs");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const path = require("path");
       const crunchyConeTomlPath = path.join(process.cwd(), "crunchycone.toml");
       const hasCrunchyConeConfig = fs.existsSync(crunchyConeTomlPath);

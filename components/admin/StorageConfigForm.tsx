@@ -121,6 +121,8 @@ export function StorageConfigForm() {
         const result = await getStorageSettings();
         if (result.success && result.settings) {
           setSettings(result.settings);
+          // Use platform mode info from settings instead of separate API call
+          setIsPlatformMode(result.isPlatformMode || false);
         } else {
           setMessage({ type: "error", text: result.error || "Failed to load storage settings" });
         }
@@ -131,25 +133,7 @@ export function StorageConfigForm() {
       }
     };
 
-    const checkPlatformMode = async () => {
-      try {
-        // Use the environment API to check if we're in platform mode
-        const response = await fetch("/api/admin/environment");
-        if (response.ok) {
-          const data = await response.json();
-          // If the API has isPlatformEnvironment field, use it to detect platform mode
-          if (data.isPlatformEnvironment !== undefined) {
-            setIsPlatformMode(data.isPlatformEnvironment);
-          }
-        }
-      } catch {
-        // Silently fail - default to false
-        setIsPlatformMode(false);
-      }
-    };
-
     loadSettings();
-    checkPlatformMode();
   }, []);
 
   // Check CrunchyCone status when provider changes to crunchycone

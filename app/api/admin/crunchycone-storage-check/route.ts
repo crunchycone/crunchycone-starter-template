@@ -28,7 +28,28 @@ export async function POST(_request: NextRequest) {
       error: null as string | null,
     };
 
-    // Check for crunchycone.toml project configuration first
+    // In platform mode with API key and project ID, automatically configure
+    if (process.env.CRUNCHYCONE_PLATFORM === "1") {
+      const hasApiKey = !!process.env.CRUNCHYCONE_API_KEY;
+      const hasProjectId = !!process.env.CRUNCHYCONE_PROJECT_ID;
+
+      if (hasApiKey && hasProjectId) {
+        result.authenticated = true;
+        result.hasProject = true;
+        result.authDetails = {
+          success: true,
+          message: "CrunchyCone configured for platform environment",
+          user: { name: "Platform User" },
+        };
+        result.projectDetails = {
+          project_id: process.env.CRUNCHYCONE_PROJECT_ID || "unknown",
+          configFile: "environment variables (platform mode)",
+        };
+        return NextResponse.json(result);
+      }
+    }
+
+    // Check for crunchycone.toml project configuration
     try {
       const tomlPath = path.join(process.cwd(), "crunchycone.toml");
 
@@ -59,25 +80,9 @@ export async function POST(_request: NextRequest) {
       }
     }
 
-    // If no project is found, skip authentication checks entirely
+    // If no project is found and not in platform mode, skip authentication checks
     if (!result.hasProject) {
       return NextResponse.json(result);
-    }
-
-    // Only check authentication if project is configured
-    // In platform mode with API key and project ID, skip auth checks
-    if (process.env.CRUNCHYCONE_PLATFORM === "1") {
-      const hasApiKey = !!process.env.CRUNCHYCONE_API_KEY;
-      const hasProjectId = !!process.env.CRUNCHYCONE_PROJECT_ID;
-
-      if (hasApiKey && hasProjectId) {
-        result.authenticated = true;
-        result.authDetails = {
-          success: true,
-          message: "CrunchyCone configured for platform environment",
-        };
-        return NextResponse.json(result);
-      }
     }
 
     // In production, check if CrunchyCone API key is configured

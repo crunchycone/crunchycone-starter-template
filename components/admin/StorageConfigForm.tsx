@@ -871,7 +871,7 @@ export function StorageConfigForm() {
                                 "Unknown user"}
                             </p>
                           )}
-                          {!crunchyConeStatus.authenticated && (
+                          {!crunchyConeStatus.authenticated && !isPlatformMode && (
                             <div className="text-sm space-y-1">
                               <p>
                                 You need to sign in to CrunchyCone to use this storage provider.
@@ -881,6 +881,18 @@ export function StorageConfigForm() {
                               </div>
                               <p className="text-muted-foreground">
                                 Run this command in your terminal to sign in.
+                              </p>
+                            </div>
+                          )}
+                          {!crunchyConeStatus.authenticated && isPlatformMode && (
+                            <div className="text-sm space-y-1">
+                              <p>
+                                CrunchyCone authentication is handled automatically in platform
+                                mode.
+                              </p>
+                              <p className="text-muted-foreground">
+                                Make sure CRUNCHYCONE_API_KEY and CRUNCHYCONE_PROJECT_ID environment
+                                variables are properly configured.
                               </p>
                             </div>
                           )}
@@ -903,13 +915,18 @@ export function StorageConfigForm() {
                               : "❌ This project is not available in CrunchyCone"}
                           </p>
                           {crunchyConeStatus.hasProject && crunchyConeStatus.projectDetails ? (
-                            <p className="text-sm">
-                              Project ID:{" "}
-                              <code className="bg-muted px-1 py-0.5 rounded text-xs">
-                                {crunchyConeStatus.projectDetails.project_id}
-                              </code>
-                            </p>
-                          ) : (
+                            <div className="text-sm space-y-1">
+                              <p>
+                                Project ID:{" "}
+                                <code className="bg-muted px-1 py-0.5 rounded text-xs">
+                                  {crunchyConeStatus.projectDetails.project_id}
+                                </code>
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                Configuration from: {crunchyConeStatus.projectDetails.configFile}
+                              </p>
+                            </div>
+                          ) : !isPlatformMode ? (
                             <div className="text-sm space-y-1">
                               <p>
                                 You need to link a CrunchyCone project to use this storage provider.
@@ -919,6 +936,16 @@ export function StorageConfigForm() {
                               </div>
                               <p className="text-muted-foreground">
                                 Run this command from your project folder to link a project.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="text-sm space-y-1">
+                              <p>
+                                Project configuration is handled automatically in platform mode.
+                              </p>
+                              <p className="text-muted-foreground">
+                                Make sure CRUNCHYCONE_PROJECT_ID environment variable is properly
+                                configured.
                               </p>
                             </div>
                           )}

@@ -18,18 +18,14 @@ export interface ProviderConfig {
 export function isGoogleAuthEnabled(): boolean {
   const googleAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH;
   const isEnabled = googleAuthEnabled === "true" || googleAuthEnabled === "1";
-  
+
   // Client-side: only check the public toggle
   if (typeof window !== "undefined") {
     return isEnabled;
   }
 
   // Server-side: check toggle and credentials
-  return (
-    isEnabled &&
-    !!process.env.GOOGLE_CLIENT_ID &&
-    !!process.env.GOOGLE_CLIENT_SECRET
-  );
+  return isEnabled && !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
 }
 
 /**
@@ -39,18 +35,14 @@ export function isGoogleAuthEnabled(): boolean {
 export function isGitHubAuthEnabled(): boolean {
   const githubAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH;
   const isEnabled = githubAuthEnabled === "true" || githubAuthEnabled === "1";
-  
+
   // Client-side: only check the public toggle
   if (typeof window !== "undefined") {
     return isEnabled;
   }
 
   // Server-side: check toggle and credentials
-  return (
-    isEnabled &&
-    !!process.env.GITHUB_CLIENT_ID &&
-    !!process.env.GITHUB_CLIENT_SECRET
-  );
+  return isEnabled && !!process.env.GITHUB_CLIENT_ID && !!process.env.GITHUB_CLIENT_SECRET;
 }
 
 /**

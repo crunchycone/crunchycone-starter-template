@@ -17,7 +17,7 @@ export interface ProviderConfig {
  */
 export function isGoogleAuthEnabled(): boolean {
   const googleAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH;
-  const isEnabled = googleAuthEnabled === "true" || googleAuthEnabled === true;
+  const isEnabled = googleAuthEnabled === "true" || googleAuthEnabled === "1";
   
   // Client-side: only check the public toggle
   if (typeof window !== "undefined") {
@@ -38,7 +38,7 @@ export function isGoogleAuthEnabled(): boolean {
  */
 export function isGitHubAuthEnabled(): boolean {
   const githubAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH;
-  const isEnabled = githubAuthEnabled === "true" || githubAuthEnabled === true;
+  const isEnabled = githubAuthEnabled === "true" || githubAuthEnabled === "1";
   
   // Client-side: only check the public toggle
   if (typeof window !== "undefined") {
@@ -63,11 +63,11 @@ export function isEmailPasswordEnabled(): boolean {
 
 /**
  * Check if Magic Link authentication is enabled based on environment variables
- * Accepts both boolean true and string "true"
+ * Accepts both "true" and "1" as truthy values
  */
 export function isMagicLinkEnabled(): boolean {
   const value = process.env.NEXT_PUBLIC_ENABLE_MAGIC_LINK;
-  return value === "true" || value === true;
+  return value === "true" || value === "1";
 }
 
 /**

@@ -85,7 +85,7 @@ const buildProviders = () => {
 
   // Conditionally add Email (Magic Link) provider
   const enableMagicLink = process.env.NEXT_PUBLIC_ENABLE_MAGIC_LINK;
-  if (enableMagicLink === "true" || enableMagicLink === true) {
+  if (enableMagicLink === "true" || enableMagicLink === "1") {
     providers.push(
       EmailProvider({
         from:
@@ -178,7 +178,7 @@ This link will expire in 24 hours.
   // Conditionally add Google OAuth provider
   const enableGoogleAuth = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH;
   if (
-    (enableGoogleAuth === "true" || enableGoogleAuth === true) &&
+    (enableGoogleAuth === "true" || enableGoogleAuth === "1") &&
     process.env.GOOGLE_CLIENT_ID &&
     process.env.GOOGLE_CLIENT_SECRET
   ) {
@@ -193,7 +193,7 @@ This link will expire in 24 hours.
   // Conditionally add GitHub OAuth provider
   const enableGithubAuth = process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH;
   if (
-    (enableGithubAuth === "true" || enableGithubAuth === true) &&
+    (enableGithubAuth === "true" || enableGithubAuth === "1") &&
     process.env.GITHUB_CLIENT_ID &&
     process.env.GITHUB_CLIENT_SECRET
   ) {

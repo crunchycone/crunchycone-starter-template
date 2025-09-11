@@ -16,14 +16,17 @@ export interface ProviderConfig {
  * Note: On client-side, we only check the toggle since credentials are server-only
  */
 export function isGoogleAuthEnabled(): boolean {
+  const googleAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH;
+  const isEnabled = googleAuthEnabled === "true" || googleAuthEnabled === true;
+  
   // Client-side: only check the public toggle
   if (typeof window !== "undefined") {
-    return process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true";
+    return isEnabled;
   }
 
   // Server-side: check toggle and credentials
   return (
-    process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true" &&
+    isEnabled &&
     !!process.env.GOOGLE_CLIENT_ID &&
     !!process.env.GOOGLE_CLIENT_SECRET
   );
@@ -34,14 +37,17 @@ export function isGoogleAuthEnabled(): boolean {
  * Note: On client-side, we only check the toggle since credentials are server-only
  */
 export function isGitHubAuthEnabled(): boolean {
+  const githubAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH;
+  const isEnabled = githubAuthEnabled === "true" || githubAuthEnabled === true;
+  
   // Client-side: only check the public toggle
   if (typeof window !== "undefined") {
-    return process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === "true";
+    return isEnabled;
   }
 
   // Server-side: check toggle and credentials
   return (
-    process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === "true" &&
+    isEnabled &&
     !!process.env.GITHUB_CLIENT_ID &&
     !!process.env.GITHUB_CLIENT_SECRET
   );
@@ -57,9 +63,11 @@ export function isEmailPasswordEnabled(): boolean {
 
 /**
  * Check if Magic Link authentication is enabled based on environment variables
+ * Accepts both boolean true and string "true"
  */
 export function isMagicLinkEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_MAGIC_LINK === "true";
+  const value = process.env.NEXT_PUBLIC_ENABLE_MAGIC_LINK;
+  return value === "true" || value === true;
 }
 
 /**

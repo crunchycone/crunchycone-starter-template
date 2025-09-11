@@ -54,6 +54,13 @@ This directory contains Cursor AI rules that help maintain code consistency and 
 - **When to Use**: Automatically applied when setting up a new project
 - **Always Applied**: This rule is always active during initial setup
 
+### 9. **build-workflow.mdc** - Build Verification and Commit Rules
+
+- **Purpose**: Enforces build verification before commits to prevent broken code
+- **Key Concepts**: Pre-commit builds, TypeScript error fixing, dependency management
+- **When to Use**: Before every commit, when fixing build errors
+- **Always Applied**: This rule is always active to ensure code quality
+
 ## How Rules Work
 
 Cursor AI uses these rules to:

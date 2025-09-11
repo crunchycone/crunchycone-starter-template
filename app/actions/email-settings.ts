@@ -399,7 +399,7 @@ export async function getCurrentEmailSettings(): Promise<EmailSettings> {
 
   return {
     provider: (envVars.CRUNCHYCONE_EMAIL_PROVIDER as EmailProvider) || "console",
-    fromAddress: envVars.CRUNCHYCONE_EMAIL_FROM || envVars.EMAIL_FROM || "noreply@example.com",
+    fromAddress: envVars.CRUNCHYCONE_EMAIL_FROM || envVars.EMAIL_FROM || "noreply@crunchycone.app",
     fromDisplayName: envVars.CRUNCHYCONE_EMAIL_FROM_DISPLAY,
     sendgridApiKey: envVars.CRUNCHYCONE_SENDGRID_API_KEY,
     resendApiKey: envVars.CRUNCHYCONE_RESEND_API_KEY,

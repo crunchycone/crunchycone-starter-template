@@ -87,7 +87,7 @@ const buildProviders = () => {
   if (process.env.NEXT_PUBLIC_ENABLE_MAGIC_LINK === "true") {
     providers.push(
       EmailProvider({
-        from: process.env.CRUNCHYCONE_EMAIL_FROM || process.env.EMAIL_FROM || "noreply@example.com",
+        from: process.env.CRUNCHYCONE_EMAIL_FROM || process.env.EMAIL_FROM || "noreply@crunchycone.app",
         // Custom email sending function using CrunchyCone email service and templates
         sendVerificationRequest: async ({ identifier: email, url, provider }) => {
           try {

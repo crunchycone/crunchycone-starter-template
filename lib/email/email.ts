@@ -131,7 +131,7 @@ export function setEmailProvider(provider: EmailProvider) {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  const fromAddress = process.env.EMAIL_FROM || "noreply@example.com";
+  const fromAddress = process.env.EMAIL_FROM || "noreply@crunchycone.app";
 
   // Add from address to options
   const fullOptions = {

@@ -315,7 +315,7 @@ NEXT_PUBLIC_ENABLE_MAGIC_LINK=false       # Magic link auth
 
 # Application
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-EMAIL_FROM="noreply@example.com"
+EMAIL_FROM="noreply@crunchycone.app"
 ```
 
 ### Disable/Enable Providers

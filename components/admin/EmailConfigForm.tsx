@@ -37,7 +37,7 @@ export function EmailConfigForm() {
   const { data: session } = useSession();
   const [settings, setSettings] = useState<EmailSettings>({
     provider: "console",
-    fromAddress: "noreply@example.com",
+    fromAddress: "noreply@crunchycone.app",
     fromDisplayName: "",
     smtpSecure: false,
   });

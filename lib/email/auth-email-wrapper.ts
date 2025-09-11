@@ -12,7 +12,7 @@ function getEmailOptions(): EmailOptions {
       process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "") ||
       "CrunchyCone Starter",
     supportEmail:
-      process.env.CRUNCHYCONE_EMAIL_FROM || process.env.EMAIL_FROM || "noreply@example.com",
+      process.env.CRUNCHYCONE_EMAIL_FROM || process.env.EMAIL_FROM || "noreply@crunchycone.app",
   };
 }
 
@@ -23,7 +23,7 @@ export async function sendMagicLinkEmail(email: string, signInUrl: string): Prom
     const emailOptions: EmailTemplateOptions = {
       template: "magic-link",
       to: email,
-      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@crunchycone.app",
       language: "en",
       data: {
         signInUrl,
@@ -45,7 +45,7 @@ export async function sendVerificationEmail(email: string, verificationUrl: stri
     const emailOptions: EmailTemplateOptions = {
       template: "email-verification",
       to: email,
-      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@crunchycone.app",
       language: "en",
       data: {
         verificationUrl,
@@ -67,7 +67,7 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string): P
     const emailOptions: EmailTemplateOptions = {
       template: "password-reset",
       to: email,
-      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@crunchycone.app",
       language: "en",
       data: {
         resetUrl,
@@ -90,7 +90,7 @@ export async function sendAdminPasswordResetEmail(email: string, resetUrl: strin
     const emailOptions: EmailTemplateOptions = {
       template: "admin-password-reset",
       to: email,
-      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@crunchycone.app",
       language: "en",
       data: {
         resetUrl,
@@ -117,7 +117,7 @@ export async function sendWelcomeEmail(
     const emailOptions: EmailTemplateOptions = {
       template: "welcome",
       to: email,
-      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@example.com",
+      from: process.env.CRUNCHYCONE_EMAIL_FROM || "noreply@crunchycone.app",
       language: "en",
       data: {
         userName,

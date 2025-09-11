@@ -498,7 +498,7 @@ AUTH_SECRET="your-secret-key-change-in-production"  # Auto-generated during setu
 AUTH_URL="http://localhost:3000"
 
 # Email
-EMAIL_FROM="noreply@example.com"
+EMAIL_FROM="noreply@crunchycone.app"
 
 # Application
 NEXT_PUBLIC_APP_URL="http://localhost:3000"

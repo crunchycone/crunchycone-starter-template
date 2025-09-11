@@ -49,7 +49,56 @@ export async function POST(_request: NextRequest) {
       }
     }
 
-    // Check for crunchycone.toml project configuration
+    // First check authentication status (regardless of project configuration)
+    if (process.env.NODE_ENV === "production") {
+      // In production, check if CrunchyCone API key is configured
+      const hasApiKey = !!(process.env.CRUNCHYCONE_API_KEY || process.env.CRUNCHYCONE_API_URL);
+      result.authenticated = hasApiKey;
+      result.authDetails = hasApiKey
+        ? { success: true, message: "CrunchyCone API key configured" }
+        : { success: false, message: "CrunchyCone API key not configured" };
+    } else {
+      // In development, check authentication via CLI (keychain/stored auth)
+      try {
+        const { stdout } = await execAsync("npx --yes crunchycone-cli auth check -j", {
+          timeout: 15000, // 15 second timeout to allow for CLI installation
+        });
+
+        const output = stdout.trim();
+        try {
+          const authResult = JSON.parse(output);
+          result.authenticated = authResult.success === true;
+          result.authDetails = authResult;
+        } catch {
+          result.error = "Invalid JSON response from auth CLI";
+          result.authDetails = { success: false, message: output };
+        }
+      } catch (error: unknown) {
+        const execError = error as { stdout?: string; stderr?: string };
+        const output = execError.stdout?.trim() || execError.stderr?.trim() || "";
+
+        // Try to parse JSON from stdout or stderr
+        if (output) {
+          try {
+            const authResult = JSON.parse(output);
+            result.authenticated = authResult.success === true;
+            result.authDetails = authResult;
+          } catch {
+            // If not JSON, treat as error message
+            result.error = "Authentication check failed";
+            result.authDetails = { success: false, message: output };
+          }
+        } else {
+          result.error = "Failed to check authentication status";
+          result.authDetails = {
+            success: false,
+            message: "CrunchyCone CLI may not be installed or accessible",
+          };
+        }
+      }
+    }
+
+    // Then check for project configuration
     try {
       const tomlPath = path.join(process.cwd(), "crunchycone.toml");
 
@@ -77,49 +126,6 @@ export async function POST(_request: NextRequest) {
       result.projectDetails = null;
       if (!result.error) {
         result.error = "Failed to check project configuration";
-      }
-    }
-
-    // If no project is found and not in platform mode, skip authentication checks
-    if (!result.hasProject) {
-      return NextResponse.json(result);
-    }
-
-    // In production, check if CrunchyCone API key is configured
-    if (process.env.NODE_ENV === "production") {
-      const hasApiKey = !!(process.env.CRUNCHYCONE_API_KEY || process.env.CRUNCHYCONE_API_URL);
-      result.authenticated = hasApiKey;
-      result.authDetails = hasApiKey
-        ? { success: true, message: "CrunchyCone API key configured" }
-        : { success: false, message: "CrunchyCone API key not configured" };
-    } else {
-      // Check authentication status in development
-      try {
-        const { stdout } = await execAsync("npx --yes crunchycone-cli auth check -j", {
-          timeout: 10000, // 10 second timeout
-        });
-
-        const output = stdout.trim();
-        try {
-          const authResult = JSON.parse(output);
-          result.authenticated = authResult.success === true;
-          result.authDetails = authResult;
-        } catch {
-          result.error = "Invalid JSON response from auth CLI";
-          result.authDetails = { success: false, message: output };
-        }
-      } catch (error: unknown) {
-        const execError = error as { stdout?: string; stderr?: string };
-        const output = execError.stdout?.trim() || execError.stderr?.trim() || "";
-
-        try {
-          const authResult = JSON.parse(output);
-          result.authenticated = authResult.success === true;
-          result.authDetails = authResult;
-        } catch {
-          result.error = "Failed to check authentication status";
-          result.authDetails = { success: false, message: output || "Command execution failed" };
-        }
       }
     }
 

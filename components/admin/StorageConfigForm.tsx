@@ -541,14 +541,15 @@ export function StorageConfigForm() {
                     <div className="space-y-2">
                       <p className="font-medium">⚠️ LocalStorage Not Available in Platform Mode</p>
                       <p className="text-sm">
-                        LocalStorage requires file system access which is not available when running in CrunchyCone platform mode. 
-                        Please select a cloud storage provider instead.
+                        LocalStorage requires file system access which is not available when running
+                        in CrunchyCone platform mode. Please select a cloud storage provider
+                        instead.
                       </p>
                     </div>
                   </AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="localStoragePath">Storage Path</Label>

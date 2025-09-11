@@ -46,12 +46,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface EnvironmentVariable {
   key: string;
@@ -161,7 +156,10 @@ export function EnvironmentVariablesDisplay() {
         } else if (response.status === 502) {
           // CrunchyCone API authentication failure
           const errorData = await response.json().catch(() => ({}));
-          setError(errorData.error || "CrunchyCone API authentication failed. Please check your API key and permissions.");
+          setError(
+            errorData.error ||
+              "CrunchyCone API authentication failed. Please check your API key and permissions."
+          );
         } else if (response.status === 401) {
           setError("You must be logged in as an admin to view environment variables");
         } else {
@@ -293,7 +291,7 @@ export function EnvironmentVariablesDisplay() {
   const isDeploymentSpecific = (key: string) => {
     const deploymentSpecificKeys = [
       "DATABASE_URL",
-      "TURSO_AUTH_TOKEN", 
+      "TURSO_AUTH_TOKEN",
       "TURSO_DATABASE_URL",
       "POSTGRES_URL",
       "MYSQL_URL",
@@ -303,7 +301,7 @@ export function EnvironmentVariablesDisplay() {
       "NEXT_PUBLIC_APP_URL",
       "PORT",
       "HOST",
-      "NODE_ENV"
+      "NODE_ENV",
     ];
     return deploymentSpecificKeys.includes(key.toUpperCase());
   };
@@ -459,7 +457,7 @@ export function EnvironmentVariablesDisplay() {
       setEnvVars((prev) =>
         prev.map((envVar) =>
           envVar.key === editDialog.variableKey
-            ? platform.isPlatformEnvironment 
+            ? platform.isPlatformEnvironment
               ? { ...envVar, remoteValue: editDialog.editValue }
               : { ...envVar, localValue: editDialog.editValue }
             : envVar
@@ -495,7 +493,6 @@ export function EnvironmentVariablesDisplay() {
 
       // Update local state
       setEnvVars((prev) => prev.filter((envVar) => envVar.key !== deleteDialog.variableKey));
-
     } catch (err) {
       console.error("Error deleting environment variable:", err);
       // Could add toast notification here
@@ -638,16 +635,14 @@ export function EnvironmentVariablesDisplay() {
             <CardTitle>Environment Variables</CardTitle>
             <div className="text-sm text-muted-foreground">
               {platform.isPlatformEnvironment ? (
-                <>
-                  {envVars.length} variables from CrunchyCone Platform
-                </>
+                <>{envVars.length} variables from CrunchyCone Platform</>
               ) : (
                 <>
                   {envVars.length} variables from .env file
                   {platform.supportsLocalRemoteSync &&
                     (crunchyConeAuth.isAuthenticated
                       ? ` • CrunchyCone: ${crunchyConeStats.envCount} env vars, ${crunchyConeStats.secretCount} secrets`
-                      : crunchyConeAuth.source === "project_not_available" 
+                      : crunchyConeAuth.source === "project_not_available"
                         ? " • This project is not available in CrunchyCone"
                         : " • CrunchyCone project (not authenticated)")}
                 </>
@@ -670,7 +665,9 @@ export function EnvironmentVariablesDisplay() {
               ) : (
                 <>
                   <TableHead>Local Value</TableHead>
-                  {platform.supportsLocalRemoteSync && crunchyConeAuth.isAuthenticated && <TableHead>Remote Value</TableHead>}
+                  {platform.supportsLocalRemoteSync && crunchyConeAuth.isAuthenticated && (
+                    <TableHead>Remote Value</TableHead>
+                  )}
                 </>
               )}
             </TableRow>
@@ -683,11 +680,11 @@ export function EnvironmentVariablesDisplay() {
                     <code className="font-mono text-sm">{envVar.key}</code>
                     {isDeploymentSpecific(envVar.key) && (
                       <TooltipProvider>
-                        <Tooltip 
+                        <Tooltip
                           open={clickedTooltips.has(envVar.key) ? true : undefined}
                           onOpenChange={(open) => {
                             if (!open && clickedTooltips.has(envVar.key)) {
-                              setClickedTooltips(prev => {
+                              setClickedTooltips((prev) => {
                                 const newSet = new Set(prev);
                                 newSet.delete(envVar.key);
                                 return newSet;
@@ -696,7 +693,7 @@ export function EnvironmentVariablesDisplay() {
                           }}
                         >
                           <TooltipTrigger asChild>
-                            <div 
+                            <div
                               className="relative flex items-center justify-center w-4 h-4 rounded-full border border-blue-500 bg-blue-50 hover:bg-blue-100 cursor-help transition-colors"
                               onClick={() => toggleTooltipVisibility(envVar.key)}
                             >
@@ -704,9 +701,7 @@ export function EnvironmentVariablesDisplay() {
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p className="max-w-xs text-sm">
-                              {getDeploymentMessage(envVar.key)}
-                            </p>
+                            <p className="max-w-xs text-sm">{getDeploymentMessage(envVar.key)}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -728,7 +723,7 @@ export function EnvironmentVariablesDisplay() {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {/* Use same sensitive value logic as local values OR isRemoteSecret flag */}
-                      {(isSensitiveLocalValue(envVar.key) || envVar.isRemoteSecret) ? (
+                      {isSensitiveLocalValue(envVar.key) || envVar.isRemoteSecret ? (
                         <div className="relative flex-1 max-w-xs">
                           <Input
                             type={visibleRemoteValues.has(envVar.key) ? "text" : "password"}
@@ -877,7 +872,7 @@ export function EnvironmentVariablesDisplay() {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {/* Use same sensitive value logic as local values OR isRemoteSecret flag */}
-                      {(isSensitiveLocalValue(envVar.key) || envVar.isRemoteSecret) ? (
+                      {isSensitiveLocalValue(envVar.key) || envVar.isRemoteSecret ? (
                         <div className="relative flex-1 max-w-xs">
                           <Input
                             type={visibleRemoteValues.has(envVar.key) ? "text" : "password"}
@@ -938,8 +933,8 @@ export function EnvironmentVariablesDisplay() {
       </CardContent>
 
       {/* Edit Dialog */}
-      <Dialog 
-        open={editDialog.isOpen} 
+      <Dialog
+        open={editDialog.isOpen}
         onOpenChange={(open) => {
           if (!open && !editLoading) {
             closeEditDialog();
@@ -986,8 +981,8 @@ export function EnvironmentVariablesDisplay() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog 
-        open={deleteDialog.isOpen} 
+      <AlertDialog
+        open={deleteDialog.isOpen}
         onOpenChange={(open) => {
           if (!open && !deleteLoading) {
             closeDeleteDialog();
@@ -1000,11 +995,15 @@ export function EnvironmentVariablesDisplay() {
             <AlertDialogDescription>
               Are you sure you want to delete{" "}
               <code className="bg-muted px-1 rounded">{deleteDialog.variableKey}</code>? This will
-              remove it from {platform.isPlatformEnvironment ? "CrunchyCone Platform" : "your .env file"} and cannot be undone.
+              remove it from{" "}
+              {platform.isPlatformEnvironment ? "CrunchyCone Platform" : "your .env file"} and
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={closeDeleteDialog} disabled={deleteLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={closeDeleteDialog} disabled={deleteLoading}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteLoading}
@@ -1024,8 +1023,8 @@ export function EnvironmentVariablesDisplay() {
       </AlertDialog>
 
       {/* Add Variable Dialog */}
-      <Dialog 
-        open={addDialog.isOpen} 
+      <Dialog
+        open={addDialog.isOpen}
         onOpenChange={(open) => {
           if (!open && !addLoading) {
             closeAddDialog();
@@ -1036,7 +1035,8 @@ export function EnvironmentVariablesDisplay() {
           <DialogHeader>
             <DialogTitle>Add Environment Variable</DialogTitle>
             <DialogDescription>
-              Add a new variable to {platform.isPlatformEnvironment ? "CrunchyCone Platform" : "your .env file"}
+              Add a new variable to{" "}
+              {platform.isPlatformEnvironment ? "CrunchyCone Platform" : "your .env file"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1084,11 +1084,7 @@ export function EnvironmentVariablesDisplay() {
                     className="absolute right-1 top-0 h-full w-8 px-0 hover:bg-transparent"
                     onClick={() => setAddValueVisible(!addValueVisible)}
                   >
-                    {addValueVisible ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {addValueVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
               ) : (
@@ -1107,8 +1103,8 @@ export function EnvironmentVariablesDisplay() {
                 <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-amber-800">
                   <strong>Secret Warning:</strong> This value will be stored as a secret in
-                  CrunchyCone. Once saved, you won&apos;t be able to view its value again - it
-                  will only display as &quot;••••••••&quot;.
+                  CrunchyCone. Once saved, you won&apos;t be able to view its value again - it will
+                  only display as &quot;••••••••&quot;.
                 </div>
               </div>
             )}

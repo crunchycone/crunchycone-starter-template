@@ -45,18 +45,18 @@ export function getEnvironmentService(
 ): CrunchyConeEnvironmentService {
   // Only recreate if we don't have a global instance (production optimization)
   // globalEnvironmentService = null; // Removed forced recreation for performance
-  
+
   if (!globalEnvironmentService) {
     // Try to read project ID from crunchycone.toml if not in environment
     let projectIdFromToml: string | undefined;
     try {
       if (!process.env.CRUNCHYCONE_PROJECT_ID && !isPlatformEnvironment()) {
         // In local mode, try to read from crunchycone.toml
-        const fs = require('fs');
-        const path = require('path');
-        const tomlPath = path.join(process.cwd(), 'crunchycone.toml');
+        const fs = require("fs");
+        const path = require("path");
+        const tomlPath = path.join(process.cwd(), "crunchycone.toml");
         if (fs.existsSync(tomlPath)) {
-          const tomlContent = fs.readFileSync(tomlPath, 'utf8');
+          const tomlContent = fs.readFileSync(tomlPath, "utf8");
           const match = tomlContent.match(/id\s*=\s*"([^"]+)"/);
           if (match) {
             projectIdFromToml = match[1];
@@ -64,7 +64,7 @@ export function getEnvironmentService(
         }
       }
     } catch (error) {
-      console.warn('Failed to read crunchycone.toml:', error);
+      console.warn("Failed to read crunchycone.toml:", error);
     }
 
     // Ensure API key is passed for platform environments
@@ -74,7 +74,7 @@ export function getEnvironmentService(
       apiUrl: process.env.CRUNCHYCONE_API_URL || "https://api.crunchycone.dev",
       ...config,
     };
-    
+
     console.log("Creating environment service with config:", {
       hasApiKey: !!defaultConfig.apiKey,
       apiKeyLength: defaultConfig.apiKey?.length,
@@ -82,7 +82,7 @@ export function getEnvironmentService(
       apiUrl: defaultConfig.apiUrl,
       isPlatformEnvironment: isPlatformEnvironment(),
     });
-    
+
     try {
       globalEnvironmentService = getCrunchyConeEnvironmentService(defaultConfig);
       console.log("Environment service created successfully");
@@ -181,7 +181,7 @@ export async function getEnvironmentVariables(
 function isCacheValid(cache: CacheEntry | null): boolean {
   if (!cache) return false;
   const now = Date.now();
-  return (now - cache.timestamp) < cache.ttl;
+  return now - cache.timestamp < cache.ttl;
 }
 
 /**
@@ -190,26 +190,26 @@ function isCacheValid(cache: CacheEntry | null): boolean {
 export async function getAllEnvironmentVariables(): Promise<Record<string, string>> {
   try {
     const isPlatform = isPlatformEnvironment();
-    
+
     // Use cache in platform mode to reduce API calls
     if (isPlatform && isCacheValid(envVarsCache)) {
       console.log("Using cached environment variables");
       return envVarsCache!.data;
     }
-    
+
     const envService = getEnvironmentService();
     const envVars = await envService.listEnvVars();
-    
+
     // Cache the result in platform mode
     if (isPlatform) {
       envVarsCache = {
         data: envVars,
         timestamp: Date.now(),
-        ttl: CACHE_TTL
+        ttl: CACHE_TTL,
       };
       console.log("Cached environment variables for", CACHE_TTL / 1000, "seconds");
     }
-    
+
     return envVars;
   } catch (error) {
     console.error("Failed to get all environment variables:", error);
@@ -249,7 +249,7 @@ export async function updateEnvironmentSection(
 
   // In the new approach, we don't have sections - just set all variables
   const result = await updateEnvironmentVariables(variables);
-  
+
   // Cache is cleared in updateEnvironmentVariables, so no need to clear again
   return result;
 }
@@ -265,7 +265,7 @@ export function getDualEnvironmentServices(): {
   // Force local provider (for .env files)
   const localService = getCrunchyConeEnvironmentService({});
 
-  // Force remote provider (for CrunchyCone API) 
+  // Force remote provider (for CrunchyCone API)
   const remoteService = getCrunchyConeEnvironmentService({});
 
   return { local: localService, remote: remoteService };
@@ -290,12 +290,16 @@ export async function getMergedEnvironmentVariables(): Promise<{
     console.log("getMergedEnvironmentVariables: Starting dual environment services");
     const { local, remote } = getDualEnvironmentServices();
     console.log("getMergedEnvironmentVariables: Dual services created");
-    
+
     // Get local environment variables
     console.log("getMergedEnvironmentVariables: Fetching local vars");
     const localVars = await local.listEnvVars();
-    console.log("getMergedEnvironmentVariables: Local vars fetched:", Object.keys(localVars).length, "variables");
-    
+    console.log(
+      "getMergedEnvironmentVariables: Local vars fetched:",
+      Object.keys(localVars).length,
+      "variables"
+    );
+
     // Get remote environment variables and secrets
     let remoteVars: Record<string, string> = {};
     let remoteSecrets: string[] = [];
@@ -304,17 +308,28 @@ export async function getMergedEnvironmentVariables(): Promise<{
     try {
       console.log("getMergedEnvironmentVariables: Fetching remote vars");
       remoteVars = await remote.listEnvVars();
-      console.log("getMergedEnvironmentVariables: Remote vars fetched:", Object.keys(remoteVars).length, "variables");
-      
+      console.log(
+        "getMergedEnvironmentVariables: Remote vars fetched:",
+        Object.keys(remoteVars).length,
+        "variables"
+      );
+
       if (remote.supportsSecrets()) {
         supportsRemoteSecrets = true;
         console.log("getMergedEnvironmentVariables: Fetching remote secrets");
         remoteSecrets = await remote.listSecretNames();
-        console.log("getMergedEnvironmentVariables: Remote secrets fetched:", remoteSecrets.length, "secrets");
+        console.log(
+          "getMergedEnvironmentVariables: Remote secrets fetched:",
+          remoteSecrets.length,
+          "secrets"
+        );
       }
     } catch (error) {
       // Remote access may fail, continue with local only
-      console.warn("getMergedEnvironmentVariables: Failed to fetch remote environment variables:", error);
+      console.warn(
+        "getMergedEnvironmentVariables: Failed to fetch remote environment variables:",
+        error
+      );
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.toLowerCase().includes("not authenticated")) {
         console.warn("This appears to be a CrunchyCone authentication error from crunchycone-lib");
@@ -325,32 +340,65 @@ export async function getMergedEnvironmentVariables(): Promise<{
     const allKeys = new Set([
       ...Object.keys(localVars),
       ...Object.keys(remoteVars),
-      ...remoteSecrets
+      ...remoteSecrets,
     ]);
 
     console.log("getMergedEnvironmentVariables: All keys count:", allKeys.size);
-    console.log("getMergedEnvironmentVariables: Remote vars keys:", Object.keys(remoteVars).slice(0, 5), "...");
+    console.log(
+      "getMergedEnvironmentVariables: Remote vars keys:",
+      Object.keys(remoteVars).slice(0, 5),
+      "..."
+    );
     console.log("getMergedEnvironmentVariables: Remote secrets:", remoteSecrets.length, "secrets");
 
     // Helper function to determine if a key is sensitive
     const isSensitiveKey = (key: string): boolean => {
       const sensitiveKeywords = [
-        "secret", "key", "password", "token", "auth", "api", "private", 
-        "credential", "pass", "jwt", "oauth", "github", "google", "aws", 
-        "azure", "gcp", "stripe", "paypal", "database", "db", "redis", 
-        "session", "cookie", "smtp", "email", "twilio", "sendgrid", 
-        "crunchycone", "do", "spaces", "bucket", "access", "client"
+        "secret",
+        "key",
+        "password",
+        "token",
+        "auth",
+        "api",
+        "private",
+        "credential",
+        "pass",
+        "jwt",
+        "oauth",
+        "github",
+        "google",
+        "aws",
+        "azure",
+        "gcp",
+        "stripe",
+        "paypal",
+        "database",
+        "db",
+        "redis",
+        "session",
+        "cookie",
+        "smtp",
+        "email",
+        "twilio",
+        "sendgrid",
+        "crunchycone",
+        "do",
+        "spaces",
+        "bucket",
+        "access",
+        "client",
       ];
       const lowerKey = key.toLowerCase();
-      return sensitiveKeywords.some(keyword => lowerKey.includes(keyword));
+      return sensitiveKeywords.some((keyword) => lowerKey.includes(keyword));
     };
 
-    const variables = Array.from(allKeys).map(key => {
+    const variables = Array.from(allKeys).map((key) => {
       const localValue = localVars[key] || "";
       const remoteValue = remoteVars[key];
       const isRemoteSecret = remoteSecrets.includes(key);
       const isSecret = isSensitiveKey(key);
-      const hasConflict = localValue !== "" && remoteValue !== undefined && localValue !== remoteValue;
+      const hasConflict =
+        localValue !== "" && remoteValue !== undefined && localValue !== remoteValue;
 
       return {
         key,
@@ -364,14 +412,17 @@ export async function getMergedEnvironmentVariables(): Promise<{
 
     // Sort alphabetically by key
     variables.sort((a, b) => a.key.localeCompare(b.key));
-    
+
     console.log("getMergedEnvironmentVariables: Final variables count:", variables.length);
-    console.log("getMergedEnvironmentVariables: Sample variables:", variables.slice(0, 3).map(v => ({
-      key: v.key,
-      hasLocal: !!v.localValue,
-      hasRemote: !!v.remoteValue,
-      isRemoteSecret: v.isRemoteSecret
-    })));
+    console.log(
+      "getMergedEnvironmentVariables: Sample variables:",
+      variables.slice(0, 3).map((v) => ({
+        key: v.key,
+        hasLocal: !!v.localValue,
+        hasRemote: !!v.remoteValue,
+        isRemoteSecret: v.isRemoteSecret,
+      }))
+    );
 
     return {
       variables,
@@ -389,13 +440,15 @@ export async function getMergedEnvironmentVariables(): Promise<{
 /**
  * Push local environment variables to remote CrunchyCone
  */
-export async function pushToRemote(keys?: string[]): Promise<{ success: boolean; error?: string; pushedCount?: number }> {
+export async function pushToRemote(
+  keys?: string[]
+): Promise<{ success: boolean; error?: string; pushedCount?: number }> {
   try {
     const { local, remote } = getDualEnvironmentServices();
     const localVars = await local.listEnvVars();
-    
+
     let varsToPush: Record<string, string> = {};
-    
+
     if (keys && keys.length > 0) {
       // Push only specified keys
       for (const key of keys) {
@@ -407,19 +460,19 @@ export async function pushToRemote(keys?: string[]): Promise<{ success: boolean;
       // Push all local variables
       varsToPush = localVars;
     }
-    
+
     if (Object.keys(varsToPush).length === 0) {
       return { success: false, error: "No variables to push" };
     }
-    
+
     await remote.setEnvVars(varsToPush);
-    
+
     // Clear cache after successful push
     clearEnvVarsCache();
-    
-    return { 
-      success: true, 
-      pushedCount: Object.keys(varsToPush).length 
+
+    return {
+      success: true,
+      pushedCount: Object.keys(varsToPush).length,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -434,13 +487,15 @@ export async function pushToRemote(keys?: string[]): Promise<{ success: boolean;
 /**
  * Pull remote environment variables to local .env
  */
-export async function pullFromRemote(keys?: string[]): Promise<{ success: boolean; error?: string; pulledCount?: number }> {
+export async function pullFromRemote(
+  keys?: string[]
+): Promise<{ success: boolean; error?: string; pulledCount?: number }> {
   try {
     const { local, remote } = getDualEnvironmentServices();
     const remoteVars = await remote.listEnvVars();
-    
+
     let varsToPull: Record<string, string> = {};
-    
+
     if (keys && keys.length > 0) {
       // Pull only specified keys
       for (const key of keys) {
@@ -452,19 +507,19 @@ export async function pullFromRemote(keys?: string[]): Promise<{ success: boolea
       // Pull all remote variables (excluding secrets since they can't be read)
       varsToPull = remoteVars;
     }
-    
+
     if (Object.keys(varsToPull).length === 0) {
       return { success: false, error: "No variables to pull" };
     }
-    
+
     await local.setEnvVars(varsToPull);
-    
+
     // Clear cache after successful pull (affects local .env, but clear for consistency)
     clearEnvVarsCache();
-    
-    return { 
-      success: true, 
-      pulledCount: Object.keys(varsToPull).length 
+
+    return {
+      success: true,
+      pulledCount: Object.keys(varsToPull).length,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";

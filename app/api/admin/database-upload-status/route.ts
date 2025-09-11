@@ -20,7 +20,7 @@ export async function GET() {
     }
 
     const status = await getUploadStatus();
-    
+
     return NextResponse.json({
       success: true,
       status: status.status,

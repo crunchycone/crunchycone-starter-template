@@ -67,19 +67,19 @@ export async function POST(_request: NextRequest) {
     // Only check authentication if project is configured
     // In platform mode with API key and project ID, skip auth checks
     if (process.env.CRUNCHYCONE_PLATFORM === "1") {
-      const hasApiKey = !!(process.env.CRUNCHYCONE_API_KEY);
-      const hasProjectId = !!(process.env.CRUNCHYCONE_PROJECT_ID);
-      
+      const hasApiKey = !!process.env.CRUNCHYCONE_API_KEY;
+      const hasProjectId = !!process.env.CRUNCHYCONE_PROJECT_ID;
+
       if (hasApiKey && hasProjectId) {
         result.authenticated = true;
-        result.authDetails = { 
-          success: true, 
-          message: "CrunchyCone configured for platform environment" 
+        result.authDetails = {
+          success: true,
+          message: "CrunchyCone configured for platform environment",
         };
         return NextResponse.json(result);
       }
     }
-    
+
     // In production, check if CrunchyCone API key is configured
     if (process.env.NODE_ENV === "production") {
       const hasApiKey = !!(process.env.CRUNCHYCONE_API_KEY || process.env.CRUNCHYCONE_API_URL);

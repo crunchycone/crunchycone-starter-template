@@ -40,8 +40,14 @@ interface StorageSettings {
   gcsBucket?: string;
   gcpCdnUrl?: string;
 
-  // CrunchyCone uses CLI authentication and crunchycone.toml project config
-  // No additional settings required
+  // CrunchyCone settings
+  crunchyconeApiKey?: string;
+  crunchyconeApiUrl?: string;
+  crunchyconeProjectId?: string;
+  // Flags to indicate if values are set via environment (and should not be editable)
+  isEnvCrunchyconeApiKey?: boolean;
+  isEnvCrunchyconeApiUrl?: boolean;
+  isEnvCrunchyconeProjectId?: boolean;
 }
 
 export async function getStorageSettings(): Promise<{
@@ -80,7 +86,19 @@ export async function getStorageSettings(): Promise<{
       "CRUNCHYCONE_GCP_KEY_FILE",
       "CRUNCHYCONE_GCS_BUCKET",
       "CRUNCHYCONE_GCP_CDN_URL",
+      "CRUNCHYCONE_API_KEY",
+      "CRUNCHYCONE_API_URL",
+      "CRUNCHYCONE_PROJECT_ID",
     ]);
+
+    // Check if CrunchyCone settings are set via process environment (not managed)
+    // This helps distinguish between managed variables and system-provided ones
+    const isEnvCrunchyconeApiKey =
+      !envVars.CRUNCHYCONE_API_KEY && !!process.env.CRUNCHYCONE_API_KEY;
+    const isEnvCrunchyconeApiUrl =
+      !envVars.CRUNCHYCONE_API_URL && !!process.env.CRUNCHYCONE_API_URL;
+    const isEnvCrunchyconeProjectId =
+      !envVars.CRUNCHYCONE_PROJECT_ID && !!process.env.CRUNCHYCONE_PROJECT_ID;
 
     const settings: StorageSettings = {
       provider: envVars.CRUNCHYCONE_STORAGE_PROVIDER || "localstorage",
@@ -106,6 +124,14 @@ export async function getStorageSettings(): Promise<{
       gcpKeyFile: envVars.CRUNCHYCONE_GCP_KEY_FILE,
       gcsBucket: envVars.CRUNCHYCONE_GCS_BUCKET,
       gcpCdnUrl: envVars.CRUNCHYCONE_GCP_CDN_URL,
+      // For CrunchyCone settings, prefer managed variables, fallback to process env
+      crunchyconeApiKey: envVars.CRUNCHYCONE_API_KEY || process.env.CRUNCHYCONE_API_KEY,
+      crunchyconeApiUrl: envVars.CRUNCHYCONE_API_URL || process.env.CRUNCHYCONE_API_URL,
+      crunchyconeProjectId: envVars.CRUNCHYCONE_PROJECT_ID || process.env.CRUNCHYCONE_PROJECT_ID,
+      // Environment flags
+      isEnvCrunchyconeApiKey,
+      isEnvCrunchyconeApiUrl,
+      isEnvCrunchyconeProjectId,
     };
 
     return { success: true, settings };
@@ -151,6 +177,17 @@ export async function updateStorageSettings(
       CRUNCHYCONE_GCP_CDN_URL: settings.gcpCdnUrl,
     };
 
+    // Only set CrunchyCone settings if not already set via environment
+    if (settings.crunchyconeApiKey && !settings.isEnvCrunchyconeApiKey) {
+      updates.CRUNCHYCONE_API_KEY = settings.crunchyconeApiKey;
+    }
+    if (settings.crunchyconeApiUrl && !settings.isEnvCrunchyconeApiUrl) {
+      updates.CRUNCHYCONE_API_URL = settings.crunchyconeApiUrl;
+    }
+    if (settings.crunchyconeProjectId && !settings.isEnvCrunchyconeProjectId) {
+      updates.CRUNCHYCONE_PROJECT_ID = settings.crunchyconeProjectId;
+    }
+
     // Use the unified environment service to update variables
     const result = await updateEnvironmentVariables(updates, {
       removeEmpty: true, // Remove variables with empty values
@@ -183,18 +220,19 @@ export async function testStorageConnection(
       return {
         success: false,
         error: "LocalStorage is not available when running in CrunchyCone platform mode",
-        details: "LocalStorage requires file system access which is not available in managed platform deployments"
+        details:
+          "LocalStorage requires file system access which is not available in managed platform deployments",
       };
     }
 
     // For CrunchyCone provider, check authentication based on environment
     if (settings.provider === "crunchycone") {
       // First, check if crunchycone.toml exists
-      const fs = require('fs');
-      const path = require('path');
-      const crunchyConeTomlPath = path.join(process.cwd(), 'crunchycone.toml');
+      const fs = require("fs");
+      const path = require("path");
+      const crunchyConeTomlPath = path.join(process.cwd(), "crunchycone.toml");
       const hasCrunchyConeConfig = fs.existsSync(crunchyConeTomlPath);
-      
+
       if (!hasCrunchyConeConfig) {
         return {
           success: false,
@@ -204,8 +242,8 @@ export async function testStorageConnection(
       }
 
       if (process.env.CRUNCHYCONE_PLATFORM === "1") {
-        // For platform environments, check if API key is available
-        if (!process.env.CRUNCHYCONE_API_KEY) {
+        // Check if API key is available for platform environments (settings or environment)
+        if (!settings.crunchyconeApiKey && !process.env.CRUNCHYCONE_API_KEY) {
           return {
             success: false,
             error: "CrunchyCone API key is required for platform environment",

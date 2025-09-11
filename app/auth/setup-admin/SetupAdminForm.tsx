@@ -75,7 +75,7 @@ export function SetupAdminForm() {
       setSuccessMessage(result.message);
 
       // Short delay to show the success message
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Automatically sign in the user after successful admin setup
       const signInResult = await signIn("credentials", {

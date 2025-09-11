@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/permissions";
-import { auth } from "@/lib/auth";
-import { isAdmin } from "@/lib/auth/permissions";
-import { 
-  getEnvironmentService, 
+import {
+  getEnvironmentService,
   getMergedEnvironmentVariables,
   getDualEnvironmentServices,
-  isPlatformEnvironment 
+  isPlatformEnvironment,
 } from "@/lib/environment-service";
 import { existsSync } from "fs";
 import { join } from "path";
@@ -17,24 +15,52 @@ export const dynamic = "force-dynamic";
 // Helper function to determine if a key is sensitive
 function isSensitiveKey(key: string): boolean {
   const sensitiveKeywords = [
-    "secret", "key", "password", "token", "auth", "api", "private", 
-    "credential", "pass", "jwt", "oauth", "github", "google", "aws", 
-    "azure", "gcp", "stripe", "paypal", "database", "db", "redis", 
-    "session", "cookie", "smtp", "email", "twilio", "sendgrid", 
-    "crunchycone", "do", "spaces", "bucket", "access", "client"
+    "secret",
+    "key",
+    "password",
+    "token",
+    "auth",
+    "api",
+    "private",
+    "credential",
+    "pass",
+    "jwt",
+    "oauth",
+    "github",
+    "google",
+    "aws",
+    "azure",
+    "gcp",
+    "stripe",
+    "paypal",
+    "database",
+    "db",
+    "redis",
+    "session",
+    "cookie",
+    "smtp",
+    "email",
+    "twilio",
+    "sendgrid",
+    "crunchycone",
+    "do",
+    "spaces",
+    "bucket",
+    "access",
+    "client",
   ];
   const lowerKey = key.toLowerCase();
-  return sensitiveKeywords.some(keyword => lowerKey.includes(keyword));
+  return sensitiveKeywords.some((keyword) => lowerKey.includes(keyword));
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Require admin role (handles both auth and admin check)
     await requireRole("admin");
-    
+
     console.log("=== Environment API GET Request ===");
     console.log("Authentication passed using requireRole");
-    
+
     // Debug environment variables being used by the service
     console.log("Environment debug:", {
       isInPlatformMode: isPlatformEnvironment(),
@@ -67,7 +93,7 @@ export async function GET(request: NextRequest) {
       isRemoteSecret?: boolean;
       hasConflict?: boolean;
     }> = [];
-    
+
     let supportsRemoteSecrets = false;
 
     try {
@@ -75,15 +101,15 @@ export async function GET(request: NextRequest) {
         // PLATFORM MODE: Only use CrunchyCone provider
         const envService = getEnvironmentService();
         const providerInfo = envService.getProviderInfo();
-        
+
         console.log("Platform mode - about to fetch environment variables from CrunchyCone API");
         console.log("Environment service provider info:", providerInfo);
-        
+
         // Get environment variables from platform
         console.log("Calling envService.listEnvVars()...");
         const envVars = await envService.listEnvVars();
         console.log("Successfully fetched envVars:", Object.keys(envVars).length, "variables");
-        
+
         // Get secrets if supported
         let secretNames: string[] = [];
         if (providerInfo.supportsSecrets) {
@@ -109,16 +135,15 @@ export async function GET(request: NextRequest) {
 
         // Combine environment variables and secrets
         variables = [...envEntries, ...secretEntries];
-        
       } else {
         // LOCAL MODE: Check if CrunchyCone project is available
-        const crunchyConeTomlPath = join(process.cwd(), 'crunchycone.toml');
+        const crunchyConeTomlPath = join(process.cwd(), "crunchycone.toml");
         const hasCrunchyConeConfig = existsSync(crunchyConeTomlPath);
-        
+
         if (hasCrunchyConeConfig) {
           // Project has CrunchyCone config: Merge local (.env) + CrunchyCone providers
           const mergedResult = await getMergedEnvironmentVariables();
-          variables = mergedResult.variables.map(variable => ({
+          variables = mergedResult.variables.map((variable) => ({
             key: variable.key,
             localValue: variable.localValue,
             remoteValue: variable.remoteValue,
@@ -132,7 +157,7 @@ export async function GET(request: NextRequest) {
           console.log("No crunchycone.toml found - loading only local environment variables");
           const { local } = getDualEnvironmentServices();
           const localVars = await local.listEnvVars();
-          
+
           variables = Object.entries(localVars).map(([key, localValue]) => ({
             key,
             localValue: localValue || "",
@@ -140,58 +165,63 @@ export async function GET(request: NextRequest) {
           }));
         }
       }
-      
+
       // Sort alphabetically by key
       variables.sort((a, b) => a.key.localeCompare(b.key));
-      
     } catch (error) {
       console.error("Failed to fetch environment variables:", error);
       console.error("Error details:", error instanceof Error ? error.message : error);
       console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
       console.error("Error name:", error instanceof Error ? error.name : "Unknown");
       console.error("Error constructor:", error?.constructor?.name);
-      
+
       // Check if this is a Next.js redirect error (not an actual error)
       const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage === 'NEXT_REDIRECT') {
-        console.error("NEXT_REDIRECT error detected - this should not happen after requireRole passes");
+      if (errorMessage === "NEXT_REDIRECT") {
+        console.error(
+          "NEXT_REDIRECT error detected - this should not happen after requireRole passes"
+        );
         throw error; // Re-throw redirect errors
       }
-      
+
       // Check if this is a CrunchyCone API error
-      if (errorMessage.includes('api.crunchycone.dev') || errorMessage.includes('401') || errorMessage.includes('403')) {
+      if (
+        errorMessage.includes("api.crunchycone.dev") ||
+        errorMessage.includes("401") ||
+        errorMessage.includes("403")
+      ) {
         return NextResponse.json(
-          { error: "CrunchyCone API authentication failed. Please check your API key and permissions." },
+          {
+            error:
+              "CrunchyCone API authentication failed. Please check your API key and permissions.",
+          },
           { status: 502 }
         );
       }
-      
-      return NextResponse.json(
-        { error: "Failed to fetch environment variables" },
-        { status: 500 }
-      );
+
+      return NextResponse.json({ error: "Failed to fetch environment variables" }, { status: 500 });
     }
 
     // Check if CrunchyCone is authenticated by testing if we can access remote vars
     let crunchyConeAuth = { isAuthenticated: false, source: "unknown" };
     if (!isInPlatformMode) {
       // Check if crunchycone.toml exists in the project root
-      const crunchyConeTomlPath = join(process.cwd(), 'crunchycone.toml');
+      const crunchyConeTomlPath = join(process.cwd(), "crunchycone.toml");
       const hasCrunchyConeConfig = existsSync(crunchyConeTomlPath);
-      
+
       if (!hasCrunchyConeConfig) {
         console.log("No crunchycone.toml found - project not available in CrunchyCone");
-        crunchyConeAuth = { 
-          isAuthenticated: false, 
-          source: "project_not_available" 
+        crunchyConeAuth = {
+          isAuthenticated: false,
+          source: "project_not_available",
         };
       } else {
         try {
           // In local mode, check if we successfully fetched remote variables
-          const hasRemoteVars = variables.some(v => v.remoteValue !== undefined);
-          crunchyConeAuth = { 
-            isAuthenticated: hasRemoteVars, 
-            source: hasRemoteVars ? "keychain" : "not_authenticated" 
+          const hasRemoteVars = variables.some((v) => v.remoteValue !== undefined);
+          crunchyConeAuth = {
+            isAuthenticated: hasRemoteVars,
+            source: hasRemoteVars ? "keychain" : "not_authenticated",
           };
         } catch (error) {
           console.warn("Failed to determine CrunchyCone auth status:", error);

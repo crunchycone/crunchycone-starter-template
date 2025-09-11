@@ -919,7 +919,7 @@ export function EnvironmentVariablesDisplay() {
                           onClick={() =>
                             openPushDialog(
                               envVar.key,
-                              envVar.localValue,
+                              envVar.localValue || "",
                               envVar.remoteValue || ""
                             )
                           }

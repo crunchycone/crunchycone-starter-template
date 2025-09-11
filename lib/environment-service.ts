@@ -54,8 +54,6 @@ export function getEnvironmentService(
       apiKey: process.env.CRUNCHYCONE_API_KEY,
       projectId: process.env.CRUNCHYCONE_PROJECT_ID || projectIdFromToml,
       apiUrl: process.env.CRUNCHYCONE_API_URL || "https://api.crunchycone.dev",
-      // Force platform mode when we have both platform env var and API key
-      forcePlatform: isPlatformEnvironment() && !!process.env.CRUNCHYCONE_API_KEY,
       ...config,
     };
     
@@ -64,7 +62,6 @@ export function getEnvironmentService(
       apiKeyLength: defaultConfig.apiKey?.length,
       projectId: defaultConfig.projectId,
       apiUrl: defaultConfig.apiUrl,
-      forcePlatform: defaultConfig.forcePlatform,
       isPlatformEnvironment: isPlatformEnvironment(),
     });
     
@@ -211,14 +208,10 @@ export function getDualEnvironmentServices(): {
   remote: CrunchyConeEnvironmentService;
 } {
   // Force local provider (for .env files)
-  const localService = getCrunchyConeEnvironmentService({
-    forcePlatform: false,
-  });
+  const localService = getCrunchyConeEnvironmentService({});
 
-  // Force remote provider (for CrunchyCone API)
-  const remoteService = getCrunchyConeEnvironmentService({
-    forcePlatform: true,
-  });
+  // Force remote provider (for CrunchyCone API) 
+  const remoteService = getCrunchyConeEnvironmentService({});
 
   return { local: localService, remote: remoteService };
 }

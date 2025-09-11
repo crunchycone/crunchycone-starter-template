@@ -35,21 +35,14 @@ export function getCrunchyConeAuthService(
       timeout: 10000, // 10 seconds
       preferApi: isPlatform, // On platform, always prefer API; locally, allow CLI fallback
       cliTimeout: isPlatform ? 5000 : 15000, // Shorter timeout on platform where CLI shouldn't be used
-      apiOnly: isPlatform, // On platform, only use API key authentication
-      apiKey: process.env.CRUNCHYCONE_API_KEY,
-      projectId: process.env.CRUNCHYCONE_PROJECT_ID,
-      apiUrl: process.env.CRUNCHYCONE_API_URL || "https://api.crunchycone.dev",
       ...config,
     };
     
     console.log("Creating CrunchyCone auth service with config:", {
-      hasApiKey: !!defaultConfig.apiKey,
-      apiKeyLength: defaultConfig.apiKey?.length,
-      projectId: defaultConfig.projectId,
-      apiUrl: defaultConfig.apiUrl,
       isPlatform,
       preferApi: defaultConfig.preferApi,
-      apiOnly: defaultConfig.apiOnly,
+      timeout: defaultConfig.timeout,
+      cliTimeout: defaultConfig.cliTimeout,
     });
 
     globalAuthService = new CrunchyConeAuthService(defaultConfig);
@@ -90,12 +83,6 @@ export async function checkCrunchyConeAuth(): Promise<CrunchyConeAuthResult> {
     }
     
     console.log("About to call authService.checkAuthentication()");
-    console.log("Auth service config:", {
-      timeout: authService.timeout,
-      preferApi: authService.preferApi,
-      cliTimeout: authService.cliTimeout,
-      apiOnly: authService.apiOnly
-    });
     
     const result = await authService.checkAuthentication();
     

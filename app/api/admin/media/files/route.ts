@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
             ? fileItem.lastModified.toISOString()
             : new Date().toISOString(),
           contentType: fileItem.contentType,
-          visibility: fileItem.visibility || "private", // Use visibility from listFiles result
+          visibility: fileItem.visibility === "public" ? "public" : "private", // Use visibility from listFiles result, map temporary-public to private
         };
 
         // Add URL for public files if available from listFiles result

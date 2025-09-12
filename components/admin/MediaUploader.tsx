@@ -243,11 +243,11 @@ export function MediaUploader() {
 
       if (response.ok) {
         setMessage({ type: "success", text: "File deleted successfully" });
-        
+
         // Remove the deleted file from the current list instead of clearing all files
-        setFiles(prevFiles => prevFiles.filter(f => f.path !== filePath));
-        setFilteredFiles(prevFiles => prevFiles.filter(f => f.path !== filePath));
-        
+        setFiles((prevFiles) => prevFiles.filter((f) => f.path !== filePath));
+        setFilteredFiles((prevFiles) => prevFiles.filter((f) => f.path !== filePath));
+
         // Optionally reload to get fresh data (but don't clear files first)
         // await loadFiles(currentPage, false);
       } else {

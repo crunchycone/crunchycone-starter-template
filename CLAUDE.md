@@ -178,6 +178,7 @@ export async function GET() { ... }
 **Security**: Role checks, self-protection, bcrypt, HTTP-only cookies, JWT expiry
 **Logging**: Set `NODE_ENV=production` and `LOG_LEVEL=debug` for structured JSON logs with PII sanitization
 **Linting**: `npm run lint` - zero errors/warnings maintained with automatic fixes
+**Pre-commit**: Always run `npm run lint` and `npm run build` before committing to ensure code quality
 
 ## Email System
 

@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      console.log(`[Upload] Starting upload for ${filePath}, size: ${file.size}, type: ${file.type}`);
+      console.log(
+        `[Upload] Starting upload for ${filePath}, size: ${file.size}, type: ${file.type}`
+      );
 
       const uploadResult = await provider.uploadFile({
         external_id: `admin-upload-${uniqueId}`,

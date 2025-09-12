@@ -95,7 +95,7 @@ export async function DELETE(
     try {
       let wasDeleted = false;
       let errorMessage = "";
-      
+
       try {
         await provider.deleteFile(filePath);
         wasDeleted = true;
@@ -104,9 +104,14 @@ export async function DELETE(
         // Even if delete fails, we consider it a success if it was a "not found" error
         const errorMsg = deleteError instanceof Error ? deleteError.message : String(deleteError);
         console.log(`[Delete] Delete operation for ${filePath} failed: ${errorMsg}`);
-        
-        if (errorMsg.toLowerCase().includes("not found") || errorMsg.toLowerCase().includes("does not exist")) {
-          console.log(`[Delete] File ${filePath} was already missing, considering deletion successful`);
+
+        if (
+          errorMsg.toLowerCase().includes("not found") ||
+          errorMsg.toLowerCase().includes("does not exist")
+        ) {
+          console.log(
+            `[Delete] File ${filePath} was already missing, considering deletion successful`
+          );
           wasDeleted = true;
         } else {
           errorMessage = errorMsg;

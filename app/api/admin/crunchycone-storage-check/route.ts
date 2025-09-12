@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/permissions";
-import { exec } from "child_process";
-import { promisify } from "util";
-import fs from "fs";
-import path from "path";
+import { checkCrunchyConeAuth } from "@/lib/crunchycone-auth-service";
+import { getCrunchyConeProjectID } from "crunchycone-lib/auth";
+import { isPlatformEnvironment } from "@/lib/environment-service";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
-
-const execAsync = promisify(exec);
 
 interface CrunchyConeProject {
   project_id: string;
@@ -28,8 +25,8 @@ export async function POST(_request: NextRequest) {
       error: null as string | null,
     };
 
-    // In platform mode with API key and project ID, automatically configure
-    if (process.env.CRUNCHYCONE_PLATFORM === "1") {
+    // Check if we're in platform mode first
+    if (isPlatformEnvironment()) {
       const hasApiKey = !!process.env.CRUNCHYCONE_API_KEY;
       const hasProjectId = !!process.env.CRUNCHYCONE_PROJECT_ID;
 
@@ -42,86 +39,70 @@ export async function POST(_request: NextRequest) {
           user: { name: "Platform User" },
         };
         result.projectDetails = {
-          project_id: process.env.CRUNCHYCONE_PROJECT_ID || "unknown",
+          project_id: process.env.CRUNCHYCONE_PROJECT_ID!,
           configFile: "environment variables (platform mode)",
         };
         return NextResponse.json(result);
       }
     }
 
-    // First check authentication status (regardless of project configuration)
-    if (process.env.NODE_ENV === "production") {
-      // In production, check if CrunchyCone API key is configured
-      const hasApiKey = !!(process.env.CRUNCHYCONE_API_KEY || process.env.CRUNCHYCONE_API_URL);
-      result.authenticated = hasApiKey;
-      result.authDetails = hasApiKey
-        ? { success: true, message: "CrunchyCone API key configured" }
-        : { success: false, message: "CrunchyCone API key not configured" };
-    } else {
-      // In development, check authentication via CLI (keychain/stored auth)
-      try {
-        const { stdout } = await execAsync("npx --yes crunchycone-cli auth check -j", {
-          timeout: 15000, // 15 second timeout to allow for CLI installation
-        });
+    // For local development, use the unified auth service from crunchycone-lib
+    try {
+      const authResult = await checkCrunchyConeAuth();
 
-        const output = stdout.trim();
-        try {
-          const authResult = JSON.parse(output);
-          result.authenticated = authResult.success === true;
-          result.authDetails = authResult;
-        } catch {
-          result.error = "Invalid JSON response from auth CLI";
-          result.authDetails = { success: false, message: output };
-        }
-      } catch (error: unknown) {
-        const execError = error as { stdout?: string; stderr?: string };
-        const output = execError.stdout?.trim() || execError.stderr?.trim() || "";
+      result.authenticated = authResult.success;
+      result.authDetails = {
+        success: authResult.success,
+        message: authResult.message || (authResult.success ? "Authenticated" : "Not authenticated"),
+        user: authResult.user,
+        source: authResult.source,
+      };
 
-        // Try to parse JSON from stdout or stderr
-        if (output) {
-          try {
-            const authResult = JSON.parse(output);
-            result.authenticated = authResult.success === true;
-            result.authDetails = authResult;
-          } catch {
-            // If not JSON, treat as error message
-            result.error = "Authentication check failed";
-            result.authDetails = { success: false, message: output };
-          }
-        } else {
-          result.error = "Failed to check authentication status";
-          result.authDetails = {
-            success: false,
-            message: "CrunchyCone CLI may not be installed or accessible",
-          };
-        }
+      if (authResult.error) {
+        result.error = authResult.error;
       }
+    } catch (error) {
+      console.error("Error checking CrunchyCone auth:", error);
+      result.error = error instanceof Error ? error.message : "Unknown error occurred";
+      result.authDetails = {
+        success: false,
+        message: "Failed to check authentication status",
+      };
     }
 
-    // Then check for project configuration
+    // Check for project configuration
     try {
-      const tomlPath = path.join(process.cwd(), "crunchycone.toml");
+      // Try crunchycone-lib function first
+      let projectId = getCrunchyConeProjectID();
 
-      if (fs.existsSync(tomlPath)) {
-        const tomlContent = fs.readFileSync(tomlPath, "utf-8");
-
-        // Parse TOML for project_id (simple parsing)
-        const projectIdMatch = tomlContent.match(/^project_id\s*=\s*['"](.*?)['"]$/m);
-        if (projectIdMatch) {
-          result.hasProject = true;
-          result.projectDetails = {
-            project_id: projectIdMatch[1],
-            configFile: "crunchycone.toml",
-          };
-        } else {
-          result.hasProject = false;
-          result.projectDetails = null;
+      // If library function fails, use manual fallback (more reliable)
+      if (!projectId) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const fs = require("fs");
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const path = require("path");
+        const tomlPath = path.join(process.cwd(), "crunchycone.toml");
+        if (fs.existsSync(tomlPath)) {
+          const tomlContent = fs.readFileSync(tomlPath, "utf-8");
+          const projectIdMatch = tomlContent.match(/^project_id\s*=\s*['"](.*?)['"]$/m);
+          if (projectIdMatch) {
+            projectId = projectIdMatch[1];
+          }
         }
+      }
+
+      if (projectId) {
+        result.hasProject = true;
+        result.projectDetails = {
+          project_id: projectId,
+          configFile: "crunchycone.toml",
+        };
       } else {
         result.hasProject = false;
         result.projectDetails = null;
       }
-    } catch {
+    } catch (error) {
+      console.error("Error checking project configuration:", error);
       result.hasProject = false;
       result.projectDetails = null;
       if (!result.error) {

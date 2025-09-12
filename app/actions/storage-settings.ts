@@ -243,8 +243,9 @@ export async function testStorageConnection(
       if (!hasCrunchyConeConfig) {
         return {
           success: false,
-          error: "This project is not available in CrunchyCone",
-          details: "No crunchycone.toml configuration file found in project root",
+          error: "CrunchyCone configuration not found",
+          details:
+            "This template project is not connected to CrunchyCone. To use CrunchyCone storage, initialize a project with 'crunchycone init' or use a different storage provider.",
         };
       }
 

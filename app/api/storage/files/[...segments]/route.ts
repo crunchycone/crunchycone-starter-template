@@ -96,9 +96,7 @@ export async function GET(
         return await streamLocalStorageFile(provider, filePath, request);
       } else {
         // Cloud Providers: Get signed URL and redirect
-        console.log(`[Storage] Using cloud provider redirect`);
-        const fileUrl = await provider.getFileUrl(filePath, 3600); // 1 hour expiry
-        console.log(`[Storage] Redirecting to: ${fileUrl}`);
+        const fileUrl = await provider.getFileUrl(filePath, 3600, { disposition: 'inline' }); // 1 hour expiry, inline display
         return NextResponse.redirect(fileUrl, 302);
       }
     } catch {

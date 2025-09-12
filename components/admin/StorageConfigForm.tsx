@@ -152,10 +152,14 @@ export function StorageConfigForm() {
         method: "POST",
       });
       const result = await response.json();
+      console.log("Frontend DEBUG: Response status:", response.status);
+      console.log("Frontend DEBUG: Response result:", result);
 
       if (response.ok) {
         setCrunchyConeStatus(result);
+        console.log("Frontend DEBUG: Set crunchyConeStatus to:", result);
       } else {
+        console.log("Frontend DEBUG: Response not ok, setting error state");
         setCrunchyConeStatus({
           authenticated: false,
           hasProject: false,

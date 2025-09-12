@@ -672,24 +672,6 @@ export async function checkCrunchyConeAuth() {
   await requireRole("admin");
 
   try {
-    // Check if crunchycone.toml exists in the project root
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require("fs");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const path = require("path");
-    const crunchyConeTomlPath = path.join(process.cwd(), "crunchycone.toml");
-    const hasCrunchyConeConfig = fs.existsSync(crunchyConeTomlPath);
-
-    if (!hasCrunchyConeConfig) {
-      return {
-        success: true,
-        authenticated: false,
-        user: null,
-        message: "This project is not available in CrunchyCone",
-        source: "project_not_available",
-      };
-    }
-
     // If we're on the platform, check for API key instead of CLI auth
     if (process.env.CRUNCHYCONE_PLATFORM === "1") {
       const hasApiKey = !!(
@@ -715,6 +697,24 @@ export async function checkCrunchyConeAuth() {
         message: hasApiKey
           ? "CrunchyCone API key is configured for platform environment"
           : "CrunchyCone API key not found for platform environment",
+      };
+    }
+
+    // For local environments, check if crunchycone.toml exists first
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require("fs");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require("path");
+    const crunchyConeTomlPath = path.join(process.cwd(), "crunchycone.toml");
+    const hasCrunchyConeConfig = fs.existsSync(crunchyConeTomlPath);
+
+    if (!hasCrunchyConeConfig) {
+      return {
+        success: true,
+        authenticated: false,
+        user: null,
+        message: "This project is not available in CrunchyCone",
+        source: "project_not_available",
       };
     }
 

@@ -30,11 +30,14 @@ export async function GET(request: NextRequest) {
     // Initialize storage provider if not already done
     try {
       initializeStorageProvider();
-    } catch {
+      console.log("[Media Files] Storage provider initialized successfully");
+    } catch (error) {
+      console.log("[Media Files] Provider might already be initialized, error:", error);
       // Provider might already be initialized
     }
 
     const provider = getStorageProvider();
+    console.log("[Media Files] Got storage provider:", provider?.constructor?.name);
 
     // Use search or list files based on query parameters
     try {
@@ -74,9 +77,6 @@ export async function GET(request: NextRequest) {
       const files: FileInfo[] = [];
 
       for (const fileItem of listResult.files) {
-        // Get file visibility
-        const visibilityInfo = await provider.getFileVisibility(fileItem.key);
-
         // Extract file name from the key (path)
         const fileName = fileItem.key.split("/").pop() || fileItem.key;
 
@@ -88,12 +88,12 @@ export async function GET(request: NextRequest) {
             ? fileItem.lastModified.toISOString()
             : new Date().toISOString(),
           contentType: fileItem.contentType,
-          visibility: visibilityInfo.visibility === "public" ? "public" : "private",
+          visibility: fileItem.visibility || "private", // Use visibility from listFiles result
         };
 
-        // Add URL for public files
-        if (visibilityInfo.publicUrl) {
-          fileInfo.url = visibilityInfo.publicUrl;
+        // Add URL for public files if available from listFiles result
+        if (fileItem.publicUrl) {
+          fileInfo.url = fileItem.publicUrl;
         }
 
         files.push(fileInfo);

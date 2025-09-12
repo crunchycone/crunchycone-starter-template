@@ -90,25 +90,43 @@ export async function DELETE(
 
     const provider = getStorageProvider();
 
-    // Check if file exists
-    const fileExists = await provider.fileExists(filePath);
-    if (!fileExists) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
-    }
-
     // Delete the file using the storage provider
+    // Note: We always try to delete, even if the file doesn't exist, to ensure cleanup
     try {
-      await provider.deleteFile(filePath);
+      let wasDeleted = false;
+      let errorMessage = "";
+      
+      try {
+        await provider.deleteFile(filePath);
+        wasDeleted = true;
+        console.log(`[Delete] File ${filePath} deleted from storage`);
+      } catch (deleteError) {
+        // Even if delete fails, we consider it a success if it was a "not found" error
+        const errorMsg = deleteError instanceof Error ? deleteError.message : String(deleteError);
+        console.log(`[Delete] Delete operation for ${filePath} failed: ${errorMsg}`);
+        
+        if (errorMsg.toLowerCase().includes("not found") || errorMsg.toLowerCase().includes("does not exist")) {
+          console.log(`[Delete] File ${filePath} was already missing, considering deletion successful`);
+          wasDeleted = true;
+        } else {
+          errorMessage = errorMsg;
+        }
+      }
 
-      return NextResponse.json({
-        success: true,
-        message: "File deleted successfully",
-      });
-    } catch {
-      // Error handled silently
+      if (wasDeleted) {
+        return NextResponse.json({
+          success: true,
+          message: "File deleted successfully",
+        });
+      } else {
+        throw new Error(errorMessage || "Failed to delete file");
+      }
+    } catch (error) {
+      console.error(`[Delete] Error deleting file ${filePath}:`, error);
       return NextResponse.json(
         {
           error: "Failed to delete file",
+          details: error instanceof Error ? error.message : "Unknown error",
         },
         { status: 500 }
       );

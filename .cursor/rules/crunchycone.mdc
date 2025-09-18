@@ -106,6 +106,38 @@ npx --yes crunchycone-cli auth check && ls crunchycone.toml
 
 Both should succeed for full platform integration.
 
+## 📊 Build Monitoring & Debugging
+
+### Get Latest Builds
+Check recent build status and history:
+```bash
+npx --yes crunchycone-cli project builds
+```
+
+This shows:
+- Build IDs with status (success, failed, in-progress)
+- Build timestamps and durations
+- Branch/commit information
+
+### Examine Build Logs
+When a build fails, get detailed logs for debugging:
+```bash
+npx --yes crunchycone-cli project builds log <buildId>
+```
+
+**Usage**:
+1. Run `npx --yes crunchycone-cli project builds` to see recent builds
+2. Copy the build ID of the failed build
+3. Run `npx --yes crunchycone-cli project builds log <buildId>` to see full logs
+4. Review error messages, dependency issues, or configuration problems
+
+**Common build failure causes**:
+- Missing environment variables
+- Dependency installation failures
+- TypeScript compilation errors
+- Database migration issues
+- Authentication/configuration problems
+
 ## 🔍 Troubleshooting
 
 ### "Command not found" Error

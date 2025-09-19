@@ -368,6 +368,18 @@ async function main() {
       logSuccess("Cleaned Next.js build cache");
     }
 
+    // Step 3.5: Install Git hooks
+    try {
+      logInfo("Installing Git pre-commit hooks...");
+      execSync("npm run hooks:install", {
+        stdio: "pipe",
+        cwd: process.cwd(),
+      });
+      logSuccess("Git pre-commit hooks installed (lint + build protection)");
+    } catch (error) {
+      logWarning(`Failed to install Git hooks (not critical for setup): ${error.message}`);
+    }
+
     // Step 4: Check for migrations and reset database
     const migrationsPath = path.join(process.cwd(), "prisma", "migrations");
     const hasMigrations =

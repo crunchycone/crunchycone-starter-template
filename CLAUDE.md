@@ -4,7 +4,7 @@
 
 ```bash
 npm install                    # 1. Dependencies first
-npm run setup-env             # 2. Environment (.env + AUTH_SECRET)
+npm run setup-env             # 2. Environment (.env + AUTH_SECRET + hooks)
 npm run db:reset --yes        # 3. Database
 npm run dev:open              # 4. Start server
 ```
@@ -178,7 +178,7 @@ export async function GET() { ... }
 **Security**: Role checks, self-protection, bcrypt, HTTP-only cookies, JWT expiry
 **Logging**: Set `NODE_ENV=production` and `LOG_LEVEL=debug` for structured JSON logs with PII sanitization
 **Linting**: `npm run lint` - zero errors/warnings maintained with automatic fixes
-**Pre-commit**: Always run `npm run lint` and `npm run build` before committing to ensure code quality
+**Pre-commit**: Git hooks automatically run `npm run lint` and `npm run build` before commits to ensure code quality - install with `npm run hooks:install`
 
 ## Email System
 

@@ -234,12 +234,16 @@ export async function GET() { ... }
 **Logging**: Set `NODE_ENV=production` and `LOG_LEVEL=debug` for structured JSON logs with PII sanitization
 **Linting**: `npm run lint` - zero errors/warnings maintained with automatic fixes
 **Pre-commit**: Git hooks automatically run `npm run lint` and `npm run build` before commits to ensure code quality - install with `npm run hooks:install`
+**Package Sync**: Always ensure package.json and package-lock.json are synchronized before committing
 
 **Agent Rules**:
 - **ALWAYS** run `npm run lint` before committing
 - **ALWAYS** fix all TypeScript errors before proceeding
 - **ALWAYS** test changes locally before pushing
 - **Pre-commit hooks automatically enforce code quality**
+- **CRITICAL**: Never commit package.json without package-lock.json or vice versa
+- **ALWAYS** run `npm install` after modifying package.json to update lock file
+- **ALWAYS** commit package.json and package-lock.json together in same commit
 
 ## Email System
 
@@ -393,6 +397,9 @@ Follow patterns, add types, handle errors, update docs, test thoroughly, maintai
 - Committing TypeScript errors or linting issues
 - Exposing sensitive data in client-side code
 - Creating documentation files without explicit request
+- **PACKAGE SYNC**: Committing package.json without package-lock.json or vice versa
+- **PACKAGE SYNC**: Not running `npm install` after modifying package.json
+- **PACKAGE SYNC**: Ignoring dependency version mismatches between files
 
 ## Agent Quality Assurance Checklist
 
@@ -409,6 +416,8 @@ Follow patterns, add types, handle errors, update docs, test thoroughly, maintai
 - [ ] Database queries filter `deleted_at: null` for active records
 - [ ] `revalidatePath()` called after data mutations
 - [ ] Pre-commit hooks will automatically verify lint and build pass
+- [ ] Package.json and package-lock.json synchronized (if either modified)
+- [ ] `npm install` run after package.json changes
 
 ## Rule Integration Framework
 

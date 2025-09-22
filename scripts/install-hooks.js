@@ -56,7 +56,7 @@ hooks.forEach((hookName) => {
 
 if (installedCount > 0) {
   console.log(`\n🎯 Git hooks installed successfully!`);
-  console.log("   These hooks will run lint and build checks before commits.");
+  console.log("   These hooks will run package sync, lint and build checks before commits.");
 } else if (hooks.length > 0) {
   console.log("\n⚠️  No git hooks were installed.");
 }

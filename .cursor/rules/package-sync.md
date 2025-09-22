@@ -40,10 +40,11 @@ If files are out of sync:
 - **Document** any peer dependency requirements
 
 ### 7. Automated Checks
-The pre-commit hooks should verify:
+The pre-commit hooks automatically verify:
 - Package.json and lock file are both staged if either is modified
-- `npm ci` runs successfully (clean install test)
-- No high-severity security vulnerabilities
+- `npm ci` runs successfully (validates lock file against package.json)
+- Files are properly synchronized before allowing commit
+- Install hooks with `npm run hooks:install`
 
 ## Red Flags to Watch For
 - ❌ Committing only package.json without package-lock.json

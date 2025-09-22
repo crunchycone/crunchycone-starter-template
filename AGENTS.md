@@ -233,8 +233,8 @@ export async function GET() { ... }
 **Security**: Role checks, self-protection, bcrypt, HTTP-only cookies, JWT expiry
 **Logging**: Set `NODE_ENV=production` and `LOG_LEVEL=debug` for structured JSON logs with PII sanitization
 **Linting**: `npm run lint` - zero errors/warnings maintained with automatic fixes
-**Pre-commit**: Git hooks automatically run `npm run lint` and `npm run build` before commits to ensure code quality - install with `npm run hooks:install`
-**Package Sync**: Always ensure package.json and package-lock.json are synchronized before committing
+**Pre-commit**: Git hooks automatically run package sync validation, `npm run lint` and `npm run build` before commits to ensure code quality - install with `npm run hooks:install`
+**Package Sync**: Always ensure package.json and package-lock.json are synchronized before committing (enforced by pre-commit hook)
 
 **Agent Rules**:
 - **ALWAYS** run `npm run lint` before committing

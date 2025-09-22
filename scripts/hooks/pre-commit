@@ -3,6 +3,58 @@
 
 echo "🔍 Running pre-commit checks..."
 
+# Check if package.json and package-lock.json are in sync
+echo "📦 Checking package.json and package-lock.json sync..."
+
+# Check if either file is staged for commit
+package_json_staged=$(git diff --cached --name-only | grep -c "^package\.json$" || true)
+package_lock_staged=$(git diff --cached --name-only | grep -c "^package-lock\.json$" || true)
+
+# If either is staged, both should be staged
+if [ "$package_json_staged" -eq 1 ] || [ "$package_lock_staged" -eq 1 ]; then
+    if [ "$package_json_staged" -ne "$package_lock_staged" ]; then
+        echo ""
+        echo "❌ ERROR: Package files are out of sync!"
+        echo "Both package.json and package-lock.json must be committed together."
+        if [ "$package_json_staged" -eq 1 ]; then
+            echo "→ package.json is staged but package-lock.json is not"
+            echo "→ Run 'npm install' to update package-lock.json, then stage it"
+        else
+            echo "→ package-lock.json is staged but package.json is not"
+            echo "→ Stage package.json with 'git add package.json'"
+        fi
+        exit 1
+    fi
+
+    # If both are staged, verify they are in sync by testing clean install
+    if [ "$package_json_staged" -eq 1 ] && [ "$package_lock_staged" -eq 1 ]; then
+        echo "🧪 Verifying package files are in sync..."
+
+        # Create a temporary directory for testing
+        temp_dir=$(mktemp -d)
+        trap "rm -rf $temp_dir" EXIT
+
+        # Copy staged files to temp directory
+        git show :package.json > "$temp_dir/package.json"
+        git show :package-lock.json > "$temp_dir/package-lock.json"
+
+        # Test if npm ci works (validates lock file against package.json)
+        cd "$temp_dir"
+        if ! npm ci --silent --no-progress > /dev/null 2>&1; then
+            cd - > /dev/null
+            echo ""
+            echo "❌ ERROR: package-lock.json is out of sync with package.json!"
+            echo "The lock file doesn't match the dependencies in package.json."
+            echo "→ Run 'npm install' to regenerate package-lock.json"
+            echo "→ Then stage the updated lock file with 'git add package-lock.json'"
+            exit 1
+        fi
+        cd - > /dev/null
+
+        echo "✅ Package files are in sync!"
+    fi
+fi
+
 # Run linting
 echo "🔧 Running linter..."
 if ! npm run lint; then

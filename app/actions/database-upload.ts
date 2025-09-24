@@ -13,6 +13,16 @@ interface UploadStatus {
   completedAt?: string;
   error?: string;
   pid?: number;
+  command?: string;
+  exitCode?: number;
+  stdout?: string;
+  stderr?: string;
+  cliAvailable?: boolean;
+  environment?: {
+    nodeEnv?: string;
+    crunchyconePlatform?: string;
+    workingDirectory?: string;
+  };
 }
 
 export async function triggerDatabaseUpload(): Promise<{ success: boolean; message: string }> {
@@ -25,6 +35,28 @@ export async function triggerDatabaseUpload(): Promise<{ success: boolean; messa
       };
     }
 
+    // Check if CLI is available first
+    const cliCheck = await checkCrunchyConeCLIAvailable();
+    if (!cliCheck.available) {
+      const errorStatus: UploadStatus = {
+        status: "error",
+        error: `CrunchyCone CLI not available: ${cliCheck.message}`,
+        completedAt: new Date().toISOString(),
+        cliAvailable: false,
+        environment: {
+          nodeEnv: process.env.NODE_ENV,
+          crunchyconePlatform: process.env.CRUNCHYCONE_PLATFORM,
+          workingDirectory: process.cwd(),
+        },
+      };
+      await writeFile(STATUS_FILE, JSON.stringify(errorStatus, null, 2));
+
+      return {
+        success: false,
+        message: `CrunchyCone CLI not available: ${cliCheck.message}`,
+      };
+    }
+
     // Check if already running
     const currentStatus = await getUploadStatus();
     if (currentStatus.status === "running") {
@@ -34,17 +66,38 @@ export async function triggerDatabaseUpload(): Promise<{ success: boolean; messa
       };
     }
 
-    // Set status to running
+    // Set status to running with environment info
+    const command = "npx --yes crunchycone-cli database upload";
     const status: UploadStatus = {
       status: "running",
       startedAt: new Date().toISOString(),
+      command,
+      cliAvailable: true,
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        crunchyconePlatform: process.env.CRUNCHYCONE_PLATFORM,
+        workingDirectory: process.cwd(),
+      },
     };
     await writeFile(STATUS_FILE, JSON.stringify(status, null, 2));
+
+    // Capture stdout and stderr
+    let stdout = "";
+    let stderr = "";
 
     // Spawn the CLI command in background
     const child = spawn("npx", ["--yes", "crunchycone-cli", "database", "upload"], {
       detached: true,
-      stdio: "ignore", // Don't pipe stdio to parent
+      stdio: ["ignore", "pipe", "pipe"], // Capture stdout and stderr
+    });
+
+    // Capture output
+    child.stdout?.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr?.on("data", (data) => {
+      stderr += data.toString();
     });
 
     // Store PID for potential cleanup
@@ -57,10 +110,16 @@ export async function triggerDatabaseUpload(): Promise<{ success: boolean; messa
     // Handle process completion in background
     child.on("close", async (code) => {
       const finalStatus: UploadStatus = {
+        ...status,
         status: code === 0 ? "completed" : "error",
-        startedAt: status.startedAt,
         completedAt: new Date().toISOString(),
-        error: code !== 0 ? `Process exited with code ${code}` : undefined,
+        exitCode: code ?? undefined,
+        stdout: stdout.trim() || undefined,
+        stderr: stderr.trim() || undefined,
+        error:
+          code !== 0
+            ? `Process exited with code ${code}${stderr ? `. stderr: ${stderr.trim()}` : ""}${stdout ? `. stdout: ${stdout.trim()}` : ""}`
+            : undefined,
       };
 
       try {
@@ -72,10 +131,12 @@ export async function triggerDatabaseUpload(): Promise<{ success: boolean; messa
 
     child.on("error", async (error) => {
       const errorStatus: UploadStatus = {
+        ...status,
         status: "error",
-        startedAt: status.startedAt,
         completedAt: new Date().toISOString(),
-        error: error.message,
+        error: `Spawn error: ${error.message}`,
+        stdout: stdout.trim() || undefined,
+        stderr: stderr.trim() || undefined,
       };
 
       try {

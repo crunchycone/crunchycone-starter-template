@@ -271,8 +271,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Variable key is required" }, { status: 400 });
     }
 
-    // In platform mode, use secrets API if isSecret is true
-    if (providerInfo.isPlatformEnvironment && isSecret) {
+    if (isSecret) {
       await envService.setSecret(key, value);
     } else {
       // Use regular environment variable API

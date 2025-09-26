@@ -46,6 +46,8 @@ Production-ready Next.js starter with Auth.js v4, admin dashboard, roles, TypeSc
 
 **Sessions**: JWT in HTTP-only cookies, `auth()` for server, `useSession()` for client
 
+**Rate Limiting**: Built-in protection against brute force attacks with configurable limits per endpoint
+
 **Usage**:
 
 - Client: `useSession()`, `signIn()`, `signOut()`
@@ -100,6 +102,27 @@ export const dynamic = "force-dynamic";
 
 export async function GET() { ... }
 ```
+
+## Rate Limiting
+
+**Protection**: Built-in middleware protection against brute force attacks using `next-rate-limit`
+**Storage**: In-memory rate limiting with configurable limits per endpoint
+**Development**: Lenient limits (100-1000 requests/minute) for development mode
+
+**Rate Limits (Production)**:
+- **Auth Sign-in**: 3 attempts/minute
+- **Auth Sign-up**: 2 attempts/minute
+- **Password Reset**: 2 requests/minute
+- **General Auth**: 5 requests/minute
+- **Admin APIs**: 30 requests/minute
+
+**Features**:
+- Automatic IP detection from headers (`x-forwarded-for`, `x-real-ip`)
+- HTTP 429 responses with proper headers (`X-RateLimit-*`, `Retry-After`)
+- User-friendly error messages in auth forms
+- Comprehensive logging for monitoring and security analysis
+
+**Implementation**: `lib/rate-limit.ts` + `middleware.ts` + enhanced error handling in auth components
 
 ## Admin Dashboard
 
@@ -175,7 +198,8 @@ export async function GET() { ... }
 ## Development
 
 **Workflow**: Schema → migrate → server actions → components → pages
-**Security**: Role checks, self-protection, bcrypt, HTTP-only cookies, JWT expiry
+**Security**: Role checks, self-protection, bcrypt, HTTP-only cookies, JWT expiry, rate limiting
+**Testing**: Comprehensive test suite with Jest covering auth, rate limiting, and security - `npm test` for full suite, `npm test -- --coverage` for coverage reports
 **Logging**: Set `NODE_ENV=production` and `LOG_LEVEL=debug` for structured JSON logs with PII sanitization
 **Linting**: `npm run lint` - zero errors/warnings maintained with automatic fixes
 **Pre-commit**: Git hooks automatically run package sync validation, `npm run lint` and `npm run build` before commits to ensure code quality - install with `npm run hooks:install`
@@ -203,6 +227,24 @@ export async function GET() { ... }
 **Features**: TypeScript-based, dynamic toggle, persistent preferences, Tailwind v4 ready
 **Structure**: `themes/base/` (light, dark), `themes/custom/` (ocean, forest, midnight)
 **Utilities**: `getAllThemes()`, `getTheme()`, `validateTheme()`, `generateThemeCSS()`
+
+## Testing
+
+**Framework**: Jest with TypeScript support and ES modules compatibility
+**Coverage**: 70% threshold for branches, functions, lines, and statements
+**Test Types**: Unit tests, integration tests, security tests, error handling
+**Commands**: `npm test` (run all), `npm test -- --coverage` (with coverage), `npm test -- --watch` (watch mode)
+
+**Test Structure**:
+- `__tests__/lib/auth/utils/` - Authentication utility tests (100% coverage)
+- `__tests__/lib/auth/providers/` - OAuth and credentials provider tests (100% coverage)
+- `__tests__/lib/auth/callbacks/` - JWT, session, redirect callback tests (100% coverage)
+- `__tests__/lib/rate-limit.test.ts` - Rate limiting and security tests
+- `__tests__/integration/auth-flows.test.ts` - End-to-end authentication flow tests
+
+**Mocking**: Comprehensive mocking of Prisma, NextAuth, bcrypt, next-rate-limit, and external APIs
+**Security Testing**: Malicious input validation, rate limit testing, OAuth flow security, redirect validation
+**CI/CD Ready**: All tests pass independently and can be integrated into deployment pipelines
 
 ## Recent Updates
 
@@ -255,11 +297,23 @@ export async function GET() { ... }
 
 See `docs/` folder: email providers, auth providers, theme customization
 
-## Cursor AI Rules
+## Cursor AI Rules & Commands
 
-**Location**: `.cursor/rules/` folder
+**Rules Location**: `.cursor/rules/` folder
 **Files**: project, database, auth, admin, prisma, server-actions, themes, setup
 **Benefits**: Consistent patterns, context-aware assistance, anti-pattern prevention
+
+**Custom Commands**: `.cursor/commands/` folder
+**Available Commands**:
+- `/code-review` - Comprehensive code quality analysis
+- `/security-review` - Security-focused vulnerability assessment
+- `/test-review` - Test quality and coverage analysis
+- `/performance-review` - Performance and scalability optimization
+- `/architecture-review` - System design and pattern evaluation
+- `/refactor-suggest` - Specific refactoring recommendations
+- `/crunchycone-build-log` - CrunchyCone build troubleshooting and log analysis
+
+**Usage**: Type `/` in Cursor chat to access custom commands for specialized code analysis
 
 ## Contributing
 

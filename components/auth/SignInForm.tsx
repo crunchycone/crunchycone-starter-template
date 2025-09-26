@@ -118,7 +118,16 @@ export function SignInForm() {
         router.refresh();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      if (err instanceof Error) {
+        // Check for rate limiting error
+        if (err.message.includes("Too many requests") || err.message.includes("rate limit")) {
+          setError("Too many login attempts. Please try again later.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("An error occurred");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +149,16 @@ export function SignInForm() {
 
       setMagicLinkSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      if (err instanceof Error) {
+        // Check for rate limiting error
+        if (err.message.includes("Too many requests") || err.message.includes("rate limit")) {
+          setError("Too many magic link requests. Please try again later.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("An error occurred");
+      }
     } finally {
       setIsLoading(false);
     }

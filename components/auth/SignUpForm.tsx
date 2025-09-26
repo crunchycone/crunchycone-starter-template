@@ -91,7 +91,16 @@ export function SignUpForm() {
         setVerificationSent(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      if (err instanceof Error) {
+        // Check for rate limiting error
+        if (err.message.includes("Too many requests") || err.message.includes("rate limit")) {
+          setError("Too many sign-up attempts. Please try again later.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("An error occurred");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +124,16 @@ export function SignUpForm() {
         router.refresh();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      if (err instanceof Error) {
+        // Check for rate limiting error
+        if (err.message.includes("Too many requests") || err.message.includes("rate limit")) {
+          setError("Too many OAuth attempts. Please try again later.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("An error occurred");
+      }
     } finally {
       setIsLoading(false);
     }

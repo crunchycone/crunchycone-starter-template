@@ -16,6 +16,7 @@ A production-ready Next.js starter template with authentication, admin dashboard
   - Email verification flow
   - Secure token management with expiration
   - Session management and logout
+  - **Rate limiting**: Built-in protection against brute force attacks
 
 - 👥 **User Management & RBAC**
   - User profiles with soft delete pattern
@@ -61,9 +62,10 @@ A production-ready Next.js starter template with authentication, admin dashboard
   - **Structured JSON logging** with PII sanitization for production debugging
   - **Prisma ORM with modern Client Extensions API** (SQLite, production database ready)
   - **Automatic ULID generation** for all database records
+  - **Cursor IDE integration** with smart rules and custom slash commands
+  - **Custom Code Review Commands** - `/code-review`, `/security-review`, `/test-review`, `/performance-review`
   - Server Components and Server Actions
   - Comprehensive documentation and guides
-  - Cursor IDE integration with smart rules
   - Database migrations and seeding
   - Project reset functionality
   - Cross-platform development support
@@ -88,6 +90,23 @@ A production-ready Next.js starter template with authentication, admin dashboard
 - **Email**: CrunchyCone-lib multi-provider email service
 - **Storage**: CrunchyCone-lib with 6 storage providers
 - **Theme**: next-themes with system detection
+- **Testing**: Jest with TypeScript, comprehensive coverage (70% threshold)
+
+## Custom Cursor Commands
+
+This project includes powerful custom slash commands for Cursor IDE that provide expert code review capabilities:
+
+```
+/code-review       - Comprehensive code quality analysis
+/security-review   - Security vulnerability assessment
+/test-review       - Test quality and coverage analysis
+/performance-review - Performance optimization suggestions
+/architecture-review - System design evaluation
+/refactor-suggest   - Specific refactoring recommendations
+/crunchycone-build-log - CrunchyCone build troubleshooting
+```
+
+**Usage**: Type `/` in Cursor chat to access these commands for specialized code analysis based on elite code-reviewer patterns.
 
 ## Quick Start
 
@@ -570,6 +589,9 @@ DATABASE_URL="mysql://user:password@host:port/database"
 - ✅ Input validation with Zod
 - ✅ SQL injection protection via Prisma
 - ✅ Admin role protection
+- ✅ Rate limiting protection against brute force attacks
+- ✅ IP-based request throttling with configurable limits
+- ✅ Comprehensive security headers in middleware
 
 ## Production Deployment
 
@@ -648,7 +670,21 @@ This project includes a production-ready multi-stage Dockerfile with automatic p
 
 ## Testing
 
+This project includes a comprehensive test suite covering authentication, rate limiting, and security features.
+
 ```bash
+# Run all tests
+npm test
+
+# Run tests with coverage report (70% threshold)
+npm test -- --coverage
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run specific test file
+npm test -- --testPathPatterns="auth.test.ts"
+
 # Run linting (zero errors/warnings maintained)
 npm run lint
 
@@ -662,15 +698,35 @@ npm run build
 NODE_ENV=production LOG_LEVEL=debug npm run build
 ```
 
+### Test Coverage
+
+- **Auth Utilities**: 100% coverage on password auth, role management, user lookup, profile sync
+- **Auth Providers**: 100% coverage on credentials, Google, and GitHub OAuth providers
+- **Auth Callbacks**: 100% coverage on JWT, session, redirect, and signin callbacks
+- **Rate Limiting**: Comprehensive functional testing with security validation
+- **Integration Tests**: End-to-end authentication flows and error handling
+- **Security Testing**: Malicious input validation, rate limit testing, redirect validation
+
+### Test Structure
+
+- `__tests__/lib/auth/utils/` - Authentication utility tests
+- `__tests__/lib/auth/providers/` - OAuth and credentials provider tests
+- `__tests__/lib/auth/callbacks/` - Session and callback tests
+- `__tests__/lib/rate-limit.test.ts` - Rate limiting tests
+- `__tests__/integration/auth-flows.test.ts` - Integration tests
+
 ## Documentation
 
 Detailed guides are available in the `docs/` folder:
 
-- [Container Deployment Guide](./docs/container-deployment.md)
-- [Email Providers Guide](./docs/email-providers.md)
-- [Authentication Providers Guide](./docs/auth-providers.md)
-- [Theme Customization Guide](./docs/theme-customization.md)
-- [Technical Documentation (CLAUDE.md)](./CLAUDE.md)
+- [Testing Guide](./docs/testing.md) - Comprehensive testing documentation and best practices
+- [Security Guide](./docs/security.md) - Security features and best practices
+- [API Rate Limiting](./docs/api-rate-limiting.md) - Rate limiting configuration and testing
+- [Container Deployment Guide](./docs/container-deployment.md) - Production deployment instructions
+- [Email Providers Guide](./docs/email-providers.md) - Email service configuration
+- [Authentication Providers Guide](./docs/auth-providers.md) - OAuth provider setup
+- [Theme Customization Guide](./docs/theme-customization.md) - Theme system customization
+- [Technical Documentation (CLAUDE.md)](./CLAUDE.md) - Detailed technical reference
 
 ## Contributing
 

@@ -1,9 +1,65 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { applyRateLimit, rateLimitConfigs } from "./lib/rate-limit";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const startTime = Date.now();
+
+  // Apply rate limiting for auth and admin endpoints
+  let rateLimitConfig = null;
+  let endpoint = "";
+
+  if (pathname.startsWith("/api/auth/signin")) {
+    rateLimitConfig = rateLimitConfigs.authSignIn;
+    endpoint = "auth-signin";
+  } else if (pathname.startsWith("/api/auth/signup")) {
+    rateLimitConfig = rateLimitConfigs.authSignUp;
+    endpoint = "auth-signup";
+  } else if (pathname.includes("reset-password")) {
+    rateLimitConfig = rateLimitConfigs.passwordReset;
+    endpoint = "password-reset";
+  } else if (pathname.startsWith("/api/auth/")) {
+    rateLimitConfig = rateLimitConfigs.auth;
+    endpoint = "auth";
+  } else if (pathname.startsWith("/api/admin/")) {
+    rateLimitConfig = rateLimitConfigs.admin;
+    endpoint = "admin";
+  }
+
+  // Apply rate limiting if config exists
+  if (rateLimitConfig) {
+    const result = await applyRateLimit(request, rateLimitConfig);
+
+    if (!result.success) {
+      const ip =
+        request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+      console.warn(`Rate limit exceeded for ${endpoint}:`, {
+        ip,
+        pathname,
+        userAgent: request.headers.get("user-agent"),
+        timestamp: new Date().toISOString(),
+        limit: result.limit,
+        reset: result.reset,
+      });
+
+      return NextResponse.json(
+        {
+          error: "Too many requests. Please try again later.",
+          rateLimitExceeded: true,
+        },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": result.limit.toString(),
+            "X-RateLimit-Remaining": result.remaining.toString(),
+            "X-RateLimit-Reset": result.reset.toISOString(),
+            "Retry-After": Math.round((result.reset.getTime() - Date.now()) / 1000).toString(),
+          },
+        }
+      );
+    }
+  }
 
   // Log incoming request (if detailed logging is enabled)
   if (process.env.LOG_LEVEL === "debug") {
@@ -37,6 +93,16 @@ export async function middleware(request: NextRequest) {
   // Add the current pathname to headers so server components can access it
   const response = NextResponse.next();
   response.headers.set("x-pathname", request.nextUrl.pathname + request.nextUrl.search);
+
+  // Add rate limit headers to successful responses if rate limiting was applied
+  if (rateLimitConfig) {
+    const result = await applyRateLimit(request, rateLimitConfig);
+    if (result.success) {
+      response.headers.set("X-RateLimit-Limit", result.limit.toString());
+      response.headers.set("X-RateLimit-Remaining", result.remaining.toString());
+      response.headers.set("X-RateLimit-Reset", result.reset.toISOString());
+    }
+  }
 
   // Log response (if detailed logging is enabled)
   if (process.env.LOG_LEVEL === "debug") {

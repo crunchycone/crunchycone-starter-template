@@ -50,6 +50,39 @@ Deploy to production container platforms:
 - Database migration automation
 - Production logging and monitoring
 
+### 🔒 [Security Guide](./security.md)
+
+Comprehensive security documentation:
+
+- Rate limiting and brute force protection
+- Authentication and session security
+- Input validation and SQL injection prevention
+- Security headers and CSRF protection
+- Production security checklist
+- Vulnerability reporting guidelines
+
+### 🚦 [API Rate Limiting](./api-rate-limiting.md)
+
+Detailed API rate limiting documentation:
+
+- Rate limit configuration and endpoints
+- HTTP response formats and headers
+- Client implementation examples
+- Testing and monitoring strategies
+- Troubleshooting and customization
+- Security considerations and best practices
+
+### 🧪 [Testing Guide](./testing.md)
+
+Comprehensive testing documentation:
+
+- Jest test framework with TypeScript support
+- Authentication and security test coverage
+- Rate limiting and integration testing
+- Mocking strategies and test structure
+- CI/CD integration and coverage requirements
+- Security testing and vulnerability validation
+
 ## Quick Links
 
 - [Main README](../README.md) - Project overview and quick start

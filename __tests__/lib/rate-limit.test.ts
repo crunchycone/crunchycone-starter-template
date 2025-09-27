@@ -33,7 +33,7 @@ describe("rate-limit", () => {
   });
 
   describe("rateLimitConfigs", () => {
-    it("should have different limits for development and production", () => {
+    it("should have different limits for development and production", async () => {
       // Test development mode
       const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = "development";

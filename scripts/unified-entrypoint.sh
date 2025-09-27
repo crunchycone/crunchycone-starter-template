@@ -12,7 +12,11 @@ echo "🔍 Auto-detecting deployment platform..."
 # Auto-detect platform based on environment variables
 DETECTED_PLATFORM="default"
 
-if [ -n "$CLOUDFLARE_DEPLOYMENT_ID" ] || [ -n "$CLOUDFLARE_LOCATION" ] || [ "$PLATFORM" = "cloudflare" ]; then
+# Check for CrunchyCone platform first
+if [ "$CRUNCHYCONE_PLATFORM" = "1" ]; then
+    DETECTED_PLATFORM="crunchycone"
+    echo "  🍦 CrunchyCone platform detected"
+elif [ -n "$CLOUDFLARE_DEPLOYMENT_ID" ] || [ -n "$CLOUDFLARE_LOCATION" ] || [ "$PLATFORM" = "cloudflare" ]; then
     DETECTED_PLATFORM="cloudflare"
     echo "  🟧 Cloudflare Containers detected"
 elif [ -n "$RENDER_SERVICE_ID" ] || [ "$RENDER" = "true" ] || [ "$PLATFORM" = "render" ]; then
@@ -38,8 +42,12 @@ echo "🎯 Platform: $DETECTED_PLATFORM"
 export HOSTNAME="0.0.0.0"
 MIGRATION_STRICT=false
 
-# Cloudflare-specific overrides
-if [ "$DETECTED_PLATFORM" = "cloudflare" ]; then
+# Platform-specific overrides
+if [ "$DETECTED_PLATFORM" = "crunchycone" ]; then
+    echo "🔧 Applying CrunchyCone-specific configuration"
+    # CrunchyCone uses default settings with optimized migration handling
+    MIGRATION_STRICT=false       # Flexible error handling for CrunchyCone
+elif [ "$DETECTED_PLATFORM" = "cloudflare" ]; then
     echo "🔧 Applying Cloudflare-specific configuration"
     export PORT="8080"           # Cloudflare uses port 8080
     MIGRATION_STRICT=true        # Stricter error handling for Cloudflare

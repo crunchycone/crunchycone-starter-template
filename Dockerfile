@@ -65,6 +65,7 @@ RUN groupadd --system --gid 1001 nodejs && \
 # Set environment to production
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PRISMA_SKIP_CLIENT_VALIDATION=true
 
 # Copy necessary files from builder stage
 COPY --from=builder /app/public ./public

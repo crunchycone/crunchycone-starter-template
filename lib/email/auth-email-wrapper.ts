@@ -21,6 +21,7 @@ function getEmailOptions(): EmailOptions {
 async function sendEmailWithTemplate(
   templateName: string,
   recipientEmail: string,
+  recipientName: string | undefined,
   templateData: Record<string, unknown>,
   defaultSubject: string
 ): Promise<void> {
@@ -54,7 +55,7 @@ async function sendEmailWithTemplate(
         to: [
           {
             email: recipientEmail,
-            name: "User",
+            name: recipientName || "User",
           },
         ],
         subject: rendered.subject || defaultSubject,
@@ -86,6 +87,7 @@ export async function sendMagicLinkEmail(email: string, signInUrl: string): Prom
   await sendEmailWithTemplate(
     "magic-link",
     email,
+    undefined,
     { signInUrl, ...options },
     "Sign in to your account"
   );
@@ -96,6 +98,7 @@ export async function sendVerificationEmail(email: string, verificationUrl: stri
   await sendEmailWithTemplate(
     "email-verification",
     email,
+    undefined,
     { verificationUrl, ...options },
     "Verify your email address"
   );
@@ -106,6 +109,7 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string): P
   await sendEmailWithTemplate(
     "password-reset",
     email,
+    undefined,
     { resetUrl, expiryHours: 1, ...options },
     "Reset your password"
   );
@@ -116,6 +120,7 @@ export async function sendAdminPasswordResetEmail(email: string, resetUrl: strin
   await sendEmailWithTemplate(
     "admin-password-reset",
     email,
+    undefined,
     { resetUrl, expiryHours: 1, ...options },
     "Password Reset Request"
   );
@@ -140,6 +145,7 @@ export async function sendWelcomeEmail(
   await sendEmailWithTemplate(
     "welcome",
     email,
+    userName,
     {
       userName,
       dashboardUrl:

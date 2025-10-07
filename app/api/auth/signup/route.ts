@@ -5,6 +5,7 @@ import { z } from "zod";
 import { sendWelcomeEmail } from "@/lib/email/auth-email-wrapper";
 
 const signUpSchema = z.object({
+  name: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(8),
 });
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password } = validationResult.data;
+    const { name, email, password } = validationResult.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
+          name,
           email,
           password: hashedPassword,
           emailVerified: new Date(), // Mark as verified since we'll auto-login

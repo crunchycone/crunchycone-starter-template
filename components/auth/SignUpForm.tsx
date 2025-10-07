@@ -25,12 +25,13 @@ import { getOAuthProviders, hasOAuthProviders } from "@/lib/auth/providers";
 
 const signUpSchema = z
   .object({
-    email: z.string().email({ error: "Invalid email address" }),
-    password: z.string().min(8, { error: "Password must be at least 8 characters" }),
+    name: z.string().min(1, { message: "Full name is required" }),
+    email: z.string().email({ message: "Invalid email address" }),
+    password: z.string().min(8, { message: "Password must be at least 8 characters" }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    error: "Passwords don't match",
+    message: "Passwords don't match",
     path: ["confirmPassword"],
   });
 
@@ -49,6 +50,7 @@ export function SignUpForm() {
   const form = useForm<SignUpData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -66,6 +68,7 @@ export function SignUpForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          name: data.name,
           email: data.email,
           password: data.password,
         }),
@@ -210,6 +213,19 @@ export function SignUpForm() {
       {/* Email/Password Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="John Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="email"

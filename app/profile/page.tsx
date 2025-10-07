@@ -7,6 +7,11 @@ import { Separator } from "@/components/ui/separator";
 import { AccountLinking } from "@/components/profile/AccountLinking";
 import { UserDetails } from "@/components/profile/UserDetails";
 import { SecuritySettings } from "@/components/profile/SecuritySettings";
+import {
+  isGoogleAuthEnabled,
+  isGitHubAuthEnabled,
+  isEmailPasswordEnabled,
+} from "@/lib/auth/providers";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -63,7 +68,11 @@ export default async function ProfilePage() {
   const hasOAuthAccounts = user.accounts.length > 0;
 
   // Determine if user has email+password authentication
-  const hasEmailPassword = user.password !== null;
+  // Check both: if they have a password AND if email/password auth is enabled
+  const hasEmailPassword = user.password !== null && isEmailPasswordEnabled();
+
+  // Check if any OAuth providers are enabled
+  const showConnectedAccounts = isGoogleAuthEnabled() || isGitHubAuthEnabled();
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -91,16 +100,18 @@ export default async function ProfilePage() {
 
         <Separator />
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className={`grid gap-6 ${showConnectedAccounts ? "md:grid-cols-2" : ""}`}>
           {/* User Details */}
           <UserDetails user={user} />
 
           {/* Account Linking */}
-          <AccountLinking
-            user={user}
-            hasOAuthAccounts={hasOAuthAccounts}
-            hasEmailPassword={hasEmailPassword}
-          />
+          {showConnectedAccounts && (
+            <AccountLinking
+              user={user}
+              hasOAuthAccounts={hasOAuthAccounts}
+              hasEmailPassword={hasEmailPassword}
+            />
+          )}
         </div>
 
         {/* Security Settings */}

@@ -42,8 +42,17 @@ export function AccountLinking({
   const hasGitHubAccount = user.accounts.some((account) => account.provider === "github");
   const githubEnabled = isGitHubAuthEnabled();
 
-  // Check if user can disconnect OAuth (has email/password OR multiple OAuth providers)
-  const canDisconnectOAuth = hasEmailPassword || user.accounts.length > 1;
+  // Don't show the Connected Accounts section if no OAuth providers are enabled
+  if (!googleEnabled && !githubEnabled) {
+    return null;
+  }
+
+  // Determine if user can disconnect each provider
+  // User can disconnect if:
+  // 1. They have email/password auth (always have a way to sign in), OR
+  // 2. They have the other OAuth provider connected (will still have one way to sign in)
+  const canDisconnectGoogle = hasEmailPassword || (hasGitHubAccount && githubEnabled);
+  const canDisconnectGitHub = hasEmailPassword || (hasGoogleAccount && googleEnabled);
 
   const handleLinkGoogle = async () => {
     try {
@@ -175,7 +184,7 @@ export function AccountLinking({
                     Connected
                   </Badge>
                   {/* Show disconnect if user has alternative auth */}
-                  {canDisconnectOAuth && (
+                  {canDisconnectGoogle && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -233,7 +242,7 @@ export function AccountLinking({
                     Connected
                   </Badge>
                   {/* Show disconnect if user has alternative auth */}
-                  {canDisconnectOAuth && (
+                  {canDisconnectGitHub && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -273,12 +282,6 @@ export function AccountLinking({
           )}
 
           {/* Future providers can be added here */}
-          {!googleEnabled && !githubEnabled && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Link2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No OAuth providers are currently enabled</p>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

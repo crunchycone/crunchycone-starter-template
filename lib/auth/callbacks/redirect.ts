@@ -1,9 +1,11 @@
 export async function redirectCallback({ url, baseUrl }: { url: string; baseUrl: string }) {
   console.log("Redirect callback:", { url, baseUrl });
 
-  // If being redirected to signin page, allow it
+  // Never redirect to signin after successful authentication
+  // This happens with magic links - redirect to home instead
   if (url.includes("/auth/signin") || url === `${baseUrl}/auth/signin`) {
-    return url;
+    console.log("Preventing redirect to signin, going to home instead");
+    return `${baseUrl}/`;
   }
 
   // Default: if no specific redirect, go to home

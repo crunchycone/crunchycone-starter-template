@@ -15,11 +15,16 @@ export async function jwtCallback({
   if (user) {
     console.log("JWT callback - user:", { id: user.id, email: user.email, name: user.name });
 
-    // For OAuth users, we need to fetch roles from database
-    if (account?.provider === "google" || account?.provider === "github") {
+    // For OAuth and email provider users, we need to fetch roles from database
+    if (
+      account?.provider === "google" ||
+      account?.provider === "github" ||
+      account?.provider === "email"
+    ) {
       try {
         const roles = await getUserRoles(user.id);
         token.roles = roles;
+        console.log(`Fetched roles for ${account.provider} user:`, roles);
       } catch (error) {
         console.error("Error fetching user roles:", error);
         token.roles = [];

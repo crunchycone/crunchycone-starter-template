@@ -1,0 +1,6 @@
+[project]
+id = "01993fd9-b3e9-7573-a603-5b80d826a4fd"
+name = "test-20250912-1"
+slug = "test-20250912-1"
+
+environment = "dev"

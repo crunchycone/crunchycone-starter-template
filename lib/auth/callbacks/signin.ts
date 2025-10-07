@@ -12,6 +12,14 @@ export async function signInCallback({
   account: Account | null;
   profile?: Profile;
 }) {
+  // Handle email provider (magic links)
+  // We don't block here - security is handled by not sending emails to non-existent users
+  // in the sendVerificationRequest function in lib/auth/providers/email.ts
+  if (account?.provider === "email") {
+    console.log(`✅ Magic link sign-in flow for: ${user.email}`);
+    return true;
+  }
+
   // Handle OAuth account linking and role assignment
   if (account?.provider === "google" || account?.provider === "github") {
     console.log(`${account.provider} sign-in attempt for: ${user.email}`);

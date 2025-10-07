@@ -1,7 +1,24 @@
 import EmailProvider from "next-auth/providers/email";
+import { prisma } from "@/lib/prisma";
 
 async function sendMagicLinkEmail(email: string, url: string, provider: { from: string }) {
   try {
+    // Simply check if the email exists in the database
+    const user = await prisma.user.findUnique({
+      where: {
+        email: email.toLowerCase(),
+        deleted_at: null,
+      },
+    });
+
+    // If user doesn't exist, silently return without sending email
+    // This prevents email enumeration attacks
+    if (!user) {
+      console.log(`🔒 Magic link requested for non-existent email: ${email}`);
+      return; // Don't send email, but user sees success message
+    }
+
+    // User exists, send the magic link email
     // Import crunchycone-lib services
     const { createEmailService, getEmailTemplateService } = await import("crunchycone-lib");
 
@@ -37,7 +54,7 @@ async function sendMagicLinkEmail(email: string, url: string, provider: { from: 
         to: [
           {
             email: email,
-            name: "User",
+            name: user.name || "User",
           },
         ],
         subject: rendered.subject || "Sign in to your account",

@@ -37,6 +37,15 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             </Alert>
           )}
 
+          {message === "password-changed" && (
+            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-700 dark:text-green-300">
+                Your password has been changed successfully. Please sign in with your new password.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {error && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />

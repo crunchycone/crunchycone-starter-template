@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { signOut } from "next-auth/react";
 // Removed verifyToken import - now using server-side verification
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,12 +21,14 @@ function ResetPasswordContent() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const token = searchParams.get("token");
+  const fromProfile = searchParams.get("fromProfile") === "true";
 
   useEffect(() => {
     if (!token) {
-      setTokenValid(false);
+      router.push("/auth/error?error=MissingToken");
       return;
     }
 
@@ -56,7 +59,7 @@ function ResetPasswordContent() {
     };
 
     verifyTokenServerSide();
-  }, [token, error]);
+  }, [token, error, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,9 +94,19 @@ function ResetPasswordContent() {
 
       if (response.ok) {
         setSuccess(true);
-        setTimeout(() => {
-          router.push("/auth/signin?message=password-reset");
-        }, 2000);
+
+        // If this password change was initiated from the profile page, sign out the user
+        if (fromProfile) {
+          setIsSigningOut(true);
+          await signOut({ redirect: false });
+          setTimeout(() => {
+            router.push("/auth/signin?message=password-changed");
+          }, 2000);
+        } else {
+          setTimeout(() => {
+            router.push("/auth/signin?message=password-reset");
+          }, 2000);
+        }
       } else {
         setError(data.error || "Failed to reset password");
       }
@@ -141,12 +154,21 @@ function ResetPasswordContent() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-green-600">Password Reset Successful!</CardTitle>
+          <CardTitle className="text-green-600">
+            Password {fromProfile ? "Changed" : "Reset"} Successful!
+          </CardTitle>
           <CardDescription>Your password has been updated successfully.</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            You can now sign in with your new password. Redirecting you to sign in...
+            {fromProfile ? (
+              <>
+                You can now sign in with your new password.{" "}
+                {isSigningOut ? "Signing out..." : "Redirecting you to sign in..."}
+              </>
+            ) : (
+              <>You can now sign in with your new password. Redirecting you to sign in...</>
+            )}
           </p>
           <Link href="/auth/signin">
             <Button className="w-full">Sign In Now</Button>

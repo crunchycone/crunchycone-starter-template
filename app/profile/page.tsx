@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AccountLinking } from "@/components/profile/AccountLinking";
 import { UserDetails } from "@/components/profile/UserDetails";
+import { SecuritySettings } from "@/components/profile/SecuritySettings";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -101,6 +102,9 @@ export default async function ProfilePage() {
             hasEmailPassword={hasEmailPassword}
           />
         </div>
+
+        {/* Security Settings */}
+        <SecuritySettings hasEmailPassword={hasEmailPassword} />
       </div>
     </div>
   );

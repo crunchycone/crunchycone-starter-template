@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -19,22 +20,7 @@ async function VerifyEmailContent({ searchParams }: VerifyEmailPageProps) {
   const token = params.token;
 
   if (!token) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-destructive">Invalid Verification Link</CardTitle>
-          <CardDescription>No verification token provided.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            The verification link appears to be invalid or incomplete.
-          </p>
-          <Link href="/auth/signin">
-            <Button className="w-full">Go to Sign In</Button>
-          </Link>
-        </CardContent>
-      </Card>
-    );
+    redirect("/auth/error?error=MissingToken");
   }
 
   try {

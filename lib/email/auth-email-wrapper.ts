@@ -127,6 +127,16 @@ export async function sendWelcomeEmail(
   dashboardUrl?: string
 ): Promise<void> {
   const options = getEmailOptions();
+
+  console.log(`📧 Sending welcome email to: ${email}`);
+  console.log(`📧 Welcome email data:`, {
+    userName,
+    dashboardUrl:
+      dashboardUrl || `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/profile`,
+    appName: options.appName,
+    supportEmail: options.supportEmail,
+  });
+
   await sendEmailWithTemplate(
     "welcome",
     email,

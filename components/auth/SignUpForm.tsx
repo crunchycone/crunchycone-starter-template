@@ -19,7 +19,8 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { getOAuthProviders, hasOAuthProviders } from "@/lib/auth/providers";
 
 const signUpSchema = z
@@ -170,8 +171,28 @@ export function SignUpForm() {
                 disabled={isLoading}
                 className="w-full"
               >
-                {provider.icon && <span className="mr-2">{provider.icon}</span>}
-                {provider.name}
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : provider.id === "google" ? (
+                  <Image
+                    src="/icons/google-icon.svg"
+                    alt="Google"
+                    width={16}
+                    height={16}
+                    className="mr-2"
+                  />
+                ) : provider.id === "github" ? (
+                  <Image
+                    src="/icons/github-icon.svg"
+                    alt="GitHub"
+                    width={16}
+                    height={16}
+                    className="mr-2"
+                  />
+                ) : provider.icon ? (
+                  <span className="mr-2">{provider.icon}</span>
+                ) : null}
+                {isLoading ? "Connecting..." : provider.name}
               </Button>
             ))}
           </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { sendWelcomeEmail } from "@/lib/email/auth-email-wrapper";
 
 const signUpSchema = z.object({
   email: z.string().email(),
@@ -68,6 +69,16 @@ export async function POST(request: NextRequest) {
       return newUser;
     });
 
+    // Send welcome email (non-blocking - don't fail signup if email fails)
+    sendWelcomeEmail(user.email, user.name || undefined)
+      .then(() => {
+        console.log(`✅ Welcome email sent to: ${user.email}`);
+      })
+      .catch((error) => {
+        console.error("Failed to send welcome email:", error);
+        // Don't fail the signup if email fails
+      });
+
     return NextResponse.json({
       success: true,
       message: "Account created successfully.",
@@ -76,8 +87,8 @@ export async function POST(request: NextRequest) {
         email: user.email,
       },
     });
-  } catch {
-    console.error("Sign up error:");
+  } catch (error) {
+    console.error("Sign up error:", error);
     return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
   }
 }

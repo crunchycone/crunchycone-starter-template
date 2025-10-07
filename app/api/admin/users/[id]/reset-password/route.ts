@@ -38,14 +38,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Send password reset email
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const resetUrl = `${appUrl}/auth/reset-password?token=${resetToken}`;
+
+    console.log(`📧 Sending admin password reset email to: ${user.email}`);
+    console.log(`🔗 Reset URL: ${resetUrl}`);
+
     await sendAdminPasswordResetEmail(user.email, resetUrl);
+
+    console.log(`✅ Password reset email sent successfully to: ${user.email}`);
 
     return NextResponse.json({
       success: true,
       message: "Password reset link sent",
     });
-  } catch {
-    console.error("Password reset error:");
+  } catch (error) {
+    console.error("Password reset error:", error);
     return NextResponse.json({ error: "Failed to send password reset" }, { status: 500 });
   }
 }

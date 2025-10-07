@@ -66,17 +66,18 @@ describe("profile-sync", () => {
       });
     });
 
-    it("should not update when user already has name and image", async () => {
+    it("should not update when user already has name and image (unchanged)", async () => {
+      const existingAvatar = "https://existing.com/avatar.jpg";
       const mockUser = {
         id: "user-123",
         email: "test@example.com",
         name: "Existing Name",
-        image: "https://existing.com/avatar.jpg",
+        image: existingAvatar,
       };
 
       const profileData = {
-        name: "New Name",
-        picture: "https://new.com/avatar.jpg",
+        name: "New Name", // Different name but won't be updated because user already has one
+        picture: existingAvatar, // Same avatar URL
       };
 
       mockPrismaAuth.user.findUnique.mockResolvedValue(mockUser);

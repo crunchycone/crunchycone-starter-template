@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/permissions";
 import jwt from "jsonwebtoken";
-import { sendEmail, getPasswordResetEmailTemplate } from "@/lib/email/email";
+import { sendAdminPasswordResetEmail } from "@/lib/email/auth-email-wrapper";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -37,11 +37,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Send password reset email
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const emailTemplate = getPasswordResetEmailTemplate(resetToken, appUrl);
-    await sendEmail({
-      ...emailTemplate,
-      to: user.email,
-    });
+    const resetUrl = `${appUrl}/auth/reset-password?token=${resetToken}`;
+    await sendAdminPasswordResetEmail(user.email, resetUrl);
 
     return NextResponse.json({
       success: true,

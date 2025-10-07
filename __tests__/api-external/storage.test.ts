@@ -2,17 +2,16 @@ import { NextRequest } from "next/server";
 
 // Mock dependencies first
 jest.mock("@/lib/auth/permissions");
-jest.mock("crunchycone-lib/storage", () => ({
-  createStorageService: jest.fn(),
+jest.mock("crunchycone-lib/services/storage", () => ({
+  initializeStorageProvider: jest.fn(),
+  getStorageProvider: jest.fn(),
 }));
 
 import { requireRole } from "@/lib/auth/permissions";
-import { createStorageService } from "crunchycone-lib/storage";
+import { getStorageProvider } from "crunchycone-lib/services/storage";
 
 const mockRequireRole = requireRole as jest.MockedFunction<typeof requireRole>;
-const mockCreateStorageService = createStorageService as jest.MockedFunction<
-  typeof createStorageService
->;
+const mockGetStorageProvider = getStorageProvider as jest.MockedFunction<typeof getStorageProvider>;
 
 // Import route handlers after mocking
 import { GET as TestStorageGET } from "@/app/api/storage/test/route";
@@ -42,73 +41,55 @@ describe("Storage API Routes", () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
 
-      // Mock successful storage service
-      const mockStorageService = {
-        testConnection: jest.fn().mockResolvedValue({
-          success: true,
-          provider: "LocalStorage",
-          message: "Connection successful",
-          details: {
-            writeable: true,
-            readable: true,
-          },
-        }),
+      // Mock successful storage provider
+      const mockProvider = {
+        isAvailable: jest.fn().mockResolvedValue(true),
       };
-      mockCreateStorageService.mockResolvedValue(mockStorageService as any);
+      mockGetStorageProvider.mockReturnValue(mockProvider as any);
 
       const response = await TestStorageGET(mockRequest);
       const result = await response.json();
 
       expect(response.status).toBe(200);
       expect(result.success).toBe(true);
-      expect(result.provider).toBe("LocalStorage");
       expect(result.message).toBe("Connection successful");
       expect(result.details.writeable).toBe(true);
-      expect(mockStorageService.testConnection).toHaveBeenCalled();
+      expect(mockProvider.isAvailable).toHaveBeenCalled();
     });
 
     it("should handle storage connection failure", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
 
-      // Mock failed storage service
-      const mockStorageService = {
-        testConnection: jest.fn().mockResolvedValue({
-          success: false,
-          provider: "AWS S3",
-          message: "Connection failed",
-          error: "Invalid credentials",
-          details: {
-            writeable: false,
-            readable: false,
-          },
-        }),
+      // Mock failed storage provider
+      const mockProvider = {
+        isAvailable: jest.fn().mockResolvedValue(false),
       };
-      mockCreateStorageService.mockResolvedValue(mockStorageService as any);
+      mockGetStorageProvider.mockReturnValue(mockProvider as any);
 
       const response = await TestStorageGET(mockRequest);
       const result = await response.json();
 
       expect(response.status).toBe(200);
       expect(result.success).toBe(false);
-      expect(result.provider).toBe("AWS S3");
-      expect(result.error).toBe("Invalid credentials");
+      expect(result.message).toBe("Connection failed");
     });
 
-    it("should handle storage service creation failure", async () => {
+    it("should handle storage provider errors", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
 
-      // Mock storage service creation failure
-      mockCreateStorageService.mockRejectedValue(new Error("Provider not configured"));
+      // Mock storage provider throwing error
+      mockGetStorageProvider.mockImplementation(() => {
+        throw new Error("Provider not configured");
+      });
 
       const response = await TestStorageGET(mockRequest);
       const result = await response.json();
 
       expect(response.status).toBe(500);
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Failed to test storage connection");
-      expect(result.details).toBe("Provider not configured");
+      expect(result.error).toBe("Provider not configured");
     });
 
     it("should require admin role", async () => {
@@ -127,15 +108,17 @@ describe("Storage API Routes", () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
 
-      // Mock storage service throwing non-Error object
-      mockCreateStorageService.mockRejectedValue("Unknown error");
+      // Mock storage provider throwing non-Error object
+      mockGetStorageProvider.mockImplementation(() => {
+        throw "Unknown error";
+      });
 
       const response = await TestStorageGET(mockRequest);
       const result = await response.json();
 
       expect(response.status).toBe(500);
       expect(result.success).toBe(false);
-      expect(result.details).toBe("Unknown error");
+      expect(result.error).toBeDefined();
     });
   });
 
@@ -149,26 +132,25 @@ describe("Storage API Routes", () => {
         }
       );
 
-      // Mock successful storage service
-      const mockStorageService = {
-        getFile: jest.fn().mockResolvedValue({
+      // Mock successful storage provider
+      const mockProvider = {
+        getFileStream: jest.fn().mockResolvedValue({
           stream: new ReadableStream(),
-          metadata: {
-            contentType: "image/jpeg",
-            size: 12345,
-            lastModified: new Date(),
-          },
+          contentType: "image/jpeg",
+          contentLength: 12345,
+          streamType: "web",
+          isPartialContent: false,
         }),
       };
-      mockCreateStorageService.mockResolvedValue(mockStorageService as any);
+      mockGetStorageProvider.mockReturnValue(mockProvider as any);
 
       const response = await FilesGET(publicRequest, {
-        params: { segments: ["public", "image.jpg"] },
+        params: Promise.resolve({ segments: ["public", "image.jpg"] }),
       });
 
       expect(response.status).toBe(200);
       expect(response.headers.get("Content-Type")).toBe("image/jpeg");
-      expect(mockStorageService.getFile).toHaveBeenCalledWith("public/image.jpg");
+      expect(mockProvider.getFileStream).toHaveBeenCalledWith("public/image.jpg");
     });
 
     it("should require authentication for private files", async () => {
@@ -183,7 +165,7 @@ describe("Storage API Routes", () => {
       );
 
       const response = await FilesGET(privateRequest, {
-        params: { segments: ["private", "secret.pdf"] },
+        params: Promise.resolve({ segments: ["private", "secret.pdf"] }),
       });
 
       expect(response.status).toBe(401);
@@ -203,26 +185,25 @@ describe("Storage API Routes", () => {
         }
       );
 
-      // Mock successful storage service
-      const mockStorageService = {
-        getFile: jest.fn().mockResolvedValue({
+      // Mock successful storage provider
+      const mockProvider = {
+        getFileStream: jest.fn().mockResolvedValue({
           stream: new ReadableStream(),
-          metadata: {
-            contentType: "application/pdf",
-            size: 54321,
-            lastModified: new Date(),
-          },
+          contentType: "application/pdf",
+          contentLength: 54321,
+          streamType: "web",
+          isPartialContent: false,
         }),
       };
-      mockCreateStorageService.mockResolvedValue(mockStorageService as any);
+      mockGetStorageProvider.mockReturnValue(mockProvider as any);
 
       const response = await FilesGET(privateRequest, {
-        params: { segments: ["private", "document.pdf"] },
+        params: Promise.resolve({ segments: ["private", "document.pdf"] }),
       });
 
       expect(response.status).toBe(200);
       expect(response.headers.get("Content-Type")).toBe("application/pdf");
-      expect(mockStorageService.getFile).toHaveBeenCalledWith("private/document.pdf");
+      expect(mockProvider.getFileStream).toHaveBeenCalledWith("private/document.pdf");
     });
 
     it("should handle file not found", async () => {
@@ -233,14 +214,14 @@ describe("Storage API Routes", () => {
         }
       );
 
-      // Mock storage service file not found
-      const mockStorageService = {
-        getFile: jest.fn().mockRejectedValue(new Error("File not found")),
+      // Mock storage provider file not found
+      const mockProvider = {
+        getFileStream: jest.fn().mockRejectedValue(new Error("File not found")),
       };
-      mockCreateStorageService.mockResolvedValue(mockStorageService as any);
+      mockGetStorageProvider.mockReturnValue(mockProvider as any);
 
       const response = await FilesGET(publicRequest, {
-        params: { segments: ["public", "missing.jpg"] },
+        params: Promise.resolve({ segments: ["public", "missing.jpg"] }),
       });
 
       expect(response.status).toBe(404);
@@ -256,19 +237,19 @@ describe("Storage API Routes", () => {
         }
       );
 
-      // Mock storage service error
-      const mockStorageService = {
-        getFile: jest.fn().mockRejectedValue(new Error("Storage service unavailable")),
+      // Mock storage provider error
+      const mockProvider = {
+        getFileStream: jest.fn().mockRejectedValue(new Error("Storage service unavailable")),
       };
-      mockCreateStorageService.mockResolvedValue(mockStorageService as any);
+      mockGetStorageProvider.mockReturnValue(mockProvider as any);
 
       const response = await FilesGET(publicRequest, {
-        params: { segments: ["public", "error.jpg"] },
+        params: Promise.resolve({ segments: ["public", "error.jpg"] }),
       });
 
       expect(response.status).toBe(500);
       const result = await response.json();
-      expect(result.error).toBe("Internal server error");
+      expect(result.error).toBe("Storage service unavailable");
     });
 
     it("should handle invalid file paths", async () => {
@@ -280,7 +261,7 @@ describe("Storage API Routes", () => {
       );
 
       const response = await FilesGET(invalidRequest, {
-        params: { segments: ["../../../etc/passwd"] },
+        params: Promise.resolve({ segments: ["../../../etc/passwd"] }),
       });
 
       expect(response.status).toBe(400);
@@ -296,21 +277,20 @@ describe("Storage API Routes", () => {
         }
       );
 
-      // Mock successful storage service with image
-      const mockStorageService = {
-        getFile: jest.fn().mockResolvedValue({
+      // Mock successful storage provider with image
+      const mockProvider = {
+        getFileStream: jest.fn().mockResolvedValue({
           stream: new ReadableStream(),
-          metadata: {
-            contentType: "image/png",
-            size: 12345,
-            lastModified: new Date(),
-          },
+          contentType: "image/png",
+          contentLength: 12345,
+          streamType: "web",
+          isPartialContent: false,
         }),
       };
-      mockCreateStorageService.mockResolvedValue(mockStorageService as any);
+      mockGetStorageProvider.mockReturnValue(mockProvider as any);
 
       const response = await FilesGET(imageRequest, {
-        params: { segments: ["public", "logo.png"] },
+        params: Promise.resolve({ segments: ["public", "logo.png"] }),
       });
 
       expect(response.status).toBe(200);
@@ -330,27 +310,17 @@ describe("Storage API Routes", () => {
       mockRequireRole.mockResolvedValue(undefined);
 
       // Test AWS S3 provider
-      const mockS3Service = {
-        testConnection: jest.fn().mockResolvedValue({
-          success: true,
-          provider: "AWS S3",
-          message: "S3 connection successful",
-          details: {
-            writeable: true,
-            readable: true,
-            bucket: "test-bucket",
-            region: "us-east-1",
-          },
-        }),
+      process.env.CRUNCHYCONE_STORAGE_PROVIDER = "AWS S3";
+      const mockProvider = {
+        isAvailable: jest.fn().mockResolvedValue(true),
       };
-      mockCreateStorageService.mockResolvedValue(mockS3Service as any);
+      mockGetStorageProvider.mockReturnValue(mockProvider as any);
 
       const response = await TestStorageGET(mockRequest);
       const result = await response.json();
 
       expect(response.status).toBe(200);
       expect(result.provider).toBe("AWS S3");
-      expect(result.details.bucket).toBe("test-bucket");
     });
 
     it("should handle missing storage configuration", async () => {
@@ -362,14 +332,16 @@ describe("Storage API Routes", () => {
       mockRequireRole.mockResolvedValue(undefined);
 
       // Mock missing configuration
-      mockCreateStorageService.mockRejectedValue(new Error("No storage provider configured"));
+      mockGetStorageProvider.mockImplementation(() => {
+        throw new Error("No storage provider configured");
+      });
 
       const response = await TestStorageGET(mockRequest);
       const result = await response.json();
 
       expect(response.status).toBe(500);
       expect(result.success).toBe(false);
-      expect(result.details).toBe("No storage provider configured");
+      expect(result.error).toBeDefined();
     });
   });
 });

@@ -241,6 +241,11 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching environment variables:", error);
+    // Re-throw NEXT_REDIRECT errors to allow Next.js to handle them
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage === "NEXT_REDIRECT") {
+      throw error;
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

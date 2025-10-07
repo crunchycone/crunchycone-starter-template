@@ -37,6 +37,8 @@ describe("/api/admin/environment", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     originalEnv = process.env;
+    // Reset NODE_ENV to test to avoid production mode restrictions
+    process.env = { ...originalEnv, NODE_ENV: "test" };
     mockRequest = new NextRequest("http://localhost:3000/api/admin/environment", {
       method: "GET",
     });
@@ -121,13 +123,22 @@ describe("/api/admin/environment", () => {
 
       expect(response.status).toBe(200);
       expect(result.variables).toHaveLength(2);
-      expect(result.variables[0]).toEqual({
+      // Don't assert order, just check both variables are present
+      expect(result.variables).toContainEqual({
         key: "DATABASE_URL",
         localValue: "sqlite://local.db",
         remoteValue: "postgres://remote.db",
         isSecret: true,
         isRemoteSecret: false,
         hasConflict: true,
+      });
+      expect(result.variables).toContainEqual({
+        key: "API_URL",
+        localValue: undefined,
+        remoteValue: "https://api.crunchycone.dev",
+        isSecret: false,
+        isRemoteSecret: false,
+        hasConflict: false,
       });
       expect(result.platform.supportsLocalRemoteSync).toBe(true);
       expect(result.crunchyConeAuth.isAuthenticated).toBe(true);
@@ -246,6 +257,7 @@ describe("/api/admin/environment", () => {
     it("should update environment variable successfully", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
+      mockIsPlatformEnvironment.mockReturnValue(false);
 
       // Mock environment service
       const mockEnvService = {
@@ -276,6 +288,7 @@ describe("/api/admin/environment", () => {
     it("should update secret successfully", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
+      mockIsPlatformEnvironment.mockReturnValue(false);
 
       // Mock environment service
       const mockEnvService = {
@@ -337,6 +350,7 @@ describe("/api/admin/environment", () => {
     it("should return 400 for missing key", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
+      mockIsPlatformEnvironment.mockReturnValue(false);
 
       // Mock environment service
       const mockEnvService = {
@@ -366,6 +380,7 @@ describe("/api/admin/environment", () => {
     it("should delete environment variable successfully", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
+      mockIsPlatformEnvironment.mockReturnValue(false);
 
       // Mock environment service
       const mockEnvService = {
@@ -395,6 +410,7 @@ describe("/api/admin/environment", () => {
     it("should delete secret successfully", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
+      mockIsPlatformEnvironment.mockReturnValue(false);
 
       // Mock environment service
       const mockEnvService = {
@@ -454,6 +470,7 @@ describe("/api/admin/environment", () => {
     it("should return 400 for missing key", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
+      mockIsPlatformEnvironment.mockReturnValue(false);
 
       // Mock environment service
       const mockEnvService = {
@@ -480,6 +497,7 @@ describe("/api/admin/environment", () => {
     it("should handle service errors gracefully", async () => {
       // Mock admin access
       mockRequireRole.mockResolvedValue(undefined);
+      mockIsPlatformEnvironment.mockReturnValue(false);
 
       // Mock environment service with error
       const mockEnvService = {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
-import { sendEmail, getPasswordResetEmailTemplate } from "@/lib/email/email";
+import { sendPasswordResetEmail } from "@/lib/email/auth-email-wrapper";
 import { z } from "zod";
 
 const forgotPasswordSchema = z.object({
@@ -46,12 +46,9 @@ export async function POST(request: NextRequest) {
 
     // Send password reset email
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const emailTemplate = getPasswordResetEmailTemplate(resetToken, appUrl);
+    const resetUrl = `${appUrl}/auth/reset-password?token=${resetToken}`;
 
-    await sendEmail({
-      ...emailTemplate,
-      to: user.email,
-    });
+    await sendPasswordResetEmail(user.email, resetUrl);
 
     return NextResponse.json({
       success: true,

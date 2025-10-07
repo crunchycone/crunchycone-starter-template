@@ -5,159 +5,158 @@ import { requireRole } from "@/lib/auth/permissions";
 import { auth } from "@/lib/auth";
 import { updateEnvironmentVariables, getEnvironmentVariables } from "@/lib/environment-service";
 import { getCrunchyConeAuthService } from "@/lib/crunchycone-auth-service";
-import {
-  sendEmail,
-  setEmailProvider,
-  ConsoleEmailProvider,
-  EmailProvider as TemplateEmailProvider,
-} from "@/lib/email/email";
 import { createEmailService } from "crunchycone-lib";
 import { promisify } from "util";
 import { exec } from "child_process";
 
 const execAsync = promisify(exec);
 
-// Temporary email provider for testing configurations
-class TestEmailProvider implements TemplateEmailProvider {
-  constructor(private settings: EmailSettings) {}
-
-  async sendEmail(options: {
+// Temporary email service for testing configurations
+async function sendTestEmail(
+  settings: EmailSettings,
+  options: {
     to: string;
     subject: string;
     html: string;
     text?: string;
-    from?: string;
-  }): Promise<void> {
-    // Note: Provider-specific configuration is handled by crunchycone-lib internally
-    // via environment variables set during testing
+  }
+): Promise<void> {
+  // Store original env vars
+  const originalEnvVars: Record<string, string | undefined> = {};
 
-    // Try to send actual email using crunchycone-lib
+  if (settings.provider === "smtp") {
+    // Store original values
+    originalEnvVars.CRUNCHYCONE_SMTP_HOST = process.env.CRUNCHYCONE_SMTP_HOST;
+    originalEnvVars.CRUNCHYCONE_SMTP_PORT = process.env.CRUNCHYCONE_SMTP_PORT;
+    originalEnvVars.CRUNCHYCONE_SMTP_USER = process.env.CRUNCHYCONE_SMTP_USER;
+    originalEnvVars.CRUNCHYCONE_SMTP_PASS = process.env.CRUNCHYCONE_SMTP_PASS;
+    originalEnvVars.CRUNCHYCONE_SMTP_FROM = process.env.CRUNCHYCONE_SMTP_FROM;
+    originalEnvVars.CRUNCHYCONE_SMTP_SECURE = process.env.CRUNCHYCONE_SMTP_SECURE;
+
+    // Set test values
+    process.env.CRUNCHYCONE_SMTP_HOST = settings.smtpHost;
+    process.env.CRUNCHYCONE_SMTP_PORT = settings.smtpPort;
+    process.env.CRUNCHYCONE_SMTP_USER = settings.smtpUser;
+    process.env.CRUNCHYCONE_SMTP_PASS = settings.smtpPassword;
+    process.env.CRUNCHYCONE_SMTP_FROM = settings.fromAddress;
+    process.env.CRUNCHYCONE_SMTP_SECURE = settings.smtpSecure?.toString() || "false";
+
+    // Clear the module cache for email factory to force re-reading env vars
     try {
-      // Store original env vars
-      const originalEnvVars: Record<string, string | undefined> = {};
-
-      if (this.settings.provider === "smtp") {
-        // Store original values
-        originalEnvVars.CRUNCHYCONE_SMTP_HOST = process.env.CRUNCHYCONE_SMTP_HOST;
-        originalEnvVars.CRUNCHYCONE_SMTP_PORT = process.env.CRUNCHYCONE_SMTP_PORT;
-        originalEnvVars.CRUNCHYCONE_SMTP_USER = process.env.CRUNCHYCONE_SMTP_USER;
-        originalEnvVars.CRUNCHYCONE_SMTP_PASS = process.env.CRUNCHYCONE_SMTP_PASS;
-        originalEnvVars.CRUNCHYCONE_SMTP_FROM = process.env.CRUNCHYCONE_SMTP_FROM;
-        originalEnvVars.CRUNCHYCONE_SMTP_SECURE = process.env.CRUNCHYCONE_SMTP_SECURE;
-
-        // Set test values
-        process.env.CRUNCHYCONE_SMTP_HOST = this.settings.smtpHost;
-        process.env.CRUNCHYCONE_SMTP_PORT = this.settings.smtpPort;
-        process.env.CRUNCHYCONE_SMTP_USER = this.settings.smtpUser;
-        process.env.CRUNCHYCONE_SMTP_PASS = this.settings.smtpPassword;
-        process.env.CRUNCHYCONE_SMTP_FROM = this.settings.fromAddress;
-        process.env.CRUNCHYCONE_SMTP_SECURE = this.settings.smtpSecure?.toString() || "false";
-
-        // Clear the module cache for email factory to force re-reading env vars
-        try {
-          const factoryId = require.resolve("crunchycone-lib");
-          delete require.cache[factoryId];
-        } catch (error) {
-          // If we can't clear the cache, continue anyway
-          console.warn("Could not clear crunchycone-lib cache:", error);
-        }
-      }
-
-      const emailService = createEmailService(this.settings.provider as never);
-      const result = await emailService.sendEmail({
-        from: {
-          email: this.settings.fromAddress,
-          name: this.settings.fromDisplayName || "Test Email",
-        },
-        to: [
-          {
-            email: options.to,
-            name: "Test Recipient",
-          },
-        ],
-        subject: options.subject,
-        htmlBody: options.html,
-        textBody: options.text || options.html,
-      });
-
-      // Restore original env vars
-      if (this.settings.provider === "smtp") {
-        for (const [key, value] of Object.entries(originalEnvVars)) {
-          if (value === undefined) {
-            delete (process.env as Record<string, string | undefined>)[key];
-          } else {
-            (process.env as Record<string, string | undefined>)[key] = value;
-          }
-        }
-      }
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to send email");
-      }
-
-      console.log("=== EMAIL SENT SUCCESSFULLY ===");
-      console.log(`Provider: ${this.settings.provider.toUpperCase()}`);
-      console.log(
-        `From: ${this.settings.fromAddress} ${this.settings.fromDisplayName ? `(${this.settings.fromDisplayName})` : ""}`
-      );
-      console.log(`To: ${options.to}`);
-      console.log(`Subject: ${options.subject}`);
-      console.log(`✅ Email sent successfully using ${this.settings.provider.toUpperCase()}`);
-      console.log("===============================");
+      const factoryId = require.resolve("crunchycone-lib");
+      delete require.cache[factoryId];
     } catch (error) {
-      // Log the error and fall back to configuration validation
-      console.error("Email sending failed:", error);
-
-      console.log("=== EMAIL TEST CONFIGURATION (Fallback) ===");
-      console.log(`Provider: ${this.settings.provider.toUpperCase()}`);
-      console.log(
-        `From: ${this.settings.fromAddress} ${this.settings.fromDisplayName ? `(${this.settings.fromDisplayName})` : ""}`
-      );
-      console.log(`To: ${options.to}`);
-      console.log(`Subject: ${options.subject}`);
-
-      // Show provider-specific configuration status
-      switch (this.settings.provider) {
-        case "console":
-          console.log("Console Mode: Emails will be logged to console");
-          break;
-        case "smtp":
-          console.log(`SMTP Host: ${this.settings.smtpHost || "[NOT SET]"}`);
-          console.log(`SMTP Port: ${this.settings.smtpPort || "[NOT SET]"}`);
-          console.log(`SMTP User: ${this.settings.smtpUser || "[NOT SET]"}`);
-          console.log(`SMTP Password: ${this.settings.smtpPassword ? "[SET]" : "[NOT SET]"}`);
-          break;
-        case "sendgrid":
-          console.log(`SendGrid API Key: ${this.settings.sendgridApiKey ? "[SET]" : "[NOT SET]"}`);
-          break;
-        case "resend":
-          console.log(`Resend API Key: ${this.settings.resendApiKey ? "[SET]" : "[NOT SET]"}`);
-          break;
-        case "aws-ses":
-          console.log(`AWS Region: ${this.settings.awsRegion || "[NOT SET]"}`);
-          console.log(`AWS Access Key ID: ${this.settings.awsAccessKeyId ? "[SET]" : "[NOT SET]"}`);
-          console.log(
-            `AWS Secret Access Key: ${this.settings.awsSecretAccessKey ? "[SET]" : "[NOT SET]"}`
-          );
-          break;
-        case "mailgun":
-          console.log(`Mailgun API Key: ${this.settings.mailgunApiKey ? "[SET]" : "[NOT SET]"}`);
-          console.log(`Mailgun Domain: ${this.settings.mailgunDomain || "[NOT SET]"}`);
-          break;
-        case "crunchycone":
-          console.log("CrunchyCone: Uses CLI authentication");
-          break;
-      }
-
-      console.log("--- Email Content ---");
-      console.log(options.text || options.html);
-      console.log("==========================================");
-      console.log(`⚠️  Email configuration validated for ${this.settings.provider.toUpperCase()}`);
-      console.log("Error occurred during actual email sending - check configuration");
-
-      // Re-throw the error so the UI shows the failure
-      throw error;
+      // If we can't clear the cache, continue anyway
+      console.warn("Could not clear crunchycone-lib cache:", error);
     }
+  }
+
+  try {
+    const emailService = createEmailService(settings.provider as never);
+    const result = await emailService.sendEmail({
+      from: {
+        email: settings.fromAddress,
+        name: settings.fromDisplayName || "Test Email",
+      },
+      to: [
+        {
+          email: options.to,
+          name: "Test Recipient",
+        },
+      ],
+      subject: options.subject,
+      htmlBody: options.html,
+      textBody: options.text || options.html,
+    });
+
+    // Restore original env vars
+    if (settings.provider === "smtp") {
+      for (const [key, value] of Object.entries(originalEnvVars)) {
+        if (value === undefined) {
+          delete (process.env as Record<string, string | undefined>)[key];
+        } else {
+          (process.env as Record<string, string | undefined>)[key] = value;
+        }
+      }
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || "Failed to send email");
+    }
+
+    console.log("=== EMAIL SENT SUCCESSFULLY ===");
+    console.log(`Provider: ${settings.provider.toUpperCase()}`);
+    console.log(
+      `From: ${settings.fromAddress} ${settings.fromDisplayName ? `(${settings.fromDisplayName})` : ""}`
+    );
+    console.log(`To: ${options.to}`);
+    console.log(`Subject: ${options.subject}`);
+    console.log(`✅ Email sent successfully using ${settings.provider.toUpperCase()}`);
+    console.log("===============================");
+  } catch (error) {
+    // Restore original env vars on error too
+    if (settings.provider === "smtp") {
+      for (const [key, value] of Object.entries(originalEnvVars)) {
+        if (value === undefined) {
+          delete (process.env as Record<string, string | undefined>)[key];
+        } else {
+          (process.env as Record<string, string | undefined>)[key] = value;
+        }
+      }
+    }
+
+    // Log the error and fall back to configuration validation
+    console.error("Email sending failed:", error);
+
+    console.log("=== EMAIL TEST CONFIGURATION (Fallback) ===");
+    console.log(`Provider: ${settings.provider.toUpperCase()}`);
+    console.log(
+      `From: ${settings.fromAddress} ${settings.fromDisplayName ? `(${settings.fromDisplayName})` : ""}`
+    );
+    console.log(`To: ${options.to}`);
+    console.log(`Subject: ${options.subject}`);
+
+    // Show provider-specific configuration status
+    switch (settings.provider) {
+      case "console":
+        console.log("Console Mode: Emails will be logged to console");
+        break;
+      case "smtp":
+        console.log(`SMTP Host: ${settings.smtpHost || "[NOT SET]"}`);
+        console.log(`SMTP Port: ${settings.smtpPort || "[NOT SET]"}`);
+        console.log(`SMTP User: ${settings.smtpUser || "[NOT SET]"}`);
+        console.log(`SMTP Password: ${settings.smtpPassword ? "[SET]" : "[NOT SET]"}`);
+        break;
+      case "sendgrid":
+        console.log(`SendGrid API Key: ${settings.sendgridApiKey ? "[SET]" : "[NOT SET]"}`);
+        break;
+      case "resend":
+        console.log(`Resend API Key: ${settings.resendApiKey ? "[SET]" : "[NOT SET]"}`);
+        break;
+      case "aws-ses":
+        console.log(`AWS Region: ${settings.awsRegion || "[NOT SET]"}`);
+        console.log(`AWS Access Key ID: ${settings.awsAccessKeyId ? "[SET]" : "[NOT SET]"}`);
+        console.log(
+          `AWS Secret Access Key: ${settings.awsSecretAccessKey ? "[SET]" : "[NOT SET]"}`
+        );
+        break;
+      case "mailgun":
+        console.log(`Mailgun API Key: ${settings.mailgunApiKey ? "[SET]" : "[NOT SET]"}`);
+        console.log(`Mailgun Domain: ${settings.mailgunDomain || "[NOT SET]"}`);
+        break;
+      case "crunchycone":
+        console.log("CrunchyCone: Uses CLI authentication");
+        break;
+    }
+
+    console.log("--- Email Content ---");
+    console.log(options.text || options.html);
+    console.log("==========================================");
+    console.log(`⚠️  Email configuration validated for ${settings.provider.toUpperCase()}`);
+    console.log("Error occurred during actual email sending - check configuration");
+
+    // Re-throw the error so the UI shows the failure
+    throw error;
   }
 }
 
@@ -582,30 +581,27 @@ Sent at: ${new Date().toISOString()}
         `.trim(),
       };
 
-      // Store current email provider
-      const originalProvider = new ConsoleEmailProvider(); // Default fallback
-
-      // Temporarily set up the test email provider with current settings
-      const testProvider = new TestEmailProvider(settings);
-      setEmailProvider(testProvider);
-
+      // Send actual test email using the current configuration
       try {
-        // Send email using the template's sendEmail function with test provider
-        await sendEmail(testEmailContent);
+        // Send email using the new email system
+        await sendTestEmail(settings, testEmailContent);
 
         return {
           success: true,
           message: `Test email sent successfully to ${toEmail} using ${settings.provider}`,
         };
-      } finally {
-        // Restore original provider
-        setEmailProvider(originalProvider);
+      } catch (error) {
+        console.error("Email test error:", error);
+        return {
+          success: false,
+          message: `Failed to send test email: ${error instanceof Error ? error.message : "Unknown error"}`,
+        };
       }
     } catch (error) {
-      console.error("Email test error:", error);
+      console.error("Email configuration test error:", error);
       return {
         success: false,
-        message: `Failed to send test email: ${error instanceof Error ? error.message : "Unknown error"}`,
+        message: "Failed to test email configuration",
       };
     }
   } catch (error) {
